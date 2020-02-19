@@ -1,0 +1,3 @@
+[submodule "lib/libtesla"]
+	path = lib/libtesla
+	url = https://github.com/masagrator/libtesla

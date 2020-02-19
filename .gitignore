@@ -1,0 +1,10 @@
+
+build/
+
+*.ovl
+
+*.elf
+
+*.nacp
+
+*.nro
