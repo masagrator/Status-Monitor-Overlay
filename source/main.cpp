@@ -1,8 +1,6 @@
 #include <tesla.hpp>
 #include <switch.h>
-#include <cstring>
 
-tsl::element::ToggleListItem *toggleItem;
 u64 systemtickfrequency = 19200000 / 10;
 double percent = 0;
 u64 idletick_a0 = 0;
