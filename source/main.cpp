@@ -162,7 +162,7 @@ public:
 		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
 		snprintf(PCB_temperature_c, sizeof PCB_temperature_c, "PCB Temperature: %.2f \u00B0C", PCB_temperatureC);
 		
-		//Check for input
+		//Check for input to exit
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 		if (kHeld & KEY_LSTICK) {
