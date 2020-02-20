@@ -16,10 +16,11 @@ If you want to use it simultaneously with game, you need to first start game, th
 - CPU Usage for each core
 
 # Planned:
-- Currenly used clocks
-- Temperatures
-- Memory Used
-- GPU Usage (at this moment I don't have any clue how to do it)
+- Reduce window size
+- Show currenly used clocks
+- Show temperatures
+- Show memory Used
+- Show GPU Usage (at this moment I don't have any clue how to do it)
 
 ---
 
