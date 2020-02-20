@@ -18,6 +18,8 @@ If you want to use it simultaneously with game, you need to first start game, th
 - Memory Used
 - GPU Usage (at this moment I don't have any clue how to do it)
 
+---
+
 Thanks to:
 - RetroNX channel for helping with coding stuff
 - SunTheCourier for sys-clk-Overlay from which I learned how to make my own Tesla homebrew
