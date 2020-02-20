@@ -67,16 +67,16 @@ public:
         tsl::element::Frame *rootFrame = new tsl::element::Frame();
 		
         tsl::element::CustomDrawer *Status = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [](u16 x, u16 y, tsl::Screen *screen) {
-			screen->drawString("Used by apps/games:", false, 25, 100, 25, tsl::a(0xFFFF));
+			screen->drawString("CPU Usage:", false, 25, 100, 25, tsl::a(0xFFFF));
 			//screen->drawString(c_idletick0, false, 25, 150, 15, tsl::a(0xFFFF));
 			//screen->drawString(c_idletick1, false, 25, 165, 15, tsl::a(0xFFFF));
 			//screen->drawString(c_idletick2, false, 25, 180, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage0, false, 25, 150, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage1, false, 25, 165, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage2, false, 25, 180, 15, tsl::a(0xFFFF));
-			screen->drawString("Used by background processes:", false, 25, 225, 25, tsl::a(0xFFFF));
+			///screen->drawString("Used by background processes:", false, 25, 225, 25, tsl::a(0xFFFF));
 			//screen->drawString(c_idletick3, false, 25, 275, 15, tsl::a(0xFFFF));
-			screen->drawString(CPU_Usage3, false, 25, 275, 15, tsl::a(0xFFFF));
+			screen->drawString(CPU_Usage3, false, 25, 195, 15, tsl::a(0xFFFF));
         });
 
         rootFrame->addElement(Status);
@@ -113,13 +113,13 @@ public:
 		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
 		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
 		percent = (double) (((double)systemtickfrequency - (double)idletick0) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "CPU Usage Core #0: %.2f%s", percent, "%");
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", percent, "%");
 		percent = (double) (((double)systemtickfrequency - (double)idletick1) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "CPU Usage Core #1: %.2f%s", percent, "%");
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", percent, "%");
 		percent = (double) (((double)systemtickfrequency - (double)idletick2) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "CPU Usage Core #2: %.2f%s", percent, "%");
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", percent, "%");
 		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "CPU Usage Core #3: %.2f%s", percent, "%");
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
 	}
 };
 
