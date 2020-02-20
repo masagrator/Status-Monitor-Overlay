@@ -5,8 +5,11 @@ This is an overlay homebrew dedicated to Nintendo Switch.
 You need to have installed Tesla environment to use it.
 
 Interval between changes is set to 100 ms. In case of ~100% core load it can take more time.
+
 Because of this you need to hold button instead of just pressing to exit.
+
 I have changed exit button from B to pressing Left Stick.
+
 If you want to use it simultaneously with game, you need to first start game, then run this homebrew, next press Home button. Now input is detected by all apps.
 
 # What is currently showing:
