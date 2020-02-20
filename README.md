@@ -19,13 +19,17 @@ If you want to use it simultaneously with game, you need to first start game, th
 - Reduce window size
 - Show currenly used clocks
 - Show temperatures
-- Show memory Used
+- Show used memory
 - Show GPU Usage (at this moment I don't have any clue how to do it)
 
 ![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/Screen.jpg?raw=true)
 
 ---
 
-Thanks to:
+# Thanks to:
 - RetroNX channel for helping with coding stuff
 - SunTheCourier for sys-clk-Overlay from which I learned how to make my own Tesla homebrew
+
+# FAQ:
+Q: Is this have impact in game?
+A: Negligible, you won't see any difference. You can check in games like Doom and Witcher 3 with enabled FPS counters that running this homebrew doesn't affect FPS in visible way.
