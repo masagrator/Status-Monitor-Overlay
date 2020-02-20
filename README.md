@@ -6,7 +6,7 @@ You need to have installed Tesla environment to use it.
 
 Interval between changes is set to 100 ms + vsync signal. In case of ~100% core load it can take more time refresh info about this core.
 
-I have changed exit button from B to pressing Left Stick + Right Stick.
+I have changed exit button from B to press and hold Left Stick + Right Stick.
 
 If you want to use it simultaneously with game, you need to first start game, then run this homebrew, next press Home button. Now input is detected by all apps.
 
