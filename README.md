@@ -4,7 +4,7 @@ Monitor Your hardware in real time!
 This is an overlay homebrew dedicated to Nintendo Switch.
 You need to have installed Tesla environment to use it.
 
-Interval between changes is set to 100 ms. In case of ~100% core load it can take more time.
+Interval between changes is set to 100 ms + vsync signal. In case of ~100% core load it can take more time.
 
 Because of this you need to hold button instead of just pressing to exit.
 
