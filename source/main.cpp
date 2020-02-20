@@ -27,29 +27,42 @@ Thread t0;
 Thread t1;
 Thread t2;
 Thread t3;
+bool threadexit = false;
 
 void CheckCore0() {
-	svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
-	svcSleepThread(100*1000*1000);
-	svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
+	while (threadexit == false) {
+		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
+		svcSleepThread(100*1000*1000);
+		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
+		idletick0 = idletick_a0 - idletick_b0;
+	}
 }
 
 void CheckCore1() {
-	svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-	svcSleepThread(100*1000*1000);
-	svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
+	while (threadexit == false) {
+		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
+		svcSleepThread(100*1000*1000);
+		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
+		idletick1 = idletick_a1 - idletick_b1;
+	}
 }
 
 void CheckCore2() {
-	svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-	svcSleepThread(100*1000*1000);
-	svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
+	while (threadexit == false) {
+		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
+		svcSleepThread(100*1000*1000);
+		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
+		idletick2 = idletick_a2 - idletick_b2;
+	}
 }
 
 void CheckCore3() {
+	while (threadexit == false) {
 	svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 	svcSleepThread(100*1000*1000);
 	svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
+	idletick3 = idletick_a3 - idletick_b3;
+	}
 }
 
 class GuiMain : public tsl::Gui
@@ -84,26 +97,6 @@ public:
         return rootFrame;
 	}
 	virtual void update() {	
-		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
-		threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x3B, 1);
-		threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
-		threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
-		threadStart(&t0);
-		threadStart(&t1);
-		threadStart(&t2);
-		threadStart(&t3);
-		threadWaitForExit(&t0);
-		threadWaitForExit(&t1);
-		threadWaitForExit(&t2);
-		threadWaitForExit(&t3);
-		threadClose(&t0);
-		threadClose(&t1);
-		threadClose(&t2);
-		threadClose(&t3);
-		idletick0 = idletick_a0 - idletick_b0;
-		idletick1 = idletick_a1 - idletick_b1;
-		idletick2 = idletick_a2 - idletick_b2;
-		idletick3 = idletick_a3 - idletick_b3;
 		//snprintf(c_idletick0, sizeof c_idletick0, "Idled ticks Core #0: %u", idletick0);
 		//snprintf(c_idletick1, sizeof c_idletick1, "Idled ticks Core #1: %u", idletick1);
 		//snprintf(c_idletick2, sizeof c_idletick2, "Idled ticks Core #2: %u", idletick2);
@@ -120,6 +113,13 @@ public:
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", percent, "%");
 		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
+		hidScanInput();
+		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+		if (kHeld & KEY_LSTICK) {
+					hidScanInput();
+					u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+					if (kHeld & KEY_RSTICK) tsl::Gui::goBack();
+		}
 	}
 };
 
@@ -131,10 +131,28 @@ public:
 
     tsl::Gui *onSetup()
     {
+		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
+		threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x3B, 1);
+		threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
+		threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
+		threadStart(&t0);
+		threadStart(&t1);
+		threadStart(&t2);
+		threadStart(&t3);
         return new GuiMain();
     } // Called once when the Overlay is created and should return the first Gui to load. Initialize services here
 
-    virtual void onDestroy() {} // Called once before the overlay Exits. Exit services here
+    virtual void onDestroy() {
+		threadexit = true;
+		threadWaitForExit(&t0);
+		threadWaitForExit(&t1);
+		threadWaitForExit(&t2);
+		threadWaitForExit(&t3);
+		threadClose(&t0);
+		threadClose(&t1);
+		threadClose(&t2);
+		threadClose(&t3);
+	} // Called once before the overlay Exits. Exit services here
 
     virtual void onOverlayShow(tsl::Gui *gui) {}
 
