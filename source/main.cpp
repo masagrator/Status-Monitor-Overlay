@@ -3,6 +3,7 @@
 
 u64 systemtickfrequency = 19200000 / 10;
 double percent = 0;
+float CPU_Hz_f = 0;
 u64 idletick_a0 = 0;
 u64 idletick_a1 = 0;
 u64 idletick_a2 = 0;
@@ -23,11 +24,29 @@ char CPU_Usage0[32];
 char CPU_Usage1[32];
 char CPU_Usage2[32];
 char CPU_Usage3[32];
+char CPU_Hz_c[32];
 Thread t0;
 Thread t1;
 Thread t2;
 Thread t3;
+Thread t4;
 bool threadexit = false;
+u32 CPU_hz = 0;
+
+void GetCurrentHz()
+{
+	while (threadexit == false) {
+		if(hosversionAtLeast(8,0,0))
+		{
+			ClkrstSession cpuSession;
+			clkrstOpenSession(&cpuSession, PcvModuleId_CpuBus, 3);
+			clkrstGetClockRate(&cpuSession, &CPU_hz);
+			clkrstCloseSession(&cpuSession);
+		}
+		else pcvGetClockRate(0, &CPU_hz);
+		svcSleepThread(1000*1000*1000);
+	}
+}
 
 void CheckCore0() {
 	while (threadexit == false) {
@@ -81,6 +100,7 @@ public:
 		
         tsl::element::CustomDrawer *Status = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [](u16 x, u16 y, tsl::Screen *screen) {
 			screen->drawString("CPU Usage:", false, 25, 100, 25, tsl::a(0xFFFF));
+			screen->drawString(CPU_Hz_c, false, 25, 135, 15, tsl::a(0xFFFF));
 			//screen->drawString(c_idletick0, false, 25, 150, 15, tsl::a(0xFFFF));
 			//screen->drawString(c_idletick1, false, 25, 165, 15, tsl::a(0xFFFF));
 			//screen->drawString(c_idletick2, false, 25, 180, 15, tsl::a(0xFFFF));
@@ -113,6 +133,8 @@ public:
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", percent, "%");
 		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
+		CPU_Hz_f = (float)CPU_hz / (float)1000000;
+		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", CPU_Hz_f);
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 		if (kHeld & KEY_LSTICK) {
@@ -131,27 +153,36 @@ public:
 
     tsl::Gui *onSetup()
     {
+		smInitialize();
+		if(hosversionAtLeast(8,0,0)) clkrstInitialize();
+		else pcvInitialize();
 		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
 		threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x3B, 1);
 		threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
 		threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
+		threadCreate(&t4, GetCurrentHz, NULL, NULL, 0x100, 0x3E, 3);
 		threadStart(&t0);
 		threadStart(&t1);
 		threadStart(&t2);
 		threadStart(&t3);
+		threadStart(&t4);
         return new GuiMain();
     } // Called once when the Overlay is created and should return the first Gui to load. Initialize services here
 
     virtual void onDestroy() {
+		clkrstExit();
+		pcvExit();
 		threadexit = true;
 		threadWaitForExit(&t0);
 		threadWaitForExit(&t1);
 		threadWaitForExit(&t2);
 		threadWaitForExit(&t3);
+		threadWaitForExit(&t4);
 		threadClose(&t0);
 		threadClose(&t1);
 		threadClose(&t2);
 		threadClose(&t3);
+		threadClose(&t4);
 	} // Called once before the overlay Exits. Exit services here
 
     virtual void onOverlayShow(tsl::Gui *gui) {}
