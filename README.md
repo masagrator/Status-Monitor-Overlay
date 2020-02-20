@@ -31,6 +31,6 @@ If you want to use it simultaneously with game, you need to first start game, th
 - SunTheCourier for sys-clk-Overlay from which I learned how to make my own Tesla homebrew
 
 # FAQ:
-Q: Is this have impact in game?
+Q: This homebrew has any impact on games?
 
 A: Negligible, you won't see any difference. You can check in games like Doom and Witcher 3 with enabled FPS counters that running this homebrew doesn't affect FPS in visible way.
