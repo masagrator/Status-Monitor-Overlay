@@ -54,6 +54,34 @@ u32 RAM_Hz = 0;
 float RAM_Hz_f = 0;
 char RAM_Hz_c[32];
 
+//RAM Size
+char RAM_all_c[64];
+char RAM_application_c[64];
+char RAM_applet_c[64];
+char RAM_system_c[64];
+char RAM_systemunsafe_c[64];
+u64 RAM_Total_all_u = 0;
+float RAM_Total_all_f = 0;
+u64 RAM_Total_application_u = 0;
+float RAM_Total_application_f = 0;
+u64 RAM_Total_applet_u = 0;
+float RAM_Total_applet_f = 0;
+u64 RAM_Total_system_u = 0;
+float RAM_Total_system_f = 0;
+u64 RAM_Total_systemunsafe_u = 0;
+float RAM_Total_systemunsafe_f = 0;
+u64 RAM_Used_all_u = 0;
+float RAM_Used_all_f = 0;
+u64 RAM_Used_application_u = 0;
+float RAM_Used_application_f = 0;
+u64 RAM_Used_applet_u = 0;
+float RAM_Used_applet_f = 0;
+u64 RAM_Used_system_u = 0;
+float RAM_Used_system_f = 0;
+u64 RAM_Used_systemunsafe_u = 0;
+float RAM_Used_systemunsafe_f = 0;
+
+
 
 //Stuff that doesn't need multithreading, all set to Core #3
 void Misc() {
@@ -79,9 +107,19 @@ void Misc() {
 			pcvGetClockRate(PcvModule_EMC, &RAM_Hz);
 		}
 		
-		// Temperatures
+		//Temperatures
 		tsGetTemperatureMilliC(TsLocation_Internal, &SoC_temperaturemiliC);
 		tsGetTemperatureMilliC(TsLocation_External, &PCB_temperaturemiliC);
+		
+		//RAM Memory Used
+		svcGetSystemInfo(&RAM_Total_application_u, 0, INVALID_HANDLE, 0);
+		svcGetSystemInfo(&RAM_Total_applet_u, 0, INVALID_HANDLE, 1);
+		svcGetSystemInfo(&RAM_Total_system_u, 0, INVALID_HANDLE, 2);
+		svcGetSystemInfo(&RAM_Total_systemunsafe_u, 0, INVALID_HANDLE, 3);
+		svcGetSystemInfo(&RAM_Used_application_u, 1, INVALID_HANDLE, 0);
+		svcGetSystemInfo(&RAM_Used_applet_u, 1, INVALID_HANDLE, 1);
+		svcGetSystemInfo(&RAM_Used_system_u, 1, INVALID_HANDLE, 2);
+		svcGetSystemInfo(&RAM_Used_systemunsafe_u, 1, INVALID_HANDLE, 3);
 		
 		// 1 sec interval
 		svcSleepThread(1000*1000*1000);
@@ -152,6 +190,11 @@ public:
 			screen->drawString(GPU_Hz_c, false, 25, 285, 15, tsl::a(0xFFFF));
 			screen->drawString("RAM Usage:", false, 25, 340, 25, tsl::a(0xFFFF));
 			screen->drawString(RAM_Hz_c, false, 25, 375, 15, tsl::a(0xFFFF));
+			screen->drawString(RAM_all_c, false, 25, 390, 15, tsl::a(0xFFFF));
+			screen->drawString(RAM_application_c, false, 25, 405, 15, tsl::a(0xFFFF));
+			screen->drawString(RAM_applet_c, false, 25, 420, 15, tsl::a(0xFFFF));
+			screen->drawString(RAM_system_c, false, 25, 435, 15, tsl::a(0xFFFF));
+			screen->drawString(RAM_systemunsafe_c, false, 25, 450, 15, tsl::a(0xFFFF));
 			screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
 			screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
 			screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
@@ -188,7 +231,21 @@ public:
 		snprintf(SoC_temperature_c, sizeof SoC_temperature_c, "SoC Temperature: %.2f \u00B0C", SoC_temperatureC);
 		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
 		snprintf(PCB_temperature_c, sizeof PCB_temperature_c, "PCB Temperature: %.2f \u00B0C", PCB_temperatureC);
-		
+		RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
+		RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
+		RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
+		RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
+		RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
+		RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
+		RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
+		RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
+		RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
+		RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
+		snprintf(RAM_all_c, sizeof RAM_all_c, "Total: %.2f MiB/%.2f MiB", RAM_Used_all_f, RAM_Total_all_f);
+		snprintf(RAM_application_c, sizeof RAM_application_c, "Application: %.2f MiB/%.2f MiB", RAM_Used_application_f, RAM_Total_application_f);
+		snprintf(RAM_applet_c, sizeof RAM_applet_c, "Applet: %.2f MiB/%.2f MiB", RAM_Used_applet_f, RAM_Total_applet_f);
+		snprintf(RAM_system_c, sizeof RAM_system_c, "System: %.2f MiB/%.2f MiB", RAM_Used_system_f, RAM_Total_system_f);
+		snprintf(RAM_systemunsafe_c, sizeof RAM_systemunsafe_c, "System Unsafe: %.2f MiB/%.2f MiB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
 		//Check for input to exit
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
