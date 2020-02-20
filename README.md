@@ -22,6 +22,8 @@ If you want to use it simultaneously with game, you need to first start game, th
 - Show memory Used
 - Show GPU Usage (at this moment I don't have any clue how to do it)
 
+![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/Screen.jpg?raw=true)
+
 ---
 
 Thanks to:
