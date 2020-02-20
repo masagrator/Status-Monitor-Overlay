@@ -13,7 +13,7 @@ I have changed exit button from B to pressing Left Stick.
 If you want to use it simultaneously with game, you need to first start game, then run this homebrew, next press Home button. Now input is detected by all apps.
 
 # What is currently showing:
-- CPU Usage for each core
+- CPU Usage for each core (Cores #0-#2 are used by apps/games, Core #3 is used by OS and background processes)
 
 # Planned:
 - Reduce window size
