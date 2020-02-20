@@ -4,6 +4,10 @@
 u64 systemtickfrequency = 19200000 / 10;
 double percent = 0;
 float CPU_Hz_f = 0;
+s32 SoC_temperaturemiliC = 0;
+float SoC_temperatureC = 0;
+s32 PCB_temperaturemiliC = 0;
+float PCB_temperatureC = 0;
 u64 idletick_a0 = 0;
 u64 idletick_a1 = 0;
 u64 idletick_a2 = 0;
@@ -25,16 +29,26 @@ char CPU_Usage1[32];
 char CPU_Usage2[32];
 char CPU_Usage3[32];
 char CPU_Hz_c[32];
+char SoC_temperature_c[32];
+char PCB_temperature_c[32];
 Thread t0;
 Thread t1;
 Thread t2;
 Thread t3;
 Thread t4;
+Thread t5;
 bool threadexit = false;
 u32 CPU_hz = 0;
 
-void GetCurrentHz()
-{
+void SoC_temperature() {
+	while (threadexit == false) {
+		tsGetTemperatureMilliC(TsLocation_Internal, &SoC_temperaturemiliC);
+		tsGetTemperatureMilliC(TsLocation_External, &PCB_temperaturemiliC);
+		svcSleepThread(1000*1000*1000);
+	}
+}
+
+void GetCurrentHz() {
 	while (threadexit == false) {
 		if(hosversionAtLeast(8,0,0))
 		{
@@ -100,6 +114,7 @@ public:
 		
         tsl::element::CustomDrawer *Status = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [](u16 x, u16 y, tsl::Screen *screen) {
 			screen->drawString("CPU Usage:", false, 25, 100, 25, tsl::a(0xFFFF));
+			screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
 			screen->drawString(CPU_Hz_c, false, 25, 135, 15, tsl::a(0xFFFF));
 			//screen->drawString(c_idletick0, false, 25, 150, 15, tsl::a(0xFFFF));
 			//screen->drawString(c_idletick1, false, 25, 165, 15, tsl::a(0xFFFF));
@@ -110,6 +125,8 @@ public:
 			///screen->drawString("Used by background processes:", false, 25, 225, 25, tsl::a(0xFFFF));
 			//screen->drawString(c_idletick3, false, 25, 275, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage3, false, 25, 195, 15, tsl::a(0xFFFF));
+			screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
+			screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
         });
 
         rootFrame->addElement(Status);
@@ -135,6 +152,10 @@ public:
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
 		CPU_Hz_f = (float)CPU_hz / (float)1000000;
 		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", CPU_Hz_f);
+		SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
+		snprintf(SoC_temperature_c, sizeof SoC_temperature_c, "SoC Temperature: %.2f \u00B0C", SoC_temperatureC);
+		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
+		snprintf(PCB_temperature_c, sizeof PCB_temperature_c, "PCB Temperature: %.2f \u00B0C", PCB_temperatureC);
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 		if (kHeld & KEY_LSTICK) {
@@ -156,33 +177,40 @@ public:
 		smInitialize();
 		if(hosversionAtLeast(8,0,0)) clkrstInitialize();
 		else pcvInitialize();
+		tsInitialize();
 		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
 		threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x3B, 1);
 		threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
 		threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
 		threadCreate(&t4, GetCurrentHz, NULL, NULL, 0x100, 0x3E, 3);
+		threadCreate(&t5, SoC_temperature, NULL, NULL, 0x100, 0x3D, 3);
 		threadStart(&t0);
 		threadStart(&t1);
 		threadStart(&t2);
 		threadStart(&t3);
 		threadStart(&t4);
+		threadStart(&t5);
         return new GuiMain();
     } // Called once when the Overlay is created and should return the first Gui to load. Initialize services here
 
     virtual void onDestroy() {
-		clkrstExit();
-		pcvExit();
 		threadexit = true;
 		threadWaitForExit(&t0);
 		threadWaitForExit(&t1);
 		threadWaitForExit(&t2);
 		threadWaitForExit(&t3);
 		threadWaitForExit(&t4);
+		threadWaitForExit(&t5);
+		smExit();
+		clkrstExit();
+		pcvExit();
+		tsExit();
 		threadClose(&t0);
 		threadClose(&t1);
 		threadClose(&t2);
 		threadClose(&t3);
 		threadClose(&t4);
+		threadClose(&t5);
 	} // Called once before the overlay Exits. Exit services here
 
     virtual void onOverlayShow(tsl::Gui *gui) {}
