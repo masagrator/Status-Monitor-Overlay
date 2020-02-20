@@ -45,20 +45,39 @@ char CPU_Usage3[32];
 u32 CPU_Hz = 0;
 float CPU_Hz_f = 0;
 char CPU_Hz_c[32];
+//GPU Frequency
+u32 GPU_Hz = 0;
+float GPU_Hz_f = 0;
+char GPU_Hz_c[32];
+//RAM Frequency
+u32 RAM_Hz = 0;
+float RAM_Hz_f = 0;
+char RAM_Hz_c[32];
+
 
 //Stuff that doesn't need multithreading, all set to Core #3
 void Misc() {
 	while (threadexit == false) {
 		
-		// CPU Frequency
+		// CPU, GPU and RAM Frequency
 		if(hosversionAtLeast(8,0,0))
 		{
 			ClkrstSession cpuSession;
 			clkrstOpenSession(&cpuSession, PcvModuleId_CpuBus, 3);
 			clkrstGetClockRate(&cpuSession, &CPU_Hz);
 			clkrstCloseSession(&cpuSession);
+			clkrstOpenSession(&cpuSession, PcvModuleId_GPU, 3);
+			clkrstGetClockRate(&cpuSession, &GPU_Hz);
+			clkrstCloseSession(&cpuSession);
+			clkrstOpenSession(&cpuSession, PcvModuleId_EMC, 3);
+			clkrstGetClockRate(&cpuSession, &RAM_Hz);
+			clkrstCloseSession(&cpuSession);
 		}
-		else pcvGetClockRate(0, &CPU_Hz);
+		else {
+			pcvGetClockRate(PcvModule_CpuBus, &CPU_Hz);
+			pcvGetClockRate(PcvModule_GPU, &CPU_Hz);
+			pcvGetClockRate(PcvModule_EMC, &RAM_Hz);
+		}
 		
 		// Temperatures
 		tsGetTemperatureMilliC(TsLocation_Internal, &SoC_temperaturemiliC);
@@ -99,10 +118,10 @@ void CheckCore2() {
 
 void CheckCore3() {
 	while (threadexit == false) {
-	svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-	svcSleepThread(100*1000*1000);
-	svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-	idletick3 = idletick_a3 - idletick_b3;
+		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
+		svcSleepThread(100*1000*1000);
+		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
+		idletick3 = idletick_a3 - idletick_b3;
 	}
 }
 
@@ -129,6 +148,10 @@ public:
 			screen->drawString(CPU_Usage1, false, 25, 165, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage2, false, 25, 180, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage3, false, 25, 195, 15, tsl::a(0xFFFF));
+			screen->drawString("GPU Usage:", false, 25, 250, 25, tsl::a(0xFFFF));
+			screen->drawString(GPU_Hz_c, false, 25, 285, 15, tsl::a(0xFFFF));
+			screen->drawString("RAM Usage:", false, 25, 340, 25, tsl::a(0xFFFF));
+			screen->drawString(RAM_Hz_c, false, 25, 375, 15, tsl::a(0xFFFF));
 			screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
 			screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
 			screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
@@ -157,6 +180,10 @@ public:
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
 		CPU_Hz_f = (float)CPU_Hz / (float)1000000;
 		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", CPU_Hz_f);
+		GPU_Hz_f = (float)GPU_Hz / (float)1000000;
+		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", GPU_Hz_f);
+		RAM_Hz_f = (float)RAM_Hz / (float)1000000;
+		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz", RAM_Hz_f);
 		SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
 		snprintf(SoC_temperature_c, sizeof SoC_temperature_c, "SoC Temperature: %.2f \u00B0C", SoC_temperatureC);
 		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
