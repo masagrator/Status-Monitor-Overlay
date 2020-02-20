@@ -7,7 +7,7 @@ Thread t1;
 Thread t2;
 Thread t3;
 Thread t4;
-u64 systemtickfrequency = 19200000 / 10;
+u64 systemtickfrequency = 19200000;
 bool threadexit = false;
 
 //Temperatures
