@@ -130,7 +130,7 @@ void Misc() {
 void CheckCore0() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
-		svcSleepThread(100*1000*1000);
+		svcSleepThread(1000*1000*1000);
 		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
 		idletick0 = idletick_a0 - idletick_b0;
 	}
@@ -139,7 +139,7 @@ void CheckCore0() {
 void CheckCore1() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-		svcSleepThread(100*1000*1000);
+		svcSleepThread(1000*1000*1000);
 		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
 		idletick1 = idletick_a1 - idletick_b1;
 	}
@@ -148,7 +148,7 @@ void CheckCore1() {
 void CheckCore2() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-		svcSleepThread(100*1000*1000);
+		svcSleepThread(1000*1000*1000);
 		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
 		idletick2 = idletick_a2 - idletick_b2;
 	}
@@ -157,7 +157,7 @@ void CheckCore2() {
 void CheckCore3() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		svcSleepThread(100*1000*1000);
+		svcSleepThread(1000*1000*1000);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		idletick3 = idletick_a3 - idletick_b3;
 	}
