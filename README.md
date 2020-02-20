@@ -32,4 +32,5 @@ If you want to use it simultaneously with game, you need to first start game, th
 
 # FAQ:
 Q: Is this have impact in game?
+
 A: Negligible, you won't see any difference. You can check in games like Doom and Witcher 3 with enabled FPS counters that running this homebrew doesn't affect FPS in visible way.
