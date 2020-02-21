@@ -1,5 +1,6 @@
 #include <tesla.hpp>
 #include <switch.h>
+#include "services/tc.hpp"
 
 //Common
 Thread t0;
@@ -11,7 +12,6 @@ u64 systemtickfrequency = 19200000;
 bool threadexit = false;
 
 //Temperatures
-static Service g_tcSrv;
 s32 SoC_temperaturemiliC = 0;
 float SoC_temperatureC = 0;
 s32 PCB_temperaturemiliC = 0;
@@ -84,14 +84,6 @@ u64 RAM_Used_system_u = 0;
 float RAM_Used_system_f = 0;
 u64 RAM_Used_systemunsafe_u = 0;
 float RAM_Used_systemunsafe_f = 0;
-
-static Result _tcCmdNoInOut32(u32 *out, u8 cmd_id) {
-    return serviceDispatchOut(&g_tcSrv, cmd_id, *out);
-}
-
-Result tcGetTemperatureMilliC(s32 *temperature) {
-    return _tcCmdNoInOut32((u32*)temperature, 9);
-}
 
 //Stuff that doesn't need multithreading
 void Misc() {
@@ -284,7 +276,7 @@ public:
 		if(hosversionAtLeast(8,0,0)) clkrstInitialize();
 		else pcvInitialize();
 		tsInitialize();
-		smGetService(&g_tcSrv, "tc");
+		tcInitialize();
 		
 		//Assign functions to core of choose
 		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
@@ -320,7 +312,7 @@ public:
 		clkrstExit();
 		pcvExit();
 		tsExit();
-		serviceClose(&g_tcSrv);
+		tcExit();
 		
 		//Free threads
 		threadClose(&t0);

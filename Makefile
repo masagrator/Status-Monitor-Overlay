@@ -41,8 +41,9 @@ APP_TITLE	:=	Status-Monitor
 
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source
+SOURCES		:=	source source/services
 DATA		:=	data
+INCLUDES	:=	include include/services
 NO_ICON		:=  1
 
 #---------------------------------------------------------------------------------
