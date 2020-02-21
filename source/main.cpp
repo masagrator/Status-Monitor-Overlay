@@ -11,12 +11,16 @@ u64 systemtickfrequency = 19200000;
 bool threadexit = false;
 
 //Temperatures
+static Service g_tcSrv;
 s32 SoC_temperaturemiliC = 0;
 float SoC_temperatureC = 0;
 s32 PCB_temperaturemiliC = 0;
 float PCB_temperatureC = 0;
+s32 skin_temperaturemiliC = 0;
+float skin_temperatureC = 0;
 char SoC_temperature_c[32];
 char PCB_temperature_c[32];
+char skin_temperature_c[32];
 
 //CPU Usage
 double percent = 0;
@@ -81,7 +85,13 @@ float RAM_Used_system_f = 0;
 u64 RAM_Used_systemunsafe_u = 0;
 float RAM_Used_systemunsafe_f = 0;
 
+static Result _tcCmdNoInOut32(u32 *out, u8 cmd_id) {
+    return serviceDispatchOut(&g_tcSrv, cmd_id, *out);
+}
 
+Result tcGetTemperatureMilliC(s32 *temperature) {
+    return _tcCmdNoInOut32((u32*)temperature, 9);
+}
 
 //Stuff that doesn't need multithreading
 void Misc() {
@@ -110,6 +120,7 @@ void Misc() {
 		//Temperatures
 		tsGetTemperatureMilliC(TsLocation_Internal, &SoC_temperaturemiliC);
 		tsGetTemperatureMilliC(TsLocation_External, &PCB_temperaturemiliC);
+		tcGetTemperatureMilliC(&skin_temperaturemiliC);
 		
 		//RAM Memory Used
 		svcGetSystemInfo(&RAM_Total_application_u, 0, INVALID_HANDLE, 0);
@@ -198,6 +209,7 @@ public:
 			screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
 			screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
 			screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
+			screen->drawString(skin_temperature_c, false, 235, 165, 15, tsl::a(0xFFFF));
         });
 
         rootFrame->addElement(Status);
@@ -231,6 +243,8 @@ public:
 		snprintf(SoC_temperature_c, sizeof SoC_temperature_c, "SoC: %.2f \u00B0C", SoC_temperatureC);
 		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
 		snprintf(PCB_temperature_c, sizeof PCB_temperature_c, "PCB: %.2f \u00B0C", PCB_temperatureC);
+		skin_temperatureC = (float)skin_temperaturemiliC / 1000;
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %.2f \u00B0C", skin_temperatureC);
 		RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
 		RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
@@ -270,6 +284,7 @@ public:
 		if(hosversionAtLeast(8,0,0)) clkrstInitialize();
 		else pcvInitialize();
 		tsInitialize();
+		smGetService(&g_tcSrv, "tc");
 		
 		//Assign functions to core of choose
 		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
@@ -305,6 +320,7 @@ public:
 		clkrstExit();
 		pcvExit();
 		tsExit();
+		serviceClose(&g_tcSrv);
 		
 		//Free threads
 		threadClose(&t0);
