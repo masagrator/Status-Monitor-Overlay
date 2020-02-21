@@ -83,7 +83,7 @@ float RAM_Used_systemunsafe_f = 0;
 
 
 
-//Stuff that doesn't need multithreading, all set to Core #3
+//Stuff that doesn't need multithreading
 void Misc() {
 	while (threadexit == false) {
 		
@@ -276,7 +276,7 @@ public:
 		threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x3B, 1);
 		threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
 		threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
-		threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3E, 3);
+		threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3E, -2);
 		
 		//Start assigned functions
 		threadStart(&t0);
