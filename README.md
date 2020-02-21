@@ -16,11 +16,11 @@ If you want to use it in dock, you need to first start Status Monitor, then put 
 - CPU Usage for each core (Cores #0-#2 are used by apps/games, Core #3 is used by OS, background processes and also Tesla overlays)
 - CPU, GPU & RAM actual frequency
 - Used RAM categorized to: 
--- Total
--- Application
--- Applet
--- System
--- System Unsafe
+- - Total
+- - Application
+- - Applet
+- - System
+- - System Unsafe
 - SoC, PCB & Skin temperature
 - Fan Rotation Level
 
