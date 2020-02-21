@@ -103,7 +103,7 @@ void Misc() {
 		}
 		else {
 			pcvGetClockRate(PcvModule_CpuBus, &CPU_Hz);
-			pcvGetClockRate(PcvModule_GPU, &CPU_Hz);
+			pcvGetClockRate(PcvModule_GPU, &GPU_Hz);
 			pcvGetClockRate(PcvModule_EMC, &RAM_Hz);
 		}
 		
