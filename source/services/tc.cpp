@@ -13,7 +13,7 @@ Result tcGetTemperatureMilliC(s32 *temperature) {
 }
 
 Result tcInitialize(void) {
-    return smGetService(&g_tcSrv, "tc");;
+    return smGetService(&g_tcSrv, "tc");
 }
 
 void tcExit(void) {
