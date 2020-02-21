@@ -126,7 +126,7 @@ void Misc() {
 	}
 }
 
-//Check each core for idled ticks in 100ms intervals, they cannot read info about other core than they are assigned
+//Check each core for idled ticks in 1s intervals, they cannot read info about other core than they are assigned
 void CheckCore0() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
@@ -290,7 +290,7 @@ public:
     }
 
     virtual void onDestroy() {
-		//Give signal to exit for all assigned functions
+		//Give signal to exit for all threaded functions
 		threadexit = true;
 		
 		//Wait for those functions to exit
@@ -306,7 +306,7 @@ public:
 		pcvExit();
 		tsExit();
 		
-		//Unassign functions
+		//Free threads
 		threadClose(&t0);
 		threadClose(&t1);
 		threadClose(&t2);
