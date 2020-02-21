@@ -255,11 +255,11 @@ public:
 		RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
-		snprintf(RAM_all_c, sizeof RAM_all_c, "Total:               %.2f MiB / %.2f MiB", RAM_Used_all_f, RAM_Total_all_f);
-		snprintf(RAM_application_c, sizeof RAM_application_c, "Application:      %.2f MiB / %.2f MiB", RAM_Used_application_f, RAM_Total_application_f);
-		snprintf(RAM_applet_c, sizeof RAM_applet_c, "Applet:             %.2f MiB / %.2f MiB", RAM_Used_applet_f, RAM_Total_applet_f);
-		snprintf(RAM_system_c, sizeof RAM_system_c, "System:            %.2f MiB / %.2f MiB", RAM_Used_system_f, RAM_Total_system_f);
-		snprintf(RAM_systemunsafe_c, sizeof RAM_systemunsafe_c, "System Unsafe: %.2f MiB / %.2f MiB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
+		snprintf(RAM_all_c, sizeof RAM_all_c, "Total:               %.2f / %.2f MB", RAM_Used_all_f, RAM_Total_all_f);
+		snprintf(RAM_application_c, sizeof RAM_application_c, "Application:      %.2f / %.2f MB", RAM_Used_application_f, RAM_Total_application_f);
+		snprintf(RAM_applet_c, sizeof RAM_applet_c, "Applet:             %.2f / %.2f MB", RAM_Used_applet_f, RAM_Total_applet_f);
+		snprintf(RAM_system_c, sizeof RAM_system_c, "System:            %.2f / %.2f MB", RAM_Used_system_f, RAM_Total_system_f);
+		snprintf(RAM_systemunsafe_c, sizeof RAM_systemunsafe_c, "System Unsafe: %.2f / %.2f MB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
 		//Check for input to exit
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
