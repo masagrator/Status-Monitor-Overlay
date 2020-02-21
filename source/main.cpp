@@ -1,6 +1,7 @@
 #include <tesla.hpp>
 #include <switch.h>
 #include "services/tc.hpp"
+#include "services/fan.hpp"
 
 //Common
 Thread t0;
@@ -85,6 +86,11 @@ float RAM_Used_system_f = 0;
 u64 RAM_Used_systemunsafe_u = 0;
 float RAM_Used_systemunsafe_f = 0;
 
+//Fan
+float Rotation_SpeedLevel_f = 0;
+float Rotation_SpeedLevel_percent = 0;
+char Rotation_SpeedLevel_c[64];
+
 //Stuff that doesn't need multithreading
 void Misc() {
 	while (threadexit == false) {
@@ -123,6 +129,9 @@ void Misc() {
 		svcGetSystemInfo(&RAM_Used_applet_u, 1, INVALID_HANDLE, 1);
 		svcGetSystemInfo(&RAM_Used_system_u, 1, INVALID_HANDLE, 2);
 		svcGetSystemInfo(&RAM_Used_systemunsafe_u, 1, INVALID_HANDLE, 3);
+		
+		//Fan
+		fanGetRotationSpeedLevel(&Rotation_SpeedLevel_f);
 		
 		// 1 sec interval
 		svcSleepThread(1000*1000*1000);
@@ -202,6 +211,7 @@ public:
 			screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
 			screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
 			screen->drawString(skin_temperature_c, false, 235, 165, 15, tsl::a(0xFFFF));
+			screen->drawString(Rotation_SpeedLevel_c, false, 235, 180, 15, tsl::a(0xFFFF));
         });
 
         rootFrame->addElement(Status);
@@ -237,6 +247,8 @@ public:
 		snprintf(PCB_temperature_c, sizeof PCB_temperature_c, "PCB: %.2f \u00B0C", PCB_temperatureC);
 		skin_temperatureC = (float)skin_temperaturemiliC / 1000;
 		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %.2f \u00B0C", skin_temperatureC);
+		Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan rotation: %.2f%s", Rotation_SpeedLevel_percent, "%");
 		RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
 		RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
@@ -277,6 +289,7 @@ public:
 		else pcvInitialize();
 		tsInitialize();
 		tcInitialize();
+		fanInitialize();
 		
 		//Assign functions to core of choose
 		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
@@ -313,6 +326,8 @@ public:
 		pcvExit();
 		tsExit();
 		tcExit();
+		fanExit();
+		
 		
 		//Free threads
 		threadClose(&t0);
