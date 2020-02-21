@@ -9,6 +9,7 @@ Interval between changes is set to 1s + vsync signal. In case of ~100% core load
 I have changed exit button from B to press and hold Left Stick + Right Stick.
 
 If you want to use it simultaneously with game, you need to first start game, then run this homebrew, next press Home button. Now input is detected by all apps.
+If you want to use it in dock, you need to first start Status Monitor, then put it to dock.
 
 # What is currently showing:
 - CPU Usage for each core (Cores #0-#2 are used by apps/games, Core #3 is used by OS, background processes and also Tesla overlays)
