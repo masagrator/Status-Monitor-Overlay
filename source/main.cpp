@@ -308,7 +308,7 @@ public:
 		threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x3B, 1);
 		threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
 		threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
-		threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3E, -2);
+		threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3A, -2);
 		
 		//Start assigned functions
 		threadStart(&t0);
