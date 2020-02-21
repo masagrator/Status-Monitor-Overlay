@@ -46,15 +46,16 @@ char CPU_Usage1[32];
 char CPU_Usage2[32];
 char CPU_Usage3[32];
 
-//CPU Frequency
+//Frequency
+///CPU
 u32 CPU_Hz = 0;
 float CPU_Hz_f = 0;
 char CPU_Hz_c[32];
-//GPU Frequency
+///GPU
 u32 GPU_Hz = 0;
 float GPU_Hz_f = 0;
 char GPU_Hz_c[32];
-//RAM Frequency
+///RAM
 u32 RAM_Hz = 0;
 float RAM_Hz_f = 0;
 char RAM_Hz_c[32];
@@ -90,6 +91,13 @@ float RAM_Used_systemunsafe_f = 0;
 float Rotation_SpeedLevel_f = 0;
 float Rotation_SpeedLevel_percent = 0;
 char Rotation_SpeedLevel_c[64];
+
+//GPU Usage
+u32 fd = 0;
+u32 GPU_Load_u = 0;
+float GPU_Load_percent = 0;
+char GPU_Load_c[32];
+float GPU_Load_max = 1000;
 
 //Stuff that doesn't need multithreading
 void Misc() {
@@ -132,6 +140,9 @@ void Misc() {
 		
 		//Fan
 		fanGetRotationSpeedLevel(&Rotation_SpeedLevel_f);
+		
+		//GPU Load
+		nvIoctl(fd, 0x80044715, &GPU_Load_u);
 		
 		// 1 sec interval
 		svcSleepThread(1000*1000*1000);
@@ -200,6 +211,7 @@ public:
 			screen->drawString(CPU_Usage3, false, 25, 210, 15, tsl::a(0xFFFF));
 			screen->drawString("GPU Usage:", false, 25, 265, 25, tsl::a(0xFFFF));
 			screen->drawString(GPU_Hz_c, false, 25, 300, 15, tsl::a(0xFFFF));
+			screen->drawString(GPU_Load_c, false, 25, 315, 15, tsl::a(0xFFFF));
 			screen->drawString("RAM Usage:", false, 25, 355, 25, tsl::a(0xFFFF));
 			screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
 			screen->drawString(RAM_all_c, false, 25, 420, 15, tsl::a(0xFFFF));
@@ -235,6 +247,8 @@ public:
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", percent, "%");
 		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
+		GPU_Load_percent = (float)GPU_Load_u / GPU_Load_max * 100;
+		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", GPU_Load_percent, "%");
 		CPU_Hz_f = (float)CPU_Hz / (float)1000000;
 		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", CPU_Hz_f);
 		GPU_Hz_f = (float)GPU_Hz / (float)1000000;
@@ -290,6 +304,8 @@ public:
 		tsInitialize();
 		tcInitialize();
 		fanInitialize();
+		nvInitialize();
+		nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 		
 		//Assign functions to core of choose
 		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
@@ -327,6 +343,8 @@ public:
 		tsExit();
 		tcExit();
 		fanExit();
+		nvClose(fd);
+		nvExit();
 		
 		
 		//Free threads
