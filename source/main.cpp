@@ -12,6 +12,12 @@ Thread t4;
 u64 systemtickfrequency = 19200000;
 bool threadexit = false;
 
+//Checks
+Result smCheck;
+Result clkrstCheck;
+Result nvCheck;
+Result nvIoctlCheck;
+
 //Temperatures
 s32 SoC_temperaturemiliC = 0;
 float SoC_temperatureC = 0;
@@ -100,29 +106,31 @@ void Misc() {
 	while (threadexit == false) {
 		
 		// CPU, GPU and RAM Frequency
-		if(hosversionAtLeast(8,0,0))
-		{
-			ClkrstSession cpuSession;
-			clkrstOpenSession(&cpuSession, PcvModuleId_CpuBus, 3);
-			clkrstGetClockRate(&cpuSession, &CPU_Hz);
-			clkrstCloseSession(&cpuSession);
-			clkrstOpenSession(&cpuSession, PcvModuleId_GPU, 3);
-			clkrstGetClockRate(&cpuSession, &GPU_Hz);
-			clkrstCloseSession(&cpuSession);
-			clkrstOpenSession(&cpuSession, PcvModuleId_EMC, 3);
-			clkrstGetClockRate(&cpuSession, &RAM_Hz);
-			clkrstCloseSession(&cpuSession);
-		}
-		else {
-			pcvGetClockRate(PcvModule_CpuBus, &CPU_Hz);
-			pcvGetClockRate(PcvModule_GPU, &GPU_Hz);
-			pcvGetClockRate(PcvModule_EMC, &RAM_Hz);
+		if (R_SUCCEEDED(smCheck)) {
+			if(R_SUCCEEDED(clkrstCheck))
+			{
+				ClkrstSession cpuSession;
+				clkrstOpenSession(&cpuSession, PcvModuleId_CpuBus, 3);
+				clkrstGetClockRate(&cpuSession, &CPU_Hz);
+				clkrstCloseSession(&cpuSession);
+				clkrstOpenSession(&cpuSession, PcvModuleId_GPU, 3);
+				clkrstGetClockRate(&cpuSession, &GPU_Hz);
+				clkrstCloseSession(&cpuSession);
+				clkrstOpenSession(&cpuSession, PcvModuleId_EMC, 3);
+				clkrstGetClockRate(&cpuSession, &RAM_Hz);
+				clkrstCloseSession(&cpuSession);
+			}
+			else {
+				pcvGetClockRate(PcvModule_CpuBus, &CPU_Hz);
+				pcvGetClockRate(PcvModule_GPU, &GPU_Hz);
+				pcvGetClockRate(PcvModule_EMC, &RAM_Hz);
+			}
 		}
 		
 		//Temperatures
 		tsGetTemperatureMilliC(TsLocation_Internal, &SoC_temperaturemiliC);
 		tsGetTemperatureMilliC(TsLocation_External, &PCB_temperaturemiliC);
-		tcGetTemperatureMilliC(&skin_temperaturemiliC);
+		if (hosversionAtLeast(5,0,0)) tcGetTemperatureMilliC(&skin_temperaturemiliC);
 		
 		//RAM Memory Used
 		svcGetSystemInfo(&RAM_Total_application_u, 0, INVALID_HANDLE, 0);
@@ -138,7 +146,7 @@ void Misc() {
 		fanGetRotationSpeedLevel(&Rotation_SpeedLevel_f);
 		
 		//GPU Load
-		nvIoctl(fd, 0x80044715, &GPU_Load_u);
+		if (R_SUCCEEDED(nvCheck)) nvIoctlCheck = nvIoctl(fd, 0x80044715, &GPU_Load_u);
 		
 		// 1 sec interval
 		svcSleepThread(1000*1000*1000);
@@ -200,16 +208,18 @@ public:
         tsl::element::CustomDrawer *Status = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [](u16 x, u16 y, tsl::Screen *screen) {
 			//Print strings
 			screen->drawString("CPU Usage:", false, 25, 100, 25, tsl::a(0xFFFF));
-			screen->drawString(CPU_Hz_c, false, 25, 135, 15, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(smCheck)) screen->drawString(CPU_Hz_c, false, 25, 135, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage0, false, 25, 165, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage1, false, 25, 180, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage2, false, 25, 195, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage3, false, 25, 210, 15, tsl::a(0xFFFF));
-			screen->drawString("GPU Usage:", false, 25, 265, 25, tsl::a(0xFFFF));
-			screen->drawString(GPU_Hz_c, false, 25, 300, 15, tsl::a(0xFFFF));
-			screen->drawString(GPU_Load_c, false, 25, 315, 15, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(smCheck) || R_SUCCEEDED(nvIoctlCheck)) {
+				screen->drawString("GPU Usage:", false, 25, 265, 25, tsl::a(0xFFFF));
+				if (R_SUCCEEDED(smCheck)) screen->drawString(GPU_Hz_c, false, 25, 300, 15, tsl::a(0xFFFF));
+				if (R_SUCCEEDED(nvIoctlCheck)) screen->drawString(GPU_Load_c, false, 25, 315, 15, tsl::a(0xFFFF));
+			}
 			screen->drawString("RAM Usage:", false, 25, 355, 25, tsl::a(0xFFFF));
-			screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(smCheck)) screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
 			screen->drawString(RAM_all_c, false, 25, 420, 15, tsl::a(0xFFFF));
 			screen->drawString(RAM_application_c, false, 25, 435, 15, tsl::a(0xFFFF));
 			screen->drawString(RAM_applet_c, false, 25, 450, 15, tsl::a(0xFFFF));
@@ -218,7 +228,7 @@ public:
 			screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
 			screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
 			screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
-			screen->drawString(skin_temperature_c, false, 235, 165, 15, tsl::a(0xFFFF));
+			if (hosversionAtLeast(5,0,0)) screen->drawString(skin_temperature_c, false, 235, 165, 15, tsl::a(0xFFFF));
 			screen->drawString(Rotation_SpeedLevel_c, false, 235, 180, 15, tsl::a(0xFFFF));
         });
 
@@ -294,14 +304,16 @@ public:
     tsl::Gui *onSetup()
     {
 		//Initialize services
-		smInitialize();
-		if(hosversionAtLeast(8,0,0)) clkrstInitialize();
-		else pcvInitialize();
+		smCheck = smInitialize();
+		if (R_SUCCEEDED(smCheck)) {
+			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
+			else pcvInitialize();
+		}
 		tsInitialize();
-		tcInitialize();
+		if (hosversionAtLeast(5,0,0)) tcInitialize();
 		fanInitialize();
-		nvInitialize();
-		nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
+		nvCheck = nvInitialize();
+		if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 		
 		//Assign functions to core of choose
 		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
@@ -333,9 +345,9 @@ public:
 		threadWaitForExit(&t4);
 		
 		//Exit services
-		smExit();
 		clkrstExit();
 		pcvExit();
+		smExit();
 		tsExit();
 		tcExit();
 		fanExit();
