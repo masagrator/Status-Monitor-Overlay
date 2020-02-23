@@ -218,18 +218,18 @@ public:
         tsl::element::CustomDrawer *Status = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [](u16 x, u16 y, tsl::Screen *screen) {
 			//Print strings
 			screen->drawString("CPU Usage:", false, 25, 100, 25, tsl::a(0xFFFF));
-			if (R_SUCCEEDED(smCheck) && (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck))) screen->drawString(CPU_Hz_c, false, 25, 135, 15, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(CPU_Hz_c, false, 25, 135, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage0, false, 25, 165, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage1, false, 25, 180, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage2, false, 25, 195, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage3, false, 25, 210, 15, tsl::a(0xFFFF));
-			if (R_SUCCEEDED(smCheck) || R_SUCCEEDED(nvIoctlCheck)) {
+			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(nvIoctlCheck)) {
 				screen->drawString("GPU Usage:", false, 25, 265, 25, tsl::a(0xFFFF));
-				if (R_SUCCEEDED(smCheck) && (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck))) screen->drawString(GPU_Hz_c, false, 25, 300, 15, tsl::a(0xFFFF));
+				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(GPU_Hz_c, false, 25, 300, 15, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(nvIoctlCheck)) screen->drawString(GPU_Load_c, false, 25, 315, 15, tsl::a(0xFFFF));
 			}
 			screen->drawString("RAM Usage:", false, 25, 355, 25, tsl::a(0xFFFF));
-			if (R_SUCCEEDED(smCheck) && (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck))) screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
 			if (R_SUCCEEDED(Hinted)) {
 				screen->drawString(RAM_all_c, false, 25, 420, 15, tsl::a(0xFFFF));
 				screen->drawString(RAM_application_c, false, 25, 435, 15, tsl::a(0xFFFF));
@@ -237,12 +237,12 @@ public:
 				screen->drawString(RAM_system_c, false, 25, 465, 15, tsl::a(0xFFFF));
 				screen->drawString(RAM_systemunsafe_c, false, 25, 480, 15, tsl::a(0xFFFF));
 			}
-			if (R_SUCCEEDED(tsCheck) || (hosversionAtLeast(5,0,0) && R_SUCCEEDED(tcCheck)) || R_SUCCEEDED(fanCheck)) screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
 			if (R_SUCCEEDED(tsCheck)) {
 				screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
 				screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
 			}
-			if (hosversionAtLeast(5,0,0) && R_SUCCEEDED(tcCheck)) screen->drawString(skin_temperature_c, false, 235, 165, 15, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(tcCheck)) screen->drawString(skin_temperature_c, false, 235, 165, 15, tsl::a(0xFFFF));
 			if (R_SUCCEEDED(fanCheck)) screen->drawString(Rotation_SpeedLevel_c, false, 235, 180, 15, tsl::a(0xFFFF));
         });
 
