@@ -4,8 +4,8 @@ static Service g_fanSrv;
 static Service g_fanCtl;
 
 Result _fanOpenController(void) {
-	if (hosversionBefore(9,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    u32 in = 0x3d000001;
+	u32 in = 0x3D000001;
+	if (hosversionBefore(9,0,0)) in = 1;
     return serviceDispatchIn(&g_fanSrv, 0, in,
         .out_num_objects = 1,
         .out_objects = &g_fanCtl
