@@ -230,7 +230,7 @@ public:
 			screen->drawString(RAM_applet_c, false, 25, 450, 15, tsl::a(0xFFFF));
 			screen->drawString(RAM_system_c, false, 25, 465, 15, tsl::a(0xFFFF));
 			screen->drawString(RAM_systemunsafe_c, false, 25, 480, 15, tsl::a(0xFFFF));
-			screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(tsCheck) || (hosversionAtLeast(5,0,0) && R_SUCCEEDED(tcCheck)) || R_SUCCEEDED(fanCheck)) screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
 			if (R_SUCCEEDED(tsCheck)) {
 				screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
 				screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
