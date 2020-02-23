@@ -1,4 +1,3 @@
-#include <switch.h>
 #include "services/tc.hpp"
 
 static Service g_tcSrv;

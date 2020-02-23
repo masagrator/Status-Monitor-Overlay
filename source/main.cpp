@@ -1,5 +1,4 @@
 #include <tesla.hpp>
-#include <switch.h>
 #include "services/tc.hpp"
 #include "services/fan.hpp"
 

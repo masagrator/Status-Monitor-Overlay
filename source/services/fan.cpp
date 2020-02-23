@@ -1,4 +1,3 @@
-#include <switch.h>
 #include "services/fan.hpp"
 
 static Service g_fanSrv;
