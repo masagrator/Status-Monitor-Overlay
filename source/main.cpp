@@ -20,6 +20,7 @@ Result pcvCheck;
 Result tsCheck;
 Result fanCheck;
 Result tcCheck;
+Result Hinted;
 
 //Temperatures
 s32 SoC_temperaturemiliC = 0;
@@ -137,14 +138,19 @@ void Misc() {
 		if (hosversionAtLeast(5,0,0) && R_SUCCEEDED(tcCheck)) tcGetTemperatureMilliC(&skin_temperaturemiliC);
 		
 		//RAM Memory Used
-		svcGetSystemInfo(&RAM_Total_application_u, 0, INVALID_HANDLE, 0);
-		svcGetSystemInfo(&RAM_Total_applet_u, 0, INVALID_HANDLE, 1);
-		svcGetSystemInfo(&RAM_Total_system_u, 0, INVALID_HANDLE, 2);
-		svcGetSystemInfo(&RAM_Total_systemunsafe_u, 0, INVALID_HANDLE, 3);
-		svcGetSystemInfo(&RAM_Used_application_u, 1, INVALID_HANDLE, 0);
-		svcGetSystemInfo(&RAM_Used_applet_u, 1, INVALID_HANDLE, 1);
-		svcGetSystemInfo(&RAM_Used_system_u, 1, INVALID_HANDLE, 2);
-		svcGetSystemInfo(&RAM_Used_systemunsafe_u, 1, INVALID_HANDLE, 3);
+		if (hosversionAtLeast(5,0,0)) {
+			Hinted = envIsSyscallHinted(0x6F);
+			if (R_SUCCEEDED(Hinted)) {
+				svcGetSystemInfo(&RAM_Total_application_u, 0, INVALID_HANDLE, 0);
+				svcGetSystemInfo(&RAM_Total_applet_u, 0, INVALID_HANDLE, 1);
+				svcGetSystemInfo(&RAM_Total_system_u, 0, INVALID_HANDLE, 2);
+				svcGetSystemInfo(&RAM_Total_systemunsafe_u, 0, INVALID_HANDLE, 3);
+				svcGetSystemInfo(&RAM_Used_application_u, 1, INVALID_HANDLE, 0);
+				svcGetSystemInfo(&RAM_Used_applet_u, 1, INVALID_HANDLE, 1);
+				svcGetSystemInfo(&RAM_Used_system_u, 1, INVALID_HANDLE, 2);
+				svcGetSystemInfo(&RAM_Used_systemunsafe_u, 1, INVALID_HANDLE, 3);
+			}
+		}
 		
 		//Fan
 		if (R_SUCCEEDED(fanCheck)) fanGetRotationSpeedLevel(&Rotation_SpeedLevel_f);
@@ -224,11 +230,13 @@ public:
 			}
 			screen->drawString("RAM Usage:", false, 25, 355, 25, tsl::a(0xFFFF));
 			if (R_SUCCEEDED(smCheck) && (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck))) screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
-			screen->drawString(RAM_all_c, false, 25, 420, 15, tsl::a(0xFFFF));
-			screen->drawString(RAM_application_c, false, 25, 435, 15, tsl::a(0xFFFF));
-			screen->drawString(RAM_applet_c, false, 25, 450, 15, tsl::a(0xFFFF));
-			screen->drawString(RAM_system_c, false, 25, 465, 15, tsl::a(0xFFFF));
-			screen->drawString(RAM_systemunsafe_c, false, 25, 480, 15, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(Hinted)) {
+				screen->drawString(RAM_all_c, false, 25, 420, 15, tsl::a(0xFFFF));
+				screen->drawString(RAM_application_c, false, 25, 435, 15, tsl::a(0xFFFF));
+				screen->drawString(RAM_applet_c, false, 25, 450, 15, tsl::a(0xFFFF));
+				screen->drawString(RAM_system_c, false, 25, 465, 15, tsl::a(0xFFFF));
+				screen->drawString(RAM_systemunsafe_c, false, 25, 480, 15, tsl::a(0xFFFF));
+			}
 			if (R_SUCCEEDED(tsCheck) || (hosversionAtLeast(5,0,0) && R_SUCCEEDED(tcCheck)) || R_SUCCEEDED(fanCheck)) screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
 			if (R_SUCCEEDED(tsCheck)) {
 				screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
@@ -351,9 +359,9 @@ public:
 		threadWaitForExit(&t4);
 		
 		//Exit services
+		smExit();
 		clkrstExit();
 		pcvExit();
-		smExit();
 		tsExit();
 		tcExit();
 		fanExit();

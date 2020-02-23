@@ -3,27 +3,25 @@
 static Service g_fanSrv;
 static Service g_fanCtl;
 
-static Result _fanOpenController(void);
+Result _fanOpenController(void) {
+	if (hosversionBefore(9,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u32 in = 0x3d000001;
+    return serviceDispatchIn(&g_fanSrv, 0, in,
+        .out_num_objects = 1,
+        .out_objects = &g_fanCtl
+    );
+}
 
 Result fanInitialize(void) {
     Result rc = smGetService(&g_fanSrv, "fan");
     
     if (R_SUCCEEDED(rc)) rc = _fanOpenController();
-
     return rc;
 }
 
 void fanExit(void) {
     serviceClose(&g_fanSrv);
     serviceClose(&g_fanCtl);
-}
-
-Result _fanOpenController(void) {
-    u32 in = 0x3d000001;
-    return serviceDispatchIn(&g_fanSrv, 0, in,
-        .out_num_objects = 1,
-        .out_objects = &g_fanCtl
-    );
 }
 
 Service* fanGetServiceSession(void) {
