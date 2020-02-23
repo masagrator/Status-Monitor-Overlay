@@ -135,7 +135,7 @@ void Misc() {
 			tsGetTemperatureMilliC(TsLocation_Internal, &SoC_temperaturemiliC);
 			tsGetTemperatureMilliC(TsLocation_External, &PCB_temperaturemiliC);
 		}
-		if (hosversionAtLeast(5,0,0)) tcGetTemperatureMilliC(&skin_temperaturemiliC);
+		if (hosversionAtLeast(5,0,0) && R_SUCCEEDED(tcCheck)) tcGetTemperatureMilliC(&skin_temperaturemiliC);
 		
 		//RAM Memory Used
 		svcGetSystemInfo(&RAM_Total_application_u, 0, INVALID_HANDLE, 0);
