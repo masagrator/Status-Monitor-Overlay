@@ -5,7 +5,7 @@ static Service g_fanCtl;
 
 Result _fanOpenController(void) {
 	u32 in = 0x3D000001;
-	if (hosversionBefore(9,0,0)) in = 1;
+	if (hosversionBefore(7,0,0)) in = 1;
     return serviceDispatchIn(&g_fanSrv, 0, in,
         .out_num_objects = 1,
         .out_objects = &g_fanCtl
