@@ -9,7 +9,7 @@ Thread t1;
 Thread t2;
 Thread t3;
 Thread t4;
-u64 systemtickfrequency = 19200000 / 2;
+u64 systemtickfrequency = 19200000;
 bool threadexit = false;
 
 //Temperatures
@@ -33,10 +33,10 @@ u64 idletick_b0 = 0;
 u64 idletick_b1 = 0;
 u64 idletick_b2 = 0;
 u64 idletick_b3 = 0;
-u64 idletick0 = 19200000 / 2;
-u64 idletick1 = 19200000 / 2;
-u64 idletick2 = 19200000 / 2;
-u64 idletick3 = 19200000 / 2;
+u64 idletick0 = 19200000;
+u64 idletick1 = 19200000;
+u64 idletick2 = 19200000;
+u64 idletick3 = 19200000;
 char CPU_Usage0[32];
 char CPU_Usage1[32];
 char CPU_Usage2[32];
@@ -141,7 +141,7 @@ void Misc() {
 		nvIoctl(fd, 0x80044715, &GPU_Load_u);
 		
 		// 1 sec interval
-		svcSleepThread(500*1000*1000);
+		svcSleepThread(1000*1000*1000);
 	}
 }
 
@@ -149,7 +149,7 @@ void Misc() {
 void CheckCore0() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
-		svcSleepThread(500*1000*1000);
+		svcSleepThread(1000*1000*1000);
 		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
 		idletick0 = idletick_a0 - idletick_b0;
 	}
@@ -158,7 +158,7 @@ void CheckCore0() {
 void CheckCore1() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-		svcSleepThread(500*1000*1000);
+		svcSleepThread(1000*1000*1000);
 		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
 		idletick1 = idletick_a1 - idletick_b1;
 	}
@@ -167,7 +167,7 @@ void CheckCore1() {
 void CheckCore2() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-		svcSleepThread(500*1000*1000);
+		svcSleepThread(1000*1000*1000);
 		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
 		idletick2 = idletick_a2 - idletick_b2;
 	}
@@ -176,7 +176,7 @@ void CheckCore2() {
 void CheckCore3() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		svcSleepThread(500*1000*1000);
+		svcSleepThread(1000*1000*1000);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		idletick3 = idletick_a3 - idletick_b3;
 	}
