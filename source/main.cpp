@@ -220,11 +220,11 @@ public:
 			screen->drawString(CPU_Usage3, false, 25, 210, 15, tsl::a(0xFFFF));
 			if (R_SUCCEEDED(smCheck) || R_SUCCEEDED(nvIoctlCheck)) {
 				screen->drawString("GPU Usage:", false, 25, 265, 25, tsl::a(0xFFFF));
-				if (R_SUCCEEDED(smCheck)) screen->drawString(GPU_Hz_c, false, 25, 300, 15, tsl::a(0xFFFF));
+				if (R_SUCCEEDED(smCheck) && (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck))) screen->drawString(GPU_Hz_c, false, 25, 300, 15, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(nvIoctlCheck)) screen->drawString(GPU_Load_c, false, 25, 315, 15, tsl::a(0xFFFF));
 			}
 			screen->drawString("RAM Usage:", false, 25, 355, 25, tsl::a(0xFFFF));
-			if (R_SUCCEEDED(smCheck)) screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(smCheck) && (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck))) screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
 			screen->drawString(RAM_all_c, false, 25, 420, 15, tsl::a(0xFFFF));
 			screen->drawString(RAM_application_c, false, 25, 435, 15, tsl::a(0xFFFF));
 			screen->drawString(RAM_applet_c, false, 25, 450, 15, tsl::a(0xFFFF));
