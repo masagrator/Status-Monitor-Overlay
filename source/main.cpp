@@ -321,9 +321,9 @@ public:
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 		if (kHeld & KEY_LSTICK) {
-					hidScanInput();
-					u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-					if (kHeld & KEY_RSTICK) tsl::Gui::goBack();
+			hidScanInput();
+			u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+			if (kHeld & KEY_RSTICK) tsl::Gui::goBack();
 		}
 	}
 };
