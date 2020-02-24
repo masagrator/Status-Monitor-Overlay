@@ -246,13 +246,13 @@ public:
 			
 			///Thermal
 			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
-				screen->drawString("Thermal:", false, 235, 100, 25, tsl::a(0xFFFF));
+				screen->drawString("Thermal:", false, 25, 520, 25, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(tsCheck)) {
-					screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
-					screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
+					screen->drawString(SoC_temperature_c, false, 25, 555, 15, tsl::a(0xFFFF));
+					screen->drawString(PCB_temperature_c, false, 25, 570, 15, tsl::a(0xFFFF));
 				}
-				if (R_SUCCEEDED(tcCheck)) screen->drawString(skin_temperature_c, false, 235, 165, 15, tsl::a(0xFFFF));
-				if (R_SUCCEEDED(fanCheck)) screen->drawString(Rotation_SpeedLevel_c, false, 235, 180, 15, tsl::a(0xFFFF));
+				if (R_SUCCEEDED(tcCheck)) screen->drawString(skin_temperature_c, false, 25, 585, 15, tsl::a(0xFFFF));
+				if (R_SUCCEEDED(fanCheck)) screen->drawString(Rotation_SpeedLevel_c, false, 25, 600, 15, tsl::a(0xFFFF));
 			}
 		
         });
