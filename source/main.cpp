@@ -198,18 +198,18 @@ void CheckCore3() {
 class GuiMain : public tsl::Gui
 {
 public:
-    GuiMain()
-    {
-        this->setTitle("Status Monitor");
-    }
-    ~GuiMain() {}
+	GuiMain()
+	{
+		this->setTitle("Status Monitor");
+	}
+	~GuiMain() {}
 
-    // Called when switching Guis to create the new UI
-    virtual tsl::Element *createUI()
-    {
-        tsl::element::Frame *rootFrame = new tsl::element::Frame();
-		
-        tsl::element::CustomDrawer *Status = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [](u16 x, u16 y, tsl::Screen *screen) {
+	// Called when switching Guis to create the new UI
+	virtual tsl::Element *createUI()
+	{
+		tsl::element::Frame *rootFrame = new tsl::element::Frame();
+
+		tsl::element::CustomDrawer *Status = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [](u16 x, u16 y, tsl::Screen *screen) {
 			
 			//Print strings
 			///CPU
@@ -255,11 +255,11 @@ public:
 				if (R_SUCCEEDED(fanCheck)) screen->drawString(Rotation_SpeedLevel_c, false, 25, 600, 15, tsl::a(0xFFFF));
 			}
 		
-        });
+	});
 
-        rootFrame->addElement(Status);
+	rootFrame->addElement(Status);
 
-        return rootFrame;
+	return rootFrame;
 	}
 	virtual void update() {
 		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
@@ -331,11 +331,11 @@ public:
 class MonitorOverlay : public tsl::Overlay
 {
 public:
-    MonitorOverlay() {}
-    ~MonitorOverlay() {}
+	MonitorOverlay() {}
+	~MonitorOverlay() {}
 
-    tsl::Gui *onSetup()
-    {
+	tsl::Gui *onSetup()
+	{
 		//Initialize services
 		smCheck = smInitialize();
 		if (R_SUCCEEDED(smCheck)) {
@@ -367,7 +367,7 @@ public:
 		return new GuiMain();
     }
 
-    virtual void onDestroy() {
+	virtual void onDestroy() {
 		//Give signal to exit for all threaded functions
 		threadexit = true;
 		
@@ -397,13 +397,13 @@ public:
 		threadClose(&t4);
 	}
 
-    virtual void onOverlayShow(tsl::Gui *gui) {}
+	virtual void onOverlayShow(tsl::Gui *gui) {}
 
-    void onOverlayHide(tsl::Gui *gui) {}
+	void onOverlayHide(tsl::Gui *gui) {}
 };
 
 // This function gets called on startup to create a new Overlay object
 tsl::Overlay *overlayLoad()
 {
-    return new MonitorOverlay();
+	return new MonitorOverlay();
 }
