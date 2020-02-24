@@ -216,19 +216,28 @@ public:
         tsl::element::Frame *rootFrame = new tsl::element::Frame();
 		
         tsl::element::CustomDrawer *Status = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [](u16 x, u16 y, tsl::Screen *screen) {
+			
 			//Print strings
+			///CPU
 			screen->drawString("CPU Usage:", false, 25, 100, 25, tsl::a(0xFFFF));
 			if ((hosversionAtLeast(8,0,0) && R_SUCCEEDED(clkrstCheck)) || R_SUCCEEDED(pcvCheck)) screen->drawString(CPU_Hz_c, false, 25, 135, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage0, false, 25, 165, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage1, false, 25, 180, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage2, false, 25, 195, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage3, false, 25, 210, 15, tsl::a(0xFFFF));
+			
+			///GPU
 			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(nvIoctlCheck)) {
+				
 				screen->drawString("GPU Usage:", false, 25, 265, 25, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(GPU_Hz_c, false, 25, 300, 15, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(nvIoctlCheck)) screen->drawString(GPU_Load_c, false, 25, 315, 15, tsl::a(0xFFFF));
+				
 			}
+			
+			///RAM
 			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || (R_SUCCEEDED(Hinted) && hosversionAtLeast(5,0,0))) {
+				
 				screen->drawString("RAM Usage:", false, 25, 355, 25, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(Hinted) && hosversionAtLeast(5,0,0)) {
@@ -237,8 +246,11 @@ public:
 					screen->drawString(RAM_applet_c, false, 25, 450, 15, tsl::a(0xFFFF));
 					screen->drawString(RAM_system_c, false, 25, 465, 15, tsl::a(0xFFFF));
 					screen->drawString(RAM_systemunsafe_c, false, 25, 480, 15, tsl::a(0xFFFF));
+				
 				}
 			}
+			
+			///Thermal
 			if (R_SUCCEEDED(tsCheck) || (R_SUCCEEDED(tcCheck) && hosversionAtLeast(5,0,0)) || R_SUCCEEDED(fanCheck)) {
 				screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(tsCheck)) {
@@ -248,6 +260,7 @@ public:
 				if (R_SUCCEEDED(tcCheck) && hosversionAtLeast(5,0,0)) screen->drawString(skin_temperature_c, false, 235, 165, 15, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(fanCheck)) screen->drawString(Rotation_SpeedLevel_c, false, 235, 180, 15, tsl::a(0xFFFF));
 			}
+		
         });
 
         rootFrame->addElement(Status);
@@ -263,6 +276,9 @@ public:
 		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
 		
 		//Make stuff ready to print
+		///CPU
+		CPU_Hz_f = (float)CPU_Hz / (float)1000000;
+		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", CPU_Hz_f);
 		percent = (double) (((double)systemtickfrequency - (double)idletick0) / ((double)systemtickfrequency)) * 100;
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", percent, "%");
 		percent = (double) (((double)systemtickfrequency - (double)idletick1) / ((double)systemtickfrequency)) * 100;
@@ -271,22 +287,16 @@ public:
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", percent, "%");
 		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
+		
+		///GPU
 		GPU_Load_percent = (float)GPU_Load_u / GPU_Load_max * 100;
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", GPU_Load_percent, "%");
-		CPU_Hz_f = (float)CPU_Hz / (float)1000000;
-		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", CPU_Hz_f);
 		GPU_Hz_f = (float)GPU_Hz / (float)1000000;
 		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", GPU_Hz_f);
+		
+		///RAM
 		RAM_Hz_f = (float)RAM_Hz / (float)1000000;
 		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz", RAM_Hz_f);
-		SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
-		snprintf(SoC_temperature_c, sizeof SoC_temperature_c, "SoC: %.2f \u00B0C", SoC_temperatureC);
-		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
-		snprintf(PCB_temperature_c, sizeof PCB_temperature_c, "PCB: %.2f \u00B0C", PCB_temperatureC);
-		skin_temperatureC = (float)skin_temperaturemiliC / 1000;
-		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %.2f \u00B0C", skin_temperatureC);
-		Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan rotation: %.2f%s", Rotation_SpeedLevel_percent, "%");
 		RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
 		RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
@@ -302,6 +312,17 @@ public:
 		snprintf(RAM_applet_c, sizeof RAM_applet_c, "Applet:             %.2f / %.2f MB", RAM_Used_applet_f, RAM_Total_applet_f);
 		snprintf(RAM_system_c, sizeof RAM_system_c, "System:            %.2f / %.2f MB", RAM_Used_system_f, RAM_Total_system_f);
 		snprintf(RAM_systemunsafe_c, sizeof RAM_systemunsafe_c, "System Unsafe: %.2f / %.2f MB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
+		
+		///Thermal
+		SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
+		snprintf(SoC_temperature_c, sizeof SoC_temperature_c, "SoC: %.2f \u00B0C", SoC_temperatureC);
+		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
+		snprintf(PCB_temperature_c, sizeof PCB_temperature_c, "PCB: %.2f \u00B0C", PCB_temperatureC);
+		skin_temperatureC = (float)skin_temperaturemiliC / 1000;
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %.2f \u00B0C", skin_temperatureC);
+		Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan rotation: %.2f%s", Rotation_SpeedLevel_percent, "%");
+		
 		//Check for input to exit
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
