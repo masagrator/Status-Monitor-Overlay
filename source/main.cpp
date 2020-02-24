@@ -12,15 +12,14 @@ u64 systemtickfrequency = 19200000;
 bool threadexit = false;
 
 //Checks
-Result smCheck;
-Result clkrstCheck;
-Result nvCheck;
-Result nvIoctlCheck;
-Result pcvCheck;
-Result tsCheck;
-Result fanCheck;
-Result tcCheck;
-Result Hinted;
+Result smCheck = 1;
+Result clkrstCheck = 1;
+Result nvCheck = 1;
+Result pcvCheck = 1;
+Result tsCheck = 1;
+Result fanCheck = 1;
+Result tcCheck = 1;
+Result Hinted = 1;
 
 //Temperatures
 s32 SoC_temperaturemiliC = 0;
@@ -110,24 +109,22 @@ void Misc() {
 	while (threadexit == false) {
 		
 		// CPU, GPU and RAM Frequency
-		if (R_SUCCEEDED(smCheck)) {
-			if (hosversionAtLeast(8,0,0) && R_SUCCEEDED(clkrstCheck)) {
-				ClkrstSession cpuSession;
-				clkrstOpenSession(&cpuSession, PcvModuleId_CpuBus, 3);
-				clkrstGetClockRate(&cpuSession, &CPU_Hz);
-				clkrstCloseSession(&cpuSession);
-				clkrstOpenSession(&cpuSession, PcvModuleId_GPU, 3);
-				clkrstGetClockRate(&cpuSession, &GPU_Hz);
-				clkrstCloseSession(&cpuSession);
-				clkrstOpenSession(&cpuSession, PcvModuleId_EMC, 3);
-				clkrstGetClockRate(&cpuSession, &RAM_Hz);
-				clkrstCloseSession(&cpuSession);
-			}
-			else if (R_SUCCEEDED(pcvCheck)) {
-				pcvGetClockRate(PcvModule_CpuBus, &CPU_Hz);
-				pcvGetClockRate(PcvModule_GPU, &GPU_Hz);
-				pcvGetClockRate(PcvModule_EMC, &RAM_Hz);
-			}
+		if (R_SUCCEEDED(clkrstCheck)) {
+			ClkrstSession cpuSession;
+			clkrstOpenSession(&cpuSession, PcvModuleId_CpuBus, 3);
+			clkrstGetClockRate(&cpuSession, &CPU_Hz);
+			clkrstCloseSession(&cpuSession);
+			clkrstOpenSession(&cpuSession, PcvModuleId_GPU, 3);
+			clkrstGetClockRate(&cpuSession, &GPU_Hz);
+			clkrstCloseSession(&cpuSession);
+			clkrstOpenSession(&cpuSession, PcvModuleId_EMC, 3);
+			clkrstGetClockRate(&cpuSession, &RAM_Hz);
+			clkrstCloseSession(&cpuSession);
+		}
+		else if (R_SUCCEEDED(pcvCheck)) {
+			pcvGetClockRate(PcvModule_CpuBus, &CPU_Hz);
+			pcvGetClockRate(PcvModule_GPU, &GPU_Hz);
+			pcvGetClockRate(PcvModule_EMC, &RAM_Hz);
 		}
 		
 		//Temperatures
@@ -135,28 +132,25 @@ void Misc() {
 			tsGetTemperatureMilliC(TsLocation_Internal, &SoC_temperaturemiliC);
 			tsGetTemperatureMilliC(TsLocation_External, &PCB_temperaturemiliC);
 		}
-		if (hosversionAtLeast(5,0,0) && R_SUCCEEDED(tcCheck)) tcGetTemperatureMilliC(&skin_temperaturemiliC);
+		if (R_SUCCEEDED(tcCheck)) tcGetTemperatureMilliC(&skin_temperaturemiliC);
 		
 		//RAM Memory Used
-		if (hosversionAtLeast(5,0,0)) {
-			Hinted = envIsSyscallHinted(0x6F);
-			if (R_SUCCEEDED(Hinted)) {
-				svcGetSystemInfo(&RAM_Total_application_u, 0, INVALID_HANDLE, 0);
-				svcGetSystemInfo(&RAM_Total_applet_u, 0, INVALID_HANDLE, 1);
-				svcGetSystemInfo(&RAM_Total_system_u, 0, INVALID_HANDLE, 2);
-				svcGetSystemInfo(&RAM_Total_systemunsafe_u, 0, INVALID_HANDLE, 3);
-				svcGetSystemInfo(&RAM_Used_application_u, 1, INVALID_HANDLE, 0);
-				svcGetSystemInfo(&RAM_Used_applet_u, 1, INVALID_HANDLE, 1);
-				svcGetSystemInfo(&RAM_Used_system_u, 1, INVALID_HANDLE, 2);
-				svcGetSystemInfo(&RAM_Used_systemunsafe_u, 1, INVALID_HANDLE, 3);
-			}
+		if (R_SUCCEEDED(Hinted)) {
+			svcGetSystemInfo(&RAM_Total_application_u, 0, INVALID_HANDLE, 0);
+			svcGetSystemInfo(&RAM_Total_applet_u, 0, INVALID_HANDLE, 1);
+			svcGetSystemInfo(&RAM_Total_system_u, 0, INVALID_HANDLE, 2);
+			svcGetSystemInfo(&RAM_Total_systemunsafe_u, 0, INVALID_HANDLE, 3);
+			svcGetSystemInfo(&RAM_Used_application_u, 1, INVALID_HANDLE, 0);
+			svcGetSystemInfo(&RAM_Used_applet_u, 1, INVALID_HANDLE, 1);
+			svcGetSystemInfo(&RAM_Used_system_u, 1, INVALID_HANDLE, 2);
+			svcGetSystemInfo(&RAM_Used_systemunsafe_u, 1, INVALID_HANDLE, 3);
 		}
 		
 		//Fan
 		if (R_SUCCEEDED(fanCheck)) fanGetRotationSpeedLevel(&Rotation_SpeedLevel_f);
 		
 		//GPU Load
-		if (R_SUCCEEDED(nvCheck)) nvIoctlCheck = nvIoctl(fd, 0x80044715, &GPU_Load_u);
+		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, 0x80044715, &GPU_Load_u);
 		
 		// 1 sec interval
 		svcSleepThread(1000*1000*1000);
@@ -220,27 +214,27 @@ public:
 			//Print strings
 			///CPU
 			screen->drawString("CPU Usage:", false, 25, 100, 25, tsl::a(0xFFFF));
-			if ((hosversionAtLeast(8,0,0) && R_SUCCEEDED(clkrstCheck)) || R_SUCCEEDED(pcvCheck)) screen->drawString(CPU_Hz_c, false, 25, 135, 15, tsl::a(0xFFFF));
+			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(CPU_Hz_c, false, 25, 135, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage0, false, 25, 165, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage1, false, 25, 180, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage2, false, 25, 195, 15, tsl::a(0xFFFF));
 			screen->drawString(CPU_Usage3, false, 25, 210, 15, tsl::a(0xFFFF));
 			
 			///GPU
-			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(nvIoctlCheck)) {
+			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(nvCheck)) {
 				
 				screen->drawString("GPU Usage:", false, 25, 265, 25, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(GPU_Hz_c, false, 25, 300, 15, tsl::a(0xFFFF));
-				if (R_SUCCEEDED(nvIoctlCheck)) screen->drawString(GPU_Load_c, false, 25, 315, 15, tsl::a(0xFFFF));
+				if (R_SUCCEEDED(nvCheck)) screen->drawString(GPU_Load_c, false, 25, 315, 15, tsl::a(0xFFFF));
 				
 			}
 			
 			///RAM
-			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || (R_SUCCEEDED(Hinted) && hosversionAtLeast(5,0,0))) {
+			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(Hinted)) {
 				
 				screen->drawString("RAM Usage:", false, 25, 355, 25, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
-				if (R_SUCCEEDED(Hinted) && hosversionAtLeast(5,0,0)) {
+				if (R_SUCCEEDED(Hinted)) {
 					screen->drawString(RAM_all_c, false, 25, 420, 15, tsl::a(0xFFFF));
 					screen->drawString(RAM_application_c, false, 25, 435, 15, tsl::a(0xFFFF));
 					screen->drawString(RAM_applet_c, false, 25, 450, 15, tsl::a(0xFFFF));
@@ -251,13 +245,13 @@ public:
 			}
 			
 			///Thermal
-			if (R_SUCCEEDED(tsCheck) || (R_SUCCEEDED(tcCheck) && hosversionAtLeast(5,0,0)) || R_SUCCEEDED(fanCheck)) {
+			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
 				screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(tsCheck)) {
 					screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
 					screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
 				}
-				if (R_SUCCEEDED(tcCheck) && hosversionAtLeast(5,0,0)) screen->drawString(skin_temperature_c, false, 235, 165, 15, tsl::a(0xFFFF));
+				if (R_SUCCEEDED(tcCheck)) screen->drawString(skin_temperature_c, false, 235, 165, 15, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(fanCheck)) screen->drawString(Rotation_SpeedLevel_c, false, 235, 180, 15, tsl::a(0xFFFF));
 			}
 		
@@ -347,12 +341,13 @@ public:
 		if (R_SUCCEEDED(smCheck)) {
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
+			tsCheck = tsInitialize();
+			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
+			fanCheck = fanInitialize();
+			nvCheck = nvInitialize();
+			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 		}
-		tsCheck = tsInitialize();
-		if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
-		fanCheck = fanInitialize();
-		nvCheck = nvInitialize();
-		if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
+		Hinted = envIsSyscallHinted(0x6F);
 		
 		//Assign functions to core of choose
 		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
