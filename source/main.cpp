@@ -384,9 +384,9 @@ public:
 		threadWaitForExit(&t4);
 		
 		//Exit services
-		smExit();
 		clkrstExit();
 		pcvExit();
+		smExit();
 		tsExit();
 		tcExit();
 		fanExit();
