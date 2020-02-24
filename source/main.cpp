@@ -8,6 +8,7 @@ Thread t1;
 Thread t2;
 Thread t3;
 Thread t4;
+Thread t5;
 u64 systemtickfrequency = 19200000;
 bool threadexit = false;
 
@@ -103,6 +104,20 @@ u32 GPU_Load_u = 0;
 float GPU_Load_percent = 0;
 char GPU_Load_c[32];
 float GPU_Load_max = 1000;
+
+//Check for input to exit outside of FPS limitations
+void CheckExit() {
+	while (threadexit == false) {
+		hidScanInput();
+		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+		if (kHeld & KEY_LSTICK) {
+			hidScanInput();
+			u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+			if (kHeld & KEY_RSTICK) tsl::Gui::goBack();
+		}
+		svcSleepThread(100*1000*1000);
+	}
+}
 
 //Stuff that doesn't need multithreading
 void Misc() {
@@ -317,14 +332,6 @@ public:
 		Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %.2f%s", Rotation_SpeedLevel_percent, "%");
 		
-		//Check for input to exit
-		hidScanInput();
-		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-		if (kHeld & KEY_LSTICK) {
-			hidScanInput();
-			u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-			if (kHeld & KEY_RSTICK) tsl::Gui::goBack();
-		}
 	}
 };
 
@@ -355,6 +362,7 @@ public:
 		threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
 		threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
 		threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3A, -2);
+		threadCreate(&t5, CheckExit, NULL, NULL, 0x200, 0x39, -2);
 		
 		//Start assigned functions
 		threadStart(&t0);
@@ -362,6 +370,7 @@ public:
 		threadStart(&t2);
 		threadStart(&t3);
 		threadStart(&t4);
+		threadStart(&t5);
 		
 		//Go to creating GUI
 		return new GuiMain();
@@ -377,6 +386,7 @@ public:
 		threadWaitForExit(&t2);
 		threadWaitForExit(&t3);
 		threadWaitForExit(&t4);
+		threadWaitForExit(&t5);
 		
 		//Exit services
 		clkrstExit();
@@ -395,6 +405,7 @@ public:
 		threadClose(&t2);
 		threadClose(&t3);
 		threadClose(&t4);
+		threadClose(&t5);
 	}
 
 	virtual void onOverlayShow(tsl::Gui *gui) {}
