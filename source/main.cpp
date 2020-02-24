@@ -365,7 +365,7 @@ public:
 		
 		//Go to creating GUI
 		return new GuiMain();
-    }
+	}
 
 	virtual void onDestroy() {
 		//Give signal to exit for all threaded functions
