@@ -20,8 +20,8 @@ Result fanInitialize(void) {
 }
 
 void fanExit(void) {
-    serviceClose(&g_fanSrv);
     serviceClose(&g_fanCtl);
+    serviceClose(&g_fanSrv);
 }
 
 Service* fanGetServiceSession(void) {
