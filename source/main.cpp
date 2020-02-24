@@ -246,7 +246,7 @@ public:
 			
 			///Thermal
 			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
-				screen->drawString("Temperatures:", false, 235, 100, 25, tsl::a(0xFFFF));
+				screen->drawString("Thermal:", false, 235, 100, 25, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(tsCheck)) {
 					screen->drawString(SoC_temperature_c, false, 235, 135, 15, tsl::a(0xFFFF));
 					screen->drawString(PCB_temperature_c, false, 235, 150, 15, tsl::a(0xFFFF));
@@ -315,7 +315,7 @@ public:
 		skin_temperatureC = (float)skin_temperaturemiliC / 1000;
 		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %.2f \u00B0C", skin_temperatureC);
 		Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan rotation: %.2f%s", Rotation_SpeedLevel_percent, "%");
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %.2f%s", Rotation_SpeedLevel_percent, "%");
 		
 		//Check for input to exit
 		hidScanInput();
