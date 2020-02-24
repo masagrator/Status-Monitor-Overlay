@@ -111,7 +111,7 @@ void Misc() {
 		
 		// CPU, GPU and RAM Frequency
 		if (R_SUCCEEDED(smCheck)) {
-			if (R_SUCCEEDED(clkrstCheck)) {
+			if (hosversionAtLeast(8,0,0) && R_SUCCEEDED(clkrstCheck)) {
 				ClkrstSession cpuSession;
 				clkrstOpenSession(&cpuSession, PcvModuleId_CpuBus, 3);
 				clkrstGetClockRate(&cpuSession, &CPU_Hz);
