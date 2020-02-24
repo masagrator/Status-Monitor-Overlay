@@ -386,13 +386,13 @@ public:
 		//Exit services
 		clkrstExit();
 		pcvExit();
-		smExit();
 		tsExit();
 		tcExit();
 		fanExit();
 		nvClose(fd);
 		nvExit();
-		
+		smExit();
+
 		
 		//Free threads
 		threadClose(&t0);
