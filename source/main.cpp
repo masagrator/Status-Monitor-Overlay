@@ -364,7 +364,7 @@ public:
 		threadStart(&t4);
 		
 		//Go to creating GUI
-        return new GuiMain();
+		return new GuiMain();
     }
 
     virtual void onDestroy() {
