@@ -11,6 +11,7 @@ Thread t4;
 Thread t5;
 u64 systemtickfrequency = 19200000;
 bool threadexit = false;
+u64 FPS = 1;
 
 //Checks
 Result smCheck = 1;
@@ -105,8 +106,8 @@ float GPU_Load_percent = 0;
 char GPU_Load_c[32];
 float GPU_Load_max = 1000;
 
-//Check for input to exit outside of FPS limitations
-void CheckExit() {
+//Check for input outside of FPS limitations
+void CheckButtons() {
 	while (threadexit == false) {
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
@@ -114,6 +115,24 @@ void CheckExit() {
 			hidScanInput();
 			u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 			if (kHeld & KEY_RSTICK) tsl::Gui::goBack();
+		}
+		if (kHeld & KEY_ZR) {
+			hidScanInput();
+			u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+			if (kHeld & KEY_R) {
+				hidScanInput();
+				u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+				if (kHeld & KEY_DDOWN) {
+					FPS = 1;
+					tsl::Gui::divir(FPS);
+					systemtickfrequency = 19200000;
+				}
+				else if (kHeld & KEY_DUP) {
+					FPS = 5;
+					tsl::Gui::divir(FPS);
+					systemtickfrequency = 3840000;
+				}
+			}
 		}
 		svcSleepThread(100*1000*1000);
 	}
@@ -168,7 +187,7 @@ void Misc() {
 		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, 0x80044715, &GPU_Load_u);
 		
 		// 1 sec interval
-		svcSleepThread(1000*1000*1000);
+		svcSleepThread(1000*1000*1000 / FPS);
 	}
 }
 
@@ -176,7 +195,7 @@ void Misc() {
 void CheckCore0() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
-		svcSleepThread(1000*1000*1000);
+		svcSleepThread(1000*1000*1000 / FPS);
 		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
 		idletick0 = idletick_a0 - idletick_b0;
 	}
@@ -185,7 +204,7 @@ void CheckCore0() {
 void CheckCore1() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-		svcSleepThread(1000*1000*1000);
+		svcSleepThread(1000*1000*1000 / FPS);
 		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
 		idletick1 = idletick_a1 - idletick_b1;
 	}
@@ -194,7 +213,7 @@ void CheckCore1() {
 void CheckCore2() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-		svcSleepThread(1000*1000*1000);
+		svcSleepThread(1000*1000*1000 / FPS);
 		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
 		idletick2 = idletick_a2 - idletick_b2;
 	}
@@ -203,7 +222,7 @@ void CheckCore2() {
 void CheckCore3() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		svcSleepThread(1000*1000*1000);
+		svcSleepThread(1000*1000*1000 / FPS);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		idletick3 = idletick_a3 - idletick_b3;
 	}
@@ -269,6 +288,9 @@ public:
 				if (R_SUCCEEDED(tcCheck)) screen->drawString(skin_temperature_c, false, 25, 585, 15, tsl::a(0xFFFF));
 				if (R_SUCCEEDED(fanCheck)) screen->drawString(Rotation_SpeedLevel_c, false, 25, 600, 15, tsl::a(0xFFFF));
 			}
+			
+			if (FPS == 5) screen->drawString("Hold ZR + R + D-Pad Down to slow down refresh", false, 20, 690, 15, tsl::a(0xFFFF));
+			if (FPS == 1) screen->drawString("Hold ZR + R + D-Pad Up to speed up refresh", false, 20, 690, 15, tsl::a(0xFFFF));
 		
 	});
 
@@ -362,7 +384,7 @@ public:
 		threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
 		threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
 		threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3A, -2);
-		threadCreate(&t5, CheckExit, NULL, NULL, 0x200, 0x39, -2);
+		threadCreate(&t5, CheckButtons, NULL, NULL, 0x200, 0x39, -2);
 		
 		//Start assigned functions
 		threadStart(&t0);
