@@ -28,7 +28,7 @@ If you want to use it in dock, you need to first start Status Monitor, then put 
 - Reduce window size
 - Show GPU Usage
 
-![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/Screen.jpg?raw=true)
+![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/screen.jpg?raw=true)
 
 ---
 
