@@ -16,13 +16,13 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 - CPU Usage for each core (Cores #0-#2 are used by apps/games, Core #3 is used by OS, background processes and also Tesla overlays)
 - GPU Load
 - CPU, GPU & RAM actual frequency
-- Used RAM categorized to: 
+- Used RAM categorized to: (not supported by FWs <5.0.0)
   - Total
   - Application
   - Applet
   - System
   - System Unsafe
-- SoC, PCB & Skin temperatures
+- SoC, PCB & Skin temperatures (Skin temperature not supported by FWs <5.0.0)
 - Fan Rotation Level
 
 # Planned:
