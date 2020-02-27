@@ -1,6 +1,7 @@
 #include <tesla.hpp>
 #include "services/tc.hpp"
 #include "services/fan.hpp"
+#include "libstratosphere/dmntcht.hpp"
 
 //Common
 Thread t0;
@@ -9,9 +10,10 @@ Thread t2;
 Thread t3;
 Thread t4;
 Thread t5;
+Thread t6;
 u64 systemtickfrequency = 19200000;
 bool threadexit = false;
-u64 FPS = 1;
+u64 refreshrate = 1;
 
 //Checks
 Result smCheck = 1;
@@ -22,6 +24,8 @@ Result tsCheck = 1;
 Result fanCheck = 1;
 Result tcCheck = 1;
 Result Hinted = 1;
+Result pmdmntCheck = 1;
+Result dmntchtCheck = 1;
 
 //Temperatures
 s32 SoC_temperaturemiliC = 0;
@@ -106,6 +110,40 @@ float GPU_Load_percent = 0;
 char GPU_Load_c[32];
 float GPU_Load_max = 1000;
 
+//FPS (WIP)
+uintptr_t FPSaddress = 0x0;
+bool GameRunning = false;
+char FPS_c[32];
+uint8_t FPS = 0xFE;
+uint8_t check = 0;
+
+void CheckIfGameRunning() {
+	while (threadexit == false) {
+		Result rc = 1;
+		uint64_t PID = 0;
+		rc = pmdmntGetApplicationProcessId(&PID);
+		if (R_FAILED(rc)) {
+			if (check == 0) remove("sdmc:/SaltySD/FPSoffset.hex");
+			check = 1;
+			GameRunning = false;
+		}
+		else if (GameRunning == false) {
+			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
+			if (FPSoffset == NULL) {
+				GameRunning = false;
+			}
+			else {
+				dmntchtForceOpenCheatProcess();
+				fread(&FPSaddress, 0x5, 1, FPSoffset);
+				fclose(FPSoffset);
+				GameRunning = true;
+				check = 0;
+			}
+		}
+		svcSleepThread(1000*1000*1000);
+	}
+}
+
 //Check for input outside of FPS limitations
 void CheckButtons() {
 	while (threadexit == false) {
@@ -123,13 +161,13 @@ void CheckButtons() {
 				hidScanInput();
 				u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 				if (kHeld & KEY_DDOWN) {
-					FPS = 1;
-					tsl::Gui::divir(FPS);
+					refreshrate = 1;
+					tsl::Gui::divir(refreshrate);
 					systemtickfrequency = 19200000;
 				}
 				else if (kHeld & KEY_DUP) {
-					FPS = 5;
-					tsl::Gui::divir(FPS);
+					refreshrate = 5;
+					tsl::Gui::divir(refreshrate);
 					systemtickfrequency = 3840000;
 				}
 			}
@@ -186,8 +224,11 @@ void Misc() {
 		//GPU Load
 		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, 0x80044715, &GPU_Load_u);
 		
+		//FPS
+		if (GameRunning == true) dmntchtReadCheatProcessMemory(FPSaddress, &FPS, 0x1);
+		
 		// 1 sec interval
-		svcSleepThread(1000*1000*1000 / FPS);
+		svcSleepThread(1000*1000*1000 / refreshrate);
 	}
 }
 
@@ -195,7 +236,7 @@ void Misc() {
 void CheckCore0() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
-		svcSleepThread(1000*1000*1000 / FPS);
+		svcSleepThread(1000*1000*1000 / refreshrate);
 		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
 		idletick0 = idletick_a0 - idletick_b0;
 	}
@@ -204,7 +245,7 @@ void CheckCore0() {
 void CheckCore1() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-		svcSleepThread(1000*1000*1000 / FPS);
+		svcSleepThread(1000*1000*1000 / refreshrate);
 		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
 		idletick1 = idletick_a1 - idletick_b1;
 	}
@@ -213,7 +254,7 @@ void CheckCore1() {
 void CheckCore2() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-		svcSleepThread(1000*1000*1000 / FPS);
+		svcSleepThread(1000*1000*1000 / refreshrate);
 		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
 		idletick2 = idletick_a2 - idletick_b2;
 	}
@@ -222,7 +263,7 @@ void CheckCore2() {
 void CheckCore3() {
 	while (threadexit == false) {
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		svcSleepThread(1000*1000*1000 / FPS);
+		svcSleepThread(1000*1000*1000 / refreshrate);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		idletick3 = idletick_a3 - idletick_b3;
 	}
@@ -289,8 +330,11 @@ public:
 				if (R_SUCCEEDED(fanCheck)) screen->drawString(Rotation_SpeedLevel_c, false, 25, 600, 15, tsl::a(0xFFFF));
 			}
 			
-			if (FPS == 5) screen->drawString("Hold ZR + R + D-Pad Down to slow down refresh", false, 20, 690, 15, tsl::a(0xFFFF));
-			if (FPS == 1) screen->drawString("Hold ZR + R + D-Pad Up to speed up refresh", false, 20, 690, 15, tsl::a(0xFFFF));
+			///FPS
+			if (GameRunning == true) screen->drawString(FPS_c, false, 235, 100, 20, tsl::a(0xFFFF));
+			
+			if (refreshrate == 5) screen->drawString("Hold ZR + R + D-Pad Down to slow down refresh", false, 20, 690, 15, tsl::a(0xFFFF));
+			if (refreshrate == 1) screen->drawString("Hold ZR + R + D-Pad Up to speed up refresh", false, 20, 690, 15, tsl::a(0xFFFF));
 		
 	});
 
@@ -354,6 +398,9 @@ public:
 		Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %.2f%s", Rotation_SpeedLevel_percent, "%");
 		
+		///FPS
+		snprintf(FPS_c, sizeof FPS_c, "FPS: %u", FPS);
+		
 	}
 };
 
@@ -375,6 +422,8 @@ public:
 			fanCheck = fanInitialize();
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
+			pmdmntCheck = pmdmntInitialize();
+			dmntchtCheck = dmntchtInitialize();
 		}
 		Hinted = envIsSyscallHinted(0x6F);
 		
@@ -385,6 +434,7 @@ public:
 		threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
 		threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3A, -2);
 		threadCreate(&t5, CheckButtons, NULL, NULL, 0x200, 0x39, -2);
+		threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
 		
 		//Start assigned functions
 		threadStart(&t0);
@@ -393,6 +443,7 @@ public:
 		threadStart(&t3);
 		threadStart(&t4);
 		threadStart(&t5);
+		threadStart(&t6);
 		
 		//Go to creating GUI
 		return new GuiMain();
@@ -409,8 +460,11 @@ public:
 		threadWaitForExit(&t3);
 		threadWaitForExit(&t4);
 		threadWaitForExit(&t5);
+		threadWaitForExit(&t6);
 		
 		//Exit services
+		dmntchtExit();
+		pmdmntExit();
 		clkrstExit();
 		pcvExit();
 		tsExit();
@@ -428,6 +482,7 @@ public:
 		threadClose(&t3);
 		threadClose(&t4);
 		threadClose(&t5);
+		threadClose(&t6);
 	}
 
 	virtual void onOverlayShow(tsl::Gui *gui) {}
