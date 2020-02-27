@@ -444,6 +444,7 @@ public:
 				pmdmntCheck = pmdmntInitialize();
 				dmntchtCheck = dmntchtInitialize();
 			}
+			else fclose(disableflag);
 		}
 		Hinted = envIsSyscallHinted(0x6F);
 		
