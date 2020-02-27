@@ -137,7 +137,7 @@ void CheckIfGameRunning() {
 				check = 0;
 			}
 		}
-		svcSleepThread(1000*1000*1000);
+		svcSleepThread(500*1000*1000);
 	}
 }
 
