@@ -440,7 +440,7 @@ public:
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 			if (SaltySD == true) {
-				FILE* disableflag = fopen("sdmc:/SaltySD/flags/disable.flag", "w");
+				FILE* disableflag = fopen("sdmc:/SaltySD/flags/disable.flag", "r");
 				if (disableflag == NULL) {
 					pmdmntCheck = pmdmntInitialize();
 					dmntchtCheck = dmntchtInitialize();
