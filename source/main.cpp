@@ -439,12 +439,14 @@ public:
 			fanCheck = fanInitialize();
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
-			if (SaltySD == true) FILE* disableflag = fopen("sdmc:/SaltySD/flags/disable.flag", "w");
-			if (disableflag == NULL) {
-				pmdmntCheck = pmdmntInitialize();
-				dmntchtCheck = dmntchtInitialize();
+			if (SaltySD == true) {
+				FILE* disableflag = fopen("sdmc:/SaltySD/flags/disable.flag", "w");
+				if (disableflag == NULL) {
+					pmdmntCheck = pmdmntInitialize();
+					dmntchtCheck = dmntchtInitialize();
+				}
+				else fclose(disableflag);
 			}
-			else fclose(disableflag);
 		}
 		Hinted = envIsSyscallHinted(0x6F);
 		
