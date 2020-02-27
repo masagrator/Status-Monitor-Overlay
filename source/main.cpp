@@ -129,10 +129,7 @@ void CheckIfGameRunning() {
 		}
 		else if (GameRunning == false) {
 			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
-			if (FPSoffset == NULL) {
-				GameRunning = false;
-			}
-			else {
+			if (FPSoffset != NULL) {
 				dmntchtForceOpenCheatProcess();
 				fread(&FPSaddress, 0x5, 1, FPSoffset);
 				fclose(FPSoffset);
