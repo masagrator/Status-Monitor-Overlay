@@ -116,25 +116,44 @@ bool GameRunning = false;
 char FPS_c[32];
 uint8_t FPS = 0xFE;
 uint8_t check = 0;
+bool SaltySD = false;
+
+//Check if SaltyNX is working
+bool CheckPort () {
+	Result ret;
+	Handle saltysd;
+    for (int i = 0; i < 200; i++)
+    {
+        ret = svcConnectToNamedPort(&saltysd, "InjectServ");
+        svcSleepThread(1000*1000);
+        
+        if (!ret) break;
+    }
+	svcCloseHandle(saltysd);
+	if (ret != 0x0) return false;
+	else return true;
+}
 
 void CheckIfGameRunning() {
 	while (threadexit == false) {
-		Result rc = 1;
-		uint64_t PID = 0;
-		rc = pmdmntGetApplicationProcessId(&PID);
-		if (R_FAILED(rc)) {
-			if (check == 0) remove("sdmc:/SaltySD/FPSoffset.hex");
-			check = 1;
-			GameRunning = false;
-		}
-		else if (GameRunning == false) {
-			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
-			if (FPSoffset != NULL) {
-				dmntchtForceOpenCheatProcess();
-				fread(&FPSaddress, 0x5, 1, FPSoffset);
-				fclose(FPSoffset);
-				GameRunning = true;
-				check = 0;
+		if (R_SUCCEEDED(pmdmntCheck) && R_SUCCEEDED(dmntchtCheck)) {
+			Result rc = 1;
+			uint64_t PID = 0;
+			rc = pmdmntGetApplicationProcessId(&PID);
+			if (R_FAILED(rc)) {
+				if (check == 0) remove("sdmc:/SaltySD/FPSoffset.hex");
+				check = 1;
+				GameRunning = false;
+			}
+			else if (GameRunning == false) {
+				FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
+				if (FPSoffset != NULL) {
+					dmntchtForceOpenCheatProcess();
+					fread(&FPSaddress, 0x5, 1, FPSoffset);
+					fclose(FPSoffset);
+					GameRunning = true;
+					check = 0;
+				}
 			}
 		}
 		svcSleepThread(500*1000*1000);
@@ -410,6 +429,7 @@ public:
 	tsl::Gui *onSetup()
 	{
 		//Initialize services
+		SaltySD = CheckPort();
 		smCheck = smInitialize();
 		if (R_SUCCEEDED(smCheck)) {
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
@@ -419,8 +439,10 @@ public:
 			fanCheck = fanInitialize();
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
-			pmdmntCheck = pmdmntInitialize();
-			dmntchtCheck = dmntchtInitialize();
+			if (SaltySD == true) {
+				pmdmntCheck = pmdmntInitialize();
+				dmntchtCheck = dmntchtInitialize();
+			}
 		}
 		Hinted = envIsSyscallHinted(0x6F);
 		
