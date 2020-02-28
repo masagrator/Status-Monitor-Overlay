@@ -14,6 +14,7 @@ Thread t6;
 u64 systemtickfrequency = 19200000;
 bool threadexit = false;
 u64 refreshrate = 1;
+FanController g_ICon;
 
 //Checks
 Result smCheck = 1;
@@ -229,7 +230,7 @@ void Misc() {
 			tsGetTemperatureMilliC(TsLocation_Internal, &SoC_temperaturemiliC);
 			tsGetTemperatureMilliC(TsLocation_External, &PCB_temperaturemiliC);
 		}
-		if (R_SUCCEEDED(tcCheck)) tcGetTemperatureMilliC(&skin_temperaturemiliC);
+		if (R_SUCCEEDED(tcCheck)) tcGetSkinTemperatureMilliC(&skin_temperaturemiliC);
 		
 		//RAM Memory Used
 		if (R_SUCCEEDED(Hinted)) {
@@ -244,7 +245,7 @@ void Misc() {
 		}
 		
 		//Fan
-		if (R_SUCCEEDED(fanCheck)) fanGetRotationSpeedLevel(&Rotation_SpeedLevel_f);
+		if (R_SUCCEEDED(fanCheck)) fanControllerGetRotationSpeedLevel(&g_ICon, &Rotation_SpeedLevel_f);
 		
 		//GPU Load
 		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, 0x80044715, &GPU_Load_u);
@@ -453,6 +454,10 @@ public:
 			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 			fanCheck = fanInitialize();
+			if (R_SUCCEEDED(fanCheck)) {
+				if (hosversionAtLeast(7,0,0)) fanCheck = fanOpenController(&g_ICon, 0x3D000001);
+				else fanCheck = fanOpenController(&g_ICon, 1);
+			}
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 			if (SaltySD == true) {
@@ -504,6 +509,7 @@ public:
 		pcvExit();
 		tsExit();
 		tcExit();
+		fanControllerClose(&g_ICon);
 		fanExit();
 		nvClose(fd);
 		nvExit();

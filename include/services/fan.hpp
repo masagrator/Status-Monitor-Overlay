@@ -7,6 +7,10 @@
 #pragma once
 #include <switch.h>
 
+typedef struct {
+    Service s;
+} FanController;
+
 /// Initialize fan.
 Result fanInitialize(void);
 
@@ -16,8 +20,12 @@ void fanExit(void);
 /// Gets the Service object for the actual fan service session.
 Service* fanGetServiceSession(void);
 
-/// Gets the Service object for the actual fan controller service session.
-Service* fanGetServiceSession_Controller(void);
+/// Opens IController session.
+Result fanOpenController(FanController *out, u32 device_code);
 
-Result fanSetRotationSpeedLevel(float level);
-Result fanGetRotationSpeedLevel(float *level);
+/// Close IController session.
+void fanControllerClose(FanController *controller);
+
+/// @warning Disabling your fan can damage your system.
+Result fanControllerSetRotationSpeedLevel(FanController *controller, float level);
+Result fanControllerGetRotationSpeedLevel(FanController *controller, float *level);
