@@ -163,6 +163,7 @@ void CheckIfGameRunning() {
 					GameRunning = true;
 					check = 0;
 				}
+				else GameRunning = false;
 			}
 		}
 		svcSleepThread(1000*1000*1000);
@@ -430,8 +431,8 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %.2f%s", Rotation_SpeedLevel_percent, "%");
 		
 		///FPS
-		snprintf(FPS_c, sizeof FPS_c, "PFPS: %u", FPS);
-		snprintf(FPSavg_c, sizeof FPSavg_c, "FPSavg: %2.2f", FPSavg);
+		snprintf(FPS_c, sizeof FPS_c, "PFPS: %u", FPS); //Pushed Frames Per Second
+		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS: %2.2f", FPSavg); //Frames Per Second calculated as 'frameavg = ((9*frameavg) + framedelta) / 10' 
 		
 	}
 };
