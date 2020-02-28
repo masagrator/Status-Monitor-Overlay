@@ -112,9 +112,12 @@ float GPU_Load_max = 1000;
 
 //FPS (WIP)
 uintptr_t FPSaddress = 0x0;
+uintptr_t FPSavgaddress = 0x0;
 bool GameRunning = false;
 char FPS_c[32];
 uint8_t FPS = 0xFE;
+char FPSavg_c[32];
+float FPSavg = 255;
 uint8_t check = 0;
 bool SaltySD = false;
 
@@ -141,22 +144,28 @@ void CheckIfGameRunning() {
 			uint64_t PID = 0;
 			rc = pmdmntGetApplicationProcessId(&PID);
 			if (R_FAILED(rc)) {
-				if (check == 0) remove("sdmc:/SaltySD/FPSoffset.hex");
+				if (check == 0) {
+					remove("sdmc:/SaltySD/FPSoffset.hex");
+					remove("sdmc:/SaltySD/FPSavgoffset.hex");
+				}
 				check = 1;
 				GameRunning = false;
 			}
 			else if (GameRunning == false) {
 				FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
-				if (FPSoffset != NULL) {
+				FILE* FPSavgoffset = fopen("sdmc:/SaltySD/FPSavgoffset.hex", "rb");
+				if ((FPSoffset != NULL) && (FPSavgoffset != NULL)) {
 					dmntchtForceOpenCheatProcess();
 					fread(&FPSaddress, 0x5, 1, FPSoffset);
+					fread(&FPSavgaddress, 0x5, 1, FPSavgoffset);
 					fclose(FPSoffset);
+					fclose(FPSavgoffset);
 					GameRunning = true;
 					check = 0;
 				}
 			}
 		}
-		svcSleepThread(500*1000*1000);
+		svcSleepThread(1000*1000*1000);
 	}
 }
 
@@ -241,7 +250,10 @@ void Misc() {
 		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, 0x80044715, &GPU_Load_u);
 		
 		//FPS
-		if (GameRunning == true) dmntchtReadCheatProcessMemory(FPSaddress, &FPS, 0x1);
+		if (GameRunning == true) {
+			dmntchtReadCheatProcessMemory(FPSaddress, &FPS, 0x1);
+			dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
+		}
 		
 		// 1 sec interval
 		svcSleepThread(1000*1000*1000 / refreshrate);
@@ -347,7 +359,10 @@ public:
 			}
 			
 			///FPS
-			if (GameRunning == true) screen->drawString(FPS_c, false, 235, 100, 20, tsl::a(0xFFFF));
+			if (GameRunning == true) {
+				screen->drawString(FPS_c, false, 235, 100, 20, tsl::a(0xFFFF));
+				screen->drawString(FPSavg_c, false, 235, 120, 20, tsl::a(0xFFFF));
+			}
 			
 			if (refreshrate == 5) screen->drawString("Hold ZR + R + D-Pad Down to slow down refresh", false, 20, 690, 15, tsl::a(0xFFFF));
 			if (refreshrate == 1) screen->drawString("Hold ZR + R + D-Pad Up to speed up refresh", false, 20, 690, 15, tsl::a(0xFFFF));
@@ -415,7 +430,8 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %.2f%s", Rotation_SpeedLevel_percent, "%");
 		
 		///FPS
-		snprintf(FPS_c, sizeof FPS_c, "FPS: %u", FPS);
+		snprintf(FPS_c, sizeof FPS_c, "FPR: %u", FPS);
+		snprintf(FPSavg_c, sizeof FPSavg_c, "FPSavg: %.2f", FPSavg);
 		
 	}
 };
