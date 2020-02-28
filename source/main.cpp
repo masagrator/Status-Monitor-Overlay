@@ -431,8 +431,8 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %.2f%s", Rotation_SpeedLevel_percent, "%");
 		
 		///FPS
-		snprintf(FPS_c, sizeof FPS_c, "PFPS: %u", FPS); //Pushed Frames Per Second
-		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS: %2.2f", FPSavg); //Frames Per Second calculated as 'frameavg = ((9*frameavg) + framedelta) / 10' 
+		snprintf(FPS_c, sizeof FPS_c, "PFPS: %u", FPS);
+		snprintf(FPSavg_c, sizeof FPSavg_c, "FPSavg: %2.2f", FPSavg);
 		
 	}
 };
@@ -457,12 +457,8 @@ public:
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 			if (SaltySD == true) {
-				FILE* disableflag = fopen("sdmc:/SaltySD/flags/disable.flag", "r");
-				if (disableflag == NULL) {
 					pmdmntCheck = pmdmntInitialize();
 					dmntchtCheck = dmntchtInitialize();
-				}
-				else fclose(disableflag);
 			}
 		}
 		Hinted = envIsSyscallHinted(0x6F);
