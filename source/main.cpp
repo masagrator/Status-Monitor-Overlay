@@ -111,7 +111,7 @@ float GPU_Load_percent = 0;
 char GPU_Load_c[32];
 float GPU_Load_max = 1000;
 
-//FPS (WIP)
+//NX-FPS
 uintptr_t FPSaddress = 0x0;
 uintptr_t FPSavgaddress = 0x0;
 bool GameRunning = false;
