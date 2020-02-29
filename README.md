@@ -24,10 +24,10 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
   - System Unsafe
 - SoC, PCB & Skin temperatures (Skin temperature not supported by FWs <5.0.0)
 - Fan Rotation Level
+- FPS (with help of [NX-FPS](https://github.com/masagrator/NX-FPS))
 
 # Planned:
 - Add 3 modes: Minimal, Standard, Graph
-- Add FPS Counter
 
 ![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/screen.jpg?raw=true)
 
@@ -42,3 +42,7 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 Q: This homebrew has any impact on games?
 
 A: Negligible, you won't see any difference. Almost everything is done on Core #3, other cores usage is below 0.001%.
+
+Q: Game sometimes hangs when using Status Monitor Overlay. Why?
+
+A: This is because of dmnt:cht nature. Some games don't like that it's peaking constantly at its memory and they stuck. This happens only if you are using NX-FPS plugin. Solution is to just close Status Monitor Overlay (you don't need to close Tesla Menu) and wait few seconds until it will resume.
