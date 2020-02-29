@@ -43,7 +43,7 @@ Q: This homebrew has any impact on games?
 
 A: Negligible, you won't see any difference. Almost everything is done on Core #3, other cores usage is below 0.001%.
 
-
+///
 
 Q: Game sometimes hangs when using Status Monitor Overlay. Why?
 
