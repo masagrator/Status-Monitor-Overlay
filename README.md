@@ -24,7 +24,7 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
   - System Unsafe
 - SoC, PCB & Skin temperatures (Skin temperature not supported by FWs <5.0.0)
 - Fan Rotation Level
-- FPS (with help of [NX-FPS](https://github.com/masagrator/NX-FPS))
+- PFPS and FPS (with help of [NX-FPS](https://github.com/masagrator/NX-FPS), more info in repo)
 
 # Planned:
 - Add 3 modes: Minimal, Standard, Graph
