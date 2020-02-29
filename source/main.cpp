@@ -147,20 +147,17 @@ void CheckIfGameRunning() {
 			if (R_FAILED(rc)) {
 				if (check == 0) {
 					remove("sdmc:/SaltySD/FPSoffset.hex");
-					remove("sdmc:/SaltySD/FPSavgoffset.hex");
 				}
 				check = 1;
 				GameRunning = false;
 			}
 			else if (GameRunning == false) {
 				FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
-				FILE* FPSavgoffset = fopen("sdmc:/SaltySD/FPSavgoffset.hex", "rb");
 				if ((FPSoffset != NULL) && (FPSavgoffset != NULL)) {
 					dmntchtForceOpenCheatProcess();
 					fread(&FPSaddress, 0x5, 1, FPSoffset);
-					fread(&FPSavgaddress, 0x5, 1, FPSavgoffset);
+					FPSavgaddress = FPSaddress - 0x8;
 					fclose(FPSoffset);
-					fclose(FPSavgoffset);
 					GameRunning = true;
 					check = 0;
 				}
