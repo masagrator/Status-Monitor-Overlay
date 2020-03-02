@@ -29,8 +29,8 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 # Planned:
 - Add 3 modes: Minimal, Standard, Graph
 
-# Issues:
-- Not compatible with Tesla Menu 1.0.2
+# Requirements:
+- From 0.4.1 you need Tesla Menu >=1.0.2
 
 
 ![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/screen.jpg?raw=true)
