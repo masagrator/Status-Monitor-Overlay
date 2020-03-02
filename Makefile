@@ -42,8 +42,7 @@ APP_TITLE	:=	Status-Monitor
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source source/services source/libstratosphere
-DATA		:=	data
-INCLUDES	:=	include include/services include/libstratosphere
+INCLUDES	:=	include include/services include/libstratosphere lib/libtesla/include
 NO_ICON		:=  1
 
 #---------------------------------------------------------------------------------
@@ -56,18 +55,18 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++17
+CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=c++17
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lnx -ltesla -lnx
+LIBS	:= -lnx
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(LIBNX) $(TOPDIR)/lib/libtesla
+LIBDIRS	:= $(PORTLIBS) $(LIBNX)
 
 
 #---------------------------------------------------------------------------------
@@ -169,10 +168,6 @@ $(BUILD):
 
 #---------------------------------------------------------------------------------
 clean:
-	@$(MAKE) --no-print-directory -C $(TOPDIR)/lib/libtesla -f Makefile clean
-	@rm -fr $(BUILD) $(TARGET).ovl $(TARGET).nro $(TARGET).nacp $(TARGET).elf
-
-cleant:
 	@rm -fr $(BUILD) $(TARGET).ovl $(TARGET).nro $(TARGET).nacp $(TARGET).elf
 
 
@@ -191,16 +186,9 @@ $(OUTPUT).ovl		:	$(OUTPUT).elf $(OUTPUT).nacp
 	@elf2nro $< $@ $(NROFLAGS)
 	@echo "built ... $(notdir $(OUTPUT).ovl)"
 
-$(OUTPUT).elf	:	$(OFILES) lib/libtesla/lib/libtesla.a
+$(OUTPUT).elf	:	$(OFILES)
 
 $(OFILES_SRC)	: $(HFILES_BIN)
-
-lib/libtesla/lib/libtesla.a:
-	@$(MAKE) --no-print-directory -C $(TOPDIR)/lib/libtesla -f Makefile
-	
-clean:
-	@$(MAKE) --no-print-directory -C $(TOPDIR)/lib/libtesla -f Makefile clean
-	@rm -fr $(BUILD) $(TARGET).ovl $(TARGET).nro $(TARGET).nacp $(TARGET).elf
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data

@@ -1,3 +1,4 @@
+#define TESLA_INIT_IMPL
 #include <tesla.hpp>
 #include "services/tc.hpp"
 #include "services/fan.hpp"
@@ -35,8 +36,7 @@ s32 PCB_temperaturemiliC = 0;
 float PCB_temperatureC = 0;
 s32 skin_temperaturemiliC = 0;
 float skin_temperatureC = 0;
-char SoC_temperature_c[32];
-char PCB_temperature_c[32];
+char SoCPCB_temperature_c[64];
 char skin_temperature_c[32];
 
 //CPU Usage
@@ -57,6 +57,7 @@ char CPU_Usage0[32];
 char CPU_Usage1[32];
 char CPU_Usage2[32];
 char CPU_Usage3[32];
+char CPU_compressed_c[128];
 
 //Frequency
 ///CPU
@@ -78,6 +79,8 @@ char RAM_application_c[64];
 char RAM_applet_c[64];
 char RAM_system_c[64];
 char RAM_systemunsafe_c[64];
+char RAM_compressed_c[320];
+char RAM_var_compressed_c[320];
 u64 RAM_Total_all_u = 0;
 float RAM_Total_all_f = 0;
 u64 RAM_Total_application_u = 0;
@@ -121,6 +124,8 @@ char FPSavg_c[32];
 float FPSavg = 255;
 uint8_t check = 0;
 bool SaltySD = false;
+char FPS_compressed_c[64];
+char FPS_var_compressed_c[64];
 
 //Check if SaltyNX is working
 bool CheckPort () {
@@ -140,7 +145,7 @@ bool CheckPort () {
 
 void CheckIfGameRunning() {
 	while (threadexit == false) {
-		if (R_SUCCEEDED(pmdmntCheck) && R_SUCCEEDED(dmntchtCheck)) {
+		if (R_SUCCEEDED(dmntchtCheck)) {
 			Result rc = 1;
 			uint64_t PID = 0;
 			rc = pmdmntGetApplicationProcessId(&PID);
@@ -172,11 +177,6 @@ void CheckButtons() {
 	while (threadexit == false) {
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-		if (kHeld & KEY_LSTICK) {
-			hidScanInput();
-			u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-			if (kHeld & KEY_RSTICK) tsl::Gui::goBack();
-		}
 		if (kHeld & KEY_ZR) {
 			hidScanInput();
 			u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
@@ -184,13 +184,13 @@ void CheckButtons() {
 				hidScanInput();
 				u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 				if (kHeld & KEY_DDOWN) {
+					TeslaFPS = 1;
 					refreshrate = 1;
-					tsl::Gui::divir(refreshrate);
 					systemtickfrequency = 19200000;
 				}
 				else if (kHeld & KEY_DUP) {
+					TeslaFPS = 5;
 					refreshrate = 5;
-					tsl::Gui::divir(refreshrate);
 					systemtickfrequency = 3840000;
 				}
 			}
@@ -296,82 +296,67 @@ void CheckCore3() {
 }
 
 //Tesla stuff
-class GuiMain : public tsl::Gui
-{
+class GuiMonitor : public tsl::Gui {
 public:
-	GuiMain()
-	{
-		this->setTitle("Status Monitor");
-	}
-	~GuiMain() {}
+    GuiMonitor(u8 arg1, u8 arg2, bool arg3) { }
 
-	// Called when switching Guis to create the new UI
-	virtual tsl::Element *createUI()
-	{
-		tsl::element::Frame *rootFrame = new tsl::element::Frame();
+    // Called when this Gui gets loaded to create the UI
+    // Allocate all your elements on the heap. libtesla will make sure to clean them up when not needed anymore
+    virtual tsl::elm::Element* createUI() override {
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.4.1");
 
-		tsl::element::CustomDrawer *Status = new tsl::element::CustomDrawer(0, 0, 100, FB_WIDTH, [](u16 x, u16 y, tsl::Screen *screen) {
+		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
 			//Print strings
 			///CPU
-			screen->drawString("CPU Usage:", false, 25, 100, 25, tsl::a(0xFFFF));
-			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(CPU_Hz_c, false, 25, 135, 15, tsl::a(0xFFFF));
-			screen->drawString(CPU_Usage0, false, 25, 165, 15, tsl::a(0xFFFF));
-			screen->drawString(CPU_Usage1, false, 25, 180, 15, tsl::a(0xFFFF));
-			screen->drawString(CPU_Usage2, false, 25, 195, 15, tsl::a(0xFFFF));
-			screen->drawString(CPU_Usage3, false, 25, 210, 15, tsl::a(0xFFFF));
+			renderer->drawString("CPU Usage:", false, 20, 120, 20, renderer->a(0xFFFF));
+			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) renderer->drawString(CPU_Hz_c, false, 20, 155, 15, renderer->a(0xFFFF));
+			renderer->drawString(CPU_compressed_c, false, 20, 185, 15, renderer->a(0xFFFF));
 			
 			///GPU
 			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(nvCheck)) {
 				
-				screen->drawString("GPU Usage:", false, 25, 265, 25, tsl::a(0xFFFF));
-				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(GPU_Hz_c, false, 25, 300, 15, tsl::a(0xFFFF));
-				if (R_SUCCEEDED(nvCheck)) screen->drawString(GPU_Load_c, false, 25, 315, 15, tsl::a(0xFFFF));
+				renderer->drawString("GPU Usage:", false, 20, 285, 20, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) renderer->drawString(GPU_Hz_c, false, 20, 320, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(nvCheck)) renderer->drawString(GPU_Load_c, false, 20, 335, 15, renderer->a(0xFFFF));
 				
 			}
 			
 			///RAM
 			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(Hinted)) {
 				
-				screen->drawString("RAM Usage:", false, 25, 355, 25, tsl::a(0xFFFF));
-				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) screen->drawString(RAM_Hz_c, false, 25, 390, 15, tsl::a(0xFFFF));
+				renderer->drawString("RAM Usage:", false, 20, 375, 20, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) renderer->drawString(RAM_Hz_c, false, 20, 410, 15, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(Hinted)) {
-					screen->drawString(RAM_all_c, false, 25, 420, 15, tsl::a(0xFFFF));
-					screen->drawString(RAM_application_c, false, 25, 435, 15, tsl::a(0xFFFF));
-					screen->drawString(RAM_applet_c, false, 25, 450, 15, tsl::a(0xFFFF));
-					screen->drawString(RAM_system_c, false, 25, 465, 15, tsl::a(0xFFFF));
-					screen->drawString(RAM_systemunsafe_c, false, 25, 480, 15, tsl::a(0xFFFF));
-				
+					renderer->drawString(RAM_compressed_c, false, 20, 440, 15, renderer->a(0xFFFF));
+					renderer->drawString(RAM_var_compressed_c, false, 140, 440, 15, renderer->a(0xFFFF));
 				}
 			}
 			
 			///Thermal
 			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
-				screen->drawString("Thermal:", false, 25, 520, 25, tsl::a(0xFFFF));
-				if (R_SUCCEEDED(tsCheck)) {
-					screen->drawString(SoC_temperature_c, false, 25, 555, 15, tsl::a(0xFFFF));
-					screen->drawString(PCB_temperature_c, false, 25, 570, 15, tsl::a(0xFFFF));
-				}
-				if (R_SUCCEEDED(tcCheck)) screen->drawString(skin_temperature_c, false, 25, 585, 15, tsl::a(0xFFFF));
-				if (R_SUCCEEDED(fanCheck)) screen->drawString(Rotation_SpeedLevel_c, false, 25, 600, 15, tsl::a(0xFFFF));
+				renderer->drawString("Thermal:", false, 20, 540, 20, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tsCheck)) renderer->drawString(SoCPCB_temperature_c, false, 20, 575, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tcCheck)) renderer->drawString(skin_temperature_c, false, 20, 605, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(fanCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, 20, 620, 15, renderer->a(0xFFFF));
 			}
 			
 			///FPS
 			if (GameRunning == true) {
-				screen->drawString(FPS_c, false, 235, 100, 20, tsl::a(0xFFFF));
-				screen->drawString(FPSavg_c, false, 235, 120, 20, tsl::a(0xFFFF));
+				renderer->drawString(FPS_compressed_c, false, 235, 120, 20, renderer->a(0xFFFF));
+				renderer->drawString(FPS_var_compressed_c, false, 295, 120, 20, renderer->a(0xFFFF));
 			}
 			
-			if (refreshrate == 5) screen->drawString("Hold ZR + R + D-Pad Down to slow down refresh", false, 20, 690, 15, tsl::a(0xFFFF));
-			if (refreshrate == 1) screen->drawString("Hold ZR + R + D-Pad Up to speed up refresh", false, 20, 690, 15, tsl::a(0xFFFF));
+			if (refreshrate == 5) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Down to slow down refresh", false, 20, 675, 15, renderer->a(0xFFFF));
+			if (refreshrate == 1) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Up to speed up refresh", false, 20, 675, 15, renderer->a(0xFFFF));
 		
-	});
+		});
 
-	rootFrame->addElement(Status);
+		rootFrame->setContent(Status);
 
-	return rootFrame;
+		return rootFrame;
 	}
-	virtual void update() {
+	virtual void update() override {
 		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
 		//This is because making each loop also takes time, which is not considered because this will take also additional time
 		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
@@ -381,7 +366,7 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		CPU_Hz_f = (float)CPU_Hz / (float)1000000;
+		CPU_Hz_f = (float)CPU_Hz / 1000000;
 		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", CPU_Hz_f);
 		percent = (double) (((double)systemtickfrequency - (double)idletick0) / ((double)systemtickfrequency)) * 100;
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", percent, "%");
@@ -391,15 +376,16 @@ public:
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", percent, "%");
 		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
+		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 		
 		///GPU
+		GPU_Hz_f = (float)GPU_Hz / 1000000;
+		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", GPU_Hz_f);
 		GPU_Load_percent = (float)GPU_Load_u / GPU_Load_max * 100;
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", GPU_Load_percent, "%");
-		GPU_Hz_f = (float)GPU_Hz / (float)1000000;
-		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", GPU_Hz_f);
 		
 		///RAM
-		RAM_Hz_f = (float)RAM_Hz / (float)1000000;
+		RAM_Hz_f = (float)RAM_Hz / 1000000;
 		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz", RAM_Hz_f);
 		RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
@@ -411,37 +397,51 @@ public:
 		RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
-		snprintf(RAM_all_c, sizeof RAM_all_c, "Total:               %.2f / %.2f MB", RAM_Used_all_f, RAM_Total_all_f);
-		snprintf(RAM_application_c, sizeof RAM_application_c, "Application:      %.2f / %.2f MB", RAM_Used_application_f, RAM_Total_application_f);
-		snprintf(RAM_applet_c, sizeof RAM_applet_c, "Applet:             %.2f / %.2f MB", RAM_Used_applet_f, RAM_Total_applet_f);
-		snprintf(RAM_system_c, sizeof RAM_system_c, "System:            %.2f / %.2f MB", RAM_Used_system_f, RAM_Total_system_f);
-		snprintf(RAM_systemunsafe_c, sizeof RAM_systemunsafe_c, "System Unsafe: %.2f / %.2f MB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
+		snprintf(RAM_all_c, sizeof RAM_all_c, "Total:");
+		snprintf(RAM_application_c, sizeof RAM_application_c, "Application:");
+		snprintf(RAM_applet_c, sizeof RAM_applet_c, "Applet:");
+		snprintf(RAM_system_c, sizeof RAM_system_c, "System:");
+		snprintf(RAM_systemunsafe_c, sizeof RAM_systemunsafe_c, "System Unsafe:");
+		snprintf(RAM_compressed_c, sizeof RAM_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
+		snprintf(RAM_all_c, sizeof RAM_all_c, "%4.2f / %4.2f MB", RAM_Used_all_f, RAM_Total_all_f);
+		snprintf(RAM_application_c, sizeof RAM_application_c, "%4.2f / %4.2f MB", RAM_Used_application_f, RAM_Total_application_f);
+		snprintf(RAM_applet_c, sizeof RAM_applet_c, "%4.2f / %4.2f MB", RAM_Used_applet_f, RAM_Total_applet_f);
+		snprintf(RAM_system_c, sizeof RAM_system_c, "%4.2f / %4.2f MB", RAM_Used_system_f, RAM_Total_system_f);
+		snprintf(RAM_systemunsafe_c, sizeof RAM_systemunsafe_c, "%4.2f / %4.2f MB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
+		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
 		
 		///Thermal
 		SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
-		snprintf(SoC_temperature_c, sizeof SoC_temperature_c, "SoC: %.2f \u00B0C", SoC_temperatureC);
 		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
-		snprintf(PCB_temperature_c, sizeof PCB_temperature_c, "PCB: %.2f \u00B0C", PCB_temperatureC);
+		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2.2f \u00B0C\nPCB: %2.2f \u00B0C", SoC_temperatureC, PCB_temperatureC);
 		skin_temperatureC = (float)skin_temperaturemiliC / 1000;
-		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %.2f \u00B0C", skin_temperatureC);
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %2.2f \u00B0C", skin_temperatureC);
 		Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %.2f%s", Rotation_SpeedLevel_percent, "%");
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %2.2f%s", Rotation_SpeedLevel_percent, "%");
 		
 		///FPS
-		snprintf(FPS_c, sizeof FPS_c, "PFPS: %u", FPS); //Pushed Frames Per Second
-		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS: %2.2f", FPSavg); //Frames Per Second calculated from averaged frametime 
+		snprintf(FPS_c, sizeof FPS_c, "PFPS:"); //Pushed Frames Per Second
+		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
+		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
+		snprintf(FPS_c, sizeof FPS_c, "%u", FPS);
+		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.2f", FPSavg);
+		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
 		
 	}
+	// Called once every frame to handle inputs not handled by other UI elements
+    virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+        if (keysHeld & KEY_RSTICK) {
+			tsl::goBack();
+			return true;
+		}
+		return false;   // Return true here to singal the inputs have been consumed
+    }
 };
 
-class MonitorOverlay : public tsl::Overlay
-{
+class MonitorOverlay : public tsl::Overlay {
 public:
-	MonitorOverlay() {}
-	~MonitorOverlay() {}
 
-	tsl::Gui *onSetup()
-	{
+	virtual void initServices() override {
 		//Initialize services
 		SaltySD = CheckPort();
 		smCheck = smInitialize();
@@ -458,7 +458,6 @@ public:
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 			if (SaltySD == true) {
-					pmdmntCheck = pmdmntInitialize();
 					dmntchtCheck = dmntchtInitialize();
 			}
 		}
@@ -481,12 +480,9 @@ public:
 		threadStart(&t4);
 		threadStart(&t5);
 		threadStart(&t6);
-		
-		//Go to creating GUI
-		return new GuiMain();
 	}
 
-	virtual void onDestroy() {
+	virtual void exitServices() override {
 		//Give signal to exit for all threaded functions
 		threadexit = true;
 		
@@ -523,13 +519,15 @@ public:
 		threadClose(&t6);
 	}
 
-	virtual void onOverlayShow(tsl::Gui *gui) {}
+    virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
+    virtual void onHide() override {}    // Called before overlay wants to change from visible to invisible state
 
-	void onOverlayHide(tsl::Gui *gui) {}
+    virtual std::unique_ptr<tsl::Gui> loadInitialGui() override {
+        return initially<GuiMonitor>(1, 2, true);  // Initial Gui to load. It's possible to pass arguments to it's constructor like this
+    }
 };
 
 // This function gets called on startup to create a new Overlay object
-tsl::Overlay *overlayLoad()
-{
-	return new MonitorOverlay();
+int main(int argc, char **argv) {
+    return tsl::loop<MonitorOverlay>(argc, argv);
 }
