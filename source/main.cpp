@@ -499,7 +499,6 @@ public:
 		
 		//Exit services
 		dmntchtExit();
-		pmdmntExit();
 		clkrstExit();
 		pcvExit();
 		tsExit();
