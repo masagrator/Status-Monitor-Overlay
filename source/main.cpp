@@ -555,6 +555,7 @@ public:
 				StartThreads();
 				TeslaFPS = 1;
 				refreshrate = 1;
+				tsl::hlp::requestForeground(false);
 				tsl::changeTo<StandardOverlay>();
 				return true;
 			}
@@ -568,6 +569,7 @@ public:
 				TeslaFPS = 31;
 				refreshrate = 31;
 				alphabackground = 0x0;
+				tsl::hlp::requestForeground(false);
 				tsl::changeTo<com_FPS>();
 				return true;
 			}
@@ -582,6 +584,7 @@ public:
 
 	virtual void update() override {
 		if (TeslaFPS != 60) {
+			tsl::hlp::requestForeground(true);
 			TeslaFPS = 60;
 			alphabackground = 0xD;
 			refreshrate = 1;
