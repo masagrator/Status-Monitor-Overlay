@@ -14,6 +14,7 @@ Thread t5;
 Thread t6;
 u64 systemtickfrequency = 19200000;
 bool threadexit = false;
+bool threadexit2 = false;
 u64 refreshrate = 1;
 FanController g_ICon;
 
@@ -127,6 +128,16 @@ bool SaltySD = false;
 char FPS_compressed_c[64];
 char FPS_var_compressed_c[64];
 
+void FPSCounter() {
+	while (threadexit == false) {
+		dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
+		
+		// 1 sec interval
+		svcSleepThread(1000*1000*1000 / refreshrate);
+	}
+}
+	
+
 //Check if SaltyNX is working
 bool CheckPort () {
 	Result ret;
@@ -144,7 +155,7 @@ bool CheckPort () {
 }
 
 void CheckIfGameRunning() {
-	while (threadexit == false) {
+	while (threadexit2 == false) {
 		if (R_SUCCEEDED(dmntchtCheck)) {
 			Result rc = 1;
 			uint64_t PID = 0;
@@ -159,6 +170,7 @@ void CheckIfGameRunning() {
 			else if (GameRunning == false) {
 				FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
 				if ((FPSoffset != NULL)) {
+					svcSleepThread(1000*1000*1000);
 					dmntchtForceOpenCheatProcess();
 					fread(&FPSaddress, 0x5, 1, FPSoffset);
 					FPSavgaddress = FPSaddress - 0x8;
@@ -295,10 +307,94 @@ void CheckCore3() {
 	}
 }
 
+void StartFPSCounterThread() {
+	threadCreate(&t0, FPSCounter, NULL, NULL, 0x100, 0x3F, 3);
+	threadStart(&t0);
+}
+
+void EndFPSCounterThread() {
+	threadexit = true;
+	threadWaitForExit(&t0);
+	threadClose(&t0);
+	threadexit = false;
+}
+
+void StartThreads() {
+	threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
+	threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x3B, 1);
+	threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
+	threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
+	threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3A, -2);
+	threadCreate(&t5, CheckButtons, NULL, NULL, 0x200, 0x39, -2);
+	threadStart(&t0);
+	threadStart(&t1);
+	threadStart(&t2);
+	threadStart(&t3);
+	threadStart(&t4);
+	threadStart(&t5);
+}
+
+void CloseThreads() {
+	threadexit = true;
+	threadWaitForExit(&t0);
+	threadWaitForExit(&t1);
+	threadWaitForExit(&t2);
+	threadWaitForExit(&t3);
+	threadWaitForExit(&t4);
+	threadWaitForExit(&t5);
+	threadClose(&t0);
+	threadClose(&t1);
+	threadClose(&t2);
+	threadClose(&t3);
+	threadClose(&t4);
+	threadClose(&t5);
+	threadexit = false;
+}
+
 //Tesla stuff
-class GuiMonitor : public tsl::Gui {
+class com_FPS : public tsl::Gui {
 public:
-    GuiMonitor(u8 arg1, u8 arg2, bool arg3) { }
+    com_FPS() { }
+
+    virtual tsl::elm::Element* createUI() override {
+		auto rootFrame = new tsl::elm::OverlayFrame("", "");
+
+		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+				static uint8_t avg = 0;
+				if (FPSavg < 10) avg = 0;
+				if (FPSavg >= 10) avg = 23;
+				if (FPSavg >= 100) avg = 46;
+				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 370 + avg, 50, a(0x7111));
+				renderer->drawString(FPSavg_c, false, 5, 40, 40, renderer->a(0xFFFF));
+		});
+
+		rootFrame->setContent(Status);
+
+		return rootFrame;
+	}
+
+	virtual void update() override {
+		///FPS
+		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f", FPSavg);
+		
+	}
+	// Called once every frame to handle inputs not handled by other UI elements
+    virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+        if (keysHeld & KEY_LSTICK) {
+			if (keysHeld & KEY_RSTICK) {
+				EndFPSCounterThread();
+				tsl::goBack();
+				return true;
+			}
+		}
+		return false;   // Return true here to signal the inputs have been consumed
+    }
+};
+
+
+class StandardOverlay : public tsl::Gui {
+public:
+    StandardOverlay() { }
 
     // Called when this Gui gets loaded to create the UI
     // Allocate all your elements on the heap. libtesla will make sure to clean them up when not needed anymore
@@ -356,7 +452,9 @@ public:
 
 		return rootFrame;
 	}
+
 	virtual void update() override {
+		if (TeslaFPS == 60) TeslaFPS = 1;
 		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
 		//This is because making each loop also takes time, which is not considered because this will take also additional time
 		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
@@ -432,9 +530,68 @@ public:
     virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
         if (keysHeld & KEY_LSTICK) {
 			if (keysHeld & KEY_RSTICK) {
+				CloseThreads();
 				tsl::goBack();
 				return true;
 			}
+		}
+		return false;   // Return true here to signal the inputs have been consumed
+    }
+};
+
+class MainMenu : public tsl::Gui {
+public:
+    MainMenu() { }
+
+    // Called when this Gui gets loaded to create the UI
+    // Allocate all your elements on the heap. libtesla will make sure to clean them up when not needed anymore
+    virtual tsl::elm::Element* createUI() override {
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.4.2");
+		auto list = new tsl::elm::List();
+		
+		auto Standard = new tsl::elm::ListItem("Standard mode");
+		Standard->setClickListener([](u64 keys) {
+			if (keys & KEY_A) {
+				StartThreads();
+				TeslaFPS = 1;
+				refreshrate = 1;
+				tsl::changeTo<StandardOverlay>();
+				return true;
+			}
+			return false;
+		});
+		list->addItem(Standard);
+		auto comFPS = new tsl::elm::ListItem("FPS Counter");
+		comFPS->setClickListener([](u64 keys) {
+			if (keys & KEY_A) {
+				StartFPSCounterThread();
+				TeslaFPS = 31;
+				refreshrate = 31;
+				alphabackground = 0x0;
+				tsl::changeTo<com_FPS>();
+				return true;
+			}
+			return false;
+		});
+		list->addItem(comFPS);
+
+		rootFrame->setContent(list);
+
+		return rootFrame;
+	}
+
+	virtual void update() override {
+		if (TeslaFPS != 60) {
+			TeslaFPS = 60;
+			alphabackground = 0xD;
+			refreshrate = 1;
+		}
+	}
+	// Called once every frame to handle inputs not handled by other UI elements
+    virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if (keysHeld & KEY_B) {
+			tsl::goBack();
+			return true;
 		}
 		return false;   // Return true here to signal the inputs have been consumed
     }
@@ -466,35 +623,14 @@ public:
 		Hinted = envIsSyscallHinted(0x6F);
 		
 		//Assign functions to core of choose
-		threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
-		threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x3B, 1);
-		threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
-		threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
-		threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3A, -2);
-		threadCreate(&t5, CheckButtons, NULL, NULL, 0x200, 0x39, -2);
 		threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
 		
 		//Start assigned functions
-		threadStart(&t0);
-		threadStart(&t1);
-		threadStart(&t2);
-		threadStart(&t3);
-		threadStart(&t4);
-		threadStart(&t5);
 		threadStart(&t6);
 	}
 
 	virtual void exitServices() override {
-		//Give signal to exit for all threaded functions
-		threadexit = true;
-		
-		//Wait for those functions to exit
-		threadWaitForExit(&t0);
-		threadWaitForExit(&t1);
-		threadWaitForExit(&t2);
-		threadWaitForExit(&t3);
-		threadWaitForExit(&t4);
-		threadWaitForExit(&t5);
+		threadexit2 = true;
 		threadWaitForExit(&t6);
 		
 		//Exit services
@@ -512,12 +648,6 @@ public:
 
 		
 		//Free threads
-		threadClose(&t0);
-		threadClose(&t1);
-		threadClose(&t2);
-		threadClose(&t3);
-		threadClose(&t4);
-		threadClose(&t5);
 		threadClose(&t6);
 	}
 
@@ -525,7 +655,7 @@ public:
     virtual void onHide() override {}    // Called before overlay wants to change from visible to invisible state
 
     virtual std::unique_ptr<tsl::Gui> loadInitialGui() override {
-        return initially<GuiMonitor>(1, 2, true);  // Initial Gui to load. It's possible to pass arguments to it's constructor like this
+        return initially<MainMenu>();  // Initial Gui to load. It's possible to pass arguments to it's constructor like this
     }
 };
 
