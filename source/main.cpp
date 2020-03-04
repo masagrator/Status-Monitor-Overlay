@@ -430,11 +430,13 @@ public:
 	}
 	// Called once every frame to handle inputs not handled by other UI elements
     virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-        if (keysHeld & KEY_RSTICK) {
-			tsl::goBack();
-			return true;
+        if (keysHeld & KEY_LSTICK) {
+			if (keysHeld & KEY_RSTICK) {
+				tsl::goBack();
+				return true;
+			}
 		}
-		return false;   // Return true here to singal the inputs have been consumed
+		return false;   // Return true here to signal the inputs have been consumed
     }
 };
 
