@@ -17,6 +17,7 @@ bool threadexit = false;
 bool threadexit2 = false;
 u64 refreshrate = 1;
 FanController g_ICon;
+char Variables[256];
 
 //Checks
 Result smCheck = 1;
@@ -392,9 +393,9 @@ public:
 };
 
 
-class StandardOverlay : public tsl::Gui {
+class FullOverlay : public tsl::Gui {
 public:
-    StandardOverlay() { }
+    FullOverlay() { }
 
     // Called when this Gui gets loaded to create the UI
     // Allocate all your elements on the heap. libtesla will make sure to clean them up when not needed anymore
@@ -539,6 +540,110 @@ public:
     }
 };
 
+class MiniOverlay : public tsl::Gui {
+public:
+    MiniOverlay() { }
+
+    // Called when this Gui gets loaded to create the UI
+    // Allocate all your elements on the heap. libtesla will make sure to clean them up when not needed anymore
+    virtual tsl::elm::Element* createUI() override {
+		auto rootFrame = new tsl::elm::OverlayFrame("", "");
+		
+
+		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+			
+			if (GameRunning == false) renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 80, a(0x7111));
+			else renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 110, a(0x7111));
+			
+			//Print strings
+			///CPU
+			if (GameRunning == true) renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN\nPFPS\nFPS", false, 0, 15, 15, renderer->a(0xFFFF));
+			else renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN", false, 0, 15, 15, renderer->a(0xFFFF));
+			
+			///GPU
+			renderer->drawString(Variables, false, 60, 15, 15, renderer->a(0xFFFF));
+		});
+
+		rootFrame->setContent(Status);
+
+		return rootFrame;
+	}
+
+	virtual void update() override {
+		if (TeslaFPS == 60) TeslaFPS = 1;
+		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
+		//This is because making each loop also takes time, which is not considered because this will take also additional time
+		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
+		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
+		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
+		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
+		
+		//Make stuff ready to print
+		///CPU
+		CPU_Hz_f = (float)CPU_Hz / 1000000;
+		percent = (double) (((double)systemtickfrequency - (double)idletick0) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%s", percent, "%");
+		percent = (double) (((double)systemtickfrequency - (double)idletick1) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%s", percent, "%");
+		percent = (double) (((double)systemtickfrequency - (double)idletick2) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%s", percent, "%");
+		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%s", percent, "%");
+		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]@%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, CPU_Hz_f);
+		
+		///GPU
+		GPU_Hz_f = (float)GPU_Hz / 1000000;
+		GPU_Load_percent = (float)GPU_Load_u / GPU_Load_max * 100;
+		snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s@%.1f", GPU_Load_percent, "%", GPU_Hz_f);
+		
+		///RAM
+		RAM_Hz_f = (float)RAM_Hz / 1000000;
+		RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
+		RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
+		RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
+		RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
+		RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
+		RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
+		RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
+		RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
+		RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
+		RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
+		snprintf(RAM_all_c, sizeof RAM_all_c, "%.0f/%.0f MB", RAM_Used_all_f, RAM_Total_all_f);
+		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, RAM_Hz_f);
+		
+		///Thermal
+		SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
+		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
+		skin_temperatureC = (float)skin_temperaturemiliC / 1000;
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", SoC_temperatureC, PCB_temperatureC, skin_temperatureC);
+		Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_percent, "%");
+		
+		///FPS
+		snprintf(FPS_c, sizeof FPS_c, "PFPS:"); //Pushed Frames Per Second
+		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
+		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
+		snprintf(FPS_c, sizeof FPS_c, "%u", FPS);
+		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.2f", FPSavg);
+		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
+
+		if (GameRunning == true) snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, FPS_var_compressed_c);
+		else snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c);
+
+	}
+	// Called once every frame to handle inputs not handled by other UI elements
+    virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+        if (keysHeld & KEY_LSTICK) {
+			if (keysHeld & KEY_RSTICK) {
+				CloseThreads();
+				tsl::goBack();
+				return true;
+			}
+		}
+		return false;   // Return true here to signal the inputs have been consumed
+    }
+};
+
 class MainMenu : public tsl::Gui {
 public:
     MainMenu() { }
@@ -549,19 +654,34 @@ public:
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.4.2");
 		auto list = new tsl::elm::List();
 		
-		auto Standard = new tsl::elm::ListItem("Standard mode");
-		Standard->setClickListener([](u64 keys) {
+		auto Full = new tsl::elm::ListItem("Full");
+		Full->setClickListener([](u64 keys) {
 			if (keys & KEY_A) {
 				StartThreads();
 				TeslaFPS = 1;
 				refreshrate = 1;
 				tsl::hlp::requestForeground(false);
-				tsl::changeTo<StandardOverlay>();
+				tsl::changeTo<FullOverlay>();
 				return true;
 			}
 			return false;
 		});
-		list->addItem(Standard);
+		list->addItem(Full);
+		auto Mini = new tsl::elm::ListItem("Mini");
+		Mini->setClickListener([](u64 keys) {
+			if (keys & KEY_A) {
+				StartThreads();
+				TeslaFPS = 1;
+				refreshrate = 1;
+				alphabackground = 0x0;
+				tsl::hlp::requestForeground(false);
+				tsl::changeTo<MiniOverlay>();
+				FullMode = false;
+				return true;
+			}
+			return false;
+		});
+		list->addItem(Mini);
 		auto comFPS = new tsl::elm::ListItem("FPS Counter");
 		comFPS->setClickListener([](u64 keys) {
 			if (keys & KEY_A) {
@@ -570,6 +690,7 @@ public:
 				refreshrate = 31;
 				alphabackground = 0x0;
 				tsl::hlp::requestForeground(false);
+				FullMode = false;
 				tsl::changeTo<com_FPS>();
 				return true;
 			}
@@ -584,6 +705,7 @@ public:
 
 	virtual void update() override {
 		if (TeslaFPS != 60) {
+			FullMode = true;
 			tsl::hlp::requestForeground(true);
 			TeslaFPS = 60;
 			alphabackground = 0xD;
