@@ -44,7 +44,10 @@ char SoCPCB_temperature_c[64];
 char skin_temperature_c[32];
 
 //CPU Usage
-double percent = 0;
+double percent0 = 0;
+double percent1 = 0;
+double percent2 = 0;
+double percent3 = 0;
 u64 idletick_a0 = 0;
 u64 idletick_a1 = 0;
 u64 idletick_a2 = 0;
@@ -468,14 +471,14 @@ public:
 		///CPU
 		CPU_Hz_f = (float)CPU_Hz / 1000000;
 		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", CPU_Hz_f);
-		percent = (double) (((double)systemtickfrequency - (double)idletick0) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick1) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick2) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
+		percent0 = (double) (((double)systemtickfrequency - (double)idletick0) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", percent0, "%");
+		percent1 = (double) (((double)systemtickfrequency - (double)idletick1) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", percent1, "%");
+		percent2 = (double) (((double)systemtickfrequency - (double)idletick2) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", percent2, "%");
+		percent3 = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent3, "%");
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 		
 		///GPU
@@ -580,14 +583,14 @@ public:
 		//Make stuff ready to print
 		///CPU
 		CPU_Hz_f = (float)CPU_Hz / 1000000;
-		percent = (double) (((double)systemtickfrequency - (double)idletick0) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick1) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick2) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%s", percent, "%");
+		percent0 = (double) (((double)systemtickfrequency - (double)idletick0) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%s", percent0, "%");
+		percent1 = (double) (((double)systemtickfrequency - (double)idletick1) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%s", percent1, "%");
+		percent2 = (double) (((double)systemtickfrequency - (double)idletick2) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%s", percent2, "%");
+		percent3 = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%s", percent3, "%");
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]@%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, CPU_Hz_f);
 		
 		///GPU
