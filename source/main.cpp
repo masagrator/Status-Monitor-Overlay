@@ -17,6 +17,8 @@ bool threadexit = false;
 bool threadexit2 = false;
 u64 refreshrate = 1;
 FanController g_ICon;
+
+//Mini mode
 char Variables[256];
 
 //Checks
@@ -117,27 +119,17 @@ char GPU_Load_c[32];
 float GPU_Load_max = 1000;
 
 //NX-FPS
+bool GameRunning = false;
+uint8_t check = 0;
+bool SaltySD = false;
 uintptr_t FPSaddress = 0x0;
 uintptr_t FPSavgaddress = 0x0;
-bool GameRunning = false;
 char FPS_c[32];
 uint8_t FPS = 0xFE;
 char FPSavg_c[32];
 float FPSavg = 255;
-uint8_t check = 0;
-bool SaltySD = false;
 char FPS_compressed_c[64];
 char FPS_var_compressed_c[64];
-
-void FPSCounter() {
-	while (threadexit == false) {
-		dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
-		
-		// 1 sec interval
-		svcSleepThread(1000*1000*1000 / refreshrate);
-	}
-}
-	
 
 //Check if SaltyNX is working
 bool CheckPort () {
@@ -308,18 +300,7 @@ void CheckCore3() {
 	}
 }
 
-void StartFPSCounterThread() {
-	threadCreate(&t0, FPSCounter, NULL, NULL, 0x100, 0x3F, 3);
-	threadStart(&t0);
-}
-
-void EndFPSCounterThread() {
-	threadexit = true;
-	threadWaitForExit(&t0);
-	threadClose(&t0);
-	threadexit = false;
-}
-
+//Start reading all stats
 void StartThreads() {
 	threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
 	threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x3B, 1);
@@ -335,6 +316,7 @@ void StartThreads() {
 	threadStart(&t5);
 }
 
+//End reading all stats
 void CloseThreads() {
 	threadexit = true;
 	threadWaitForExit(&t0);
@@ -352,7 +334,29 @@ void CloseThreads() {
 	threadexit = false;
 }
 
-//Tesla stuff
+//Separate functions dedicated to "FPS Counter" mode
+void FPSCounter() {
+	while (threadexit == false) {
+		dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
+		
+		// 1 sec interval
+		svcSleepThread(1000*1000*1000 / refreshrate);
+	}
+}
+
+void StartFPSCounterThread() {
+	threadCreate(&t0, FPSCounter, NULL, NULL, 0x100, 0x3F, 3);
+	threadStart(&t0);
+}
+
+void EndFPSCounterThread() {
+	threadexit = true;
+	threadWaitForExit(&t0);
+	threadClose(&t0);
+	threadexit = false;
+}
+
+//FPS Counter mode
 class com_FPS : public tsl::Gui {
 public:
     com_FPS() { }
@@ -379,26 +383,23 @@ public:
 		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f", FPSavg);
 		
 	}
-	// Called once every frame to handle inputs not handled by other UI elements
-    virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-        if (keysHeld & KEY_LSTICK) {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if (keysHeld & KEY_LSTICK) {
 			if (keysHeld & KEY_RSTICK) {
 				EndFPSCounterThread();
 				tsl::goBack();
 				return true;
 			}
 		}
-		return false;   // Return true here to signal the inputs have been consumed
-    }
+		return false;
+	}
 };
 
-
+//Full mode
 class FullOverlay : public tsl::Gui {
 public:
     FullOverlay() { }
 
-    // Called when this Gui gets loaded to create the UI
-    // Allocate all your elements on the heap. libtesla will make sure to clean them up when not needed anymore
     virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.5");
 
@@ -527,7 +528,6 @@ public:
 		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
 		
 	}
-	// Called once every frame to handle inputs not handled by other UI elements
     virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
         if (keysHeld & KEY_LSTICK) {
 			if (keysHeld & KEY_RSTICK) {
@@ -536,16 +536,15 @@ public:
 				return true;
 			}
 		}
-		return false;   // Return true here to signal the inputs have been consumed
+		return false;
     }
 };
 
+//Mini mode
 class MiniOverlay : public tsl::Gui {
 public:
     MiniOverlay() { }
 
-    // Called when this Gui gets loaded to create the UI
-    // Allocate all your elements on the heap. libtesla will make sure to clean them up when not needed anymore
     virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("", "");
 		
@@ -631,7 +630,6 @@ public:
 		else snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c);
 
 	}
-	// Called once every frame to handle inputs not handled by other UI elements
     virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
         if (keysHeld & KEY_LSTICK) {
 			if (keysHeld & KEY_RSTICK) {
@@ -640,16 +638,15 @@ public:
 				return true;
 			}
 		}
-		return false;   // Return true here to signal the inputs have been consumed
+		return false;
     }
 };
 
+//Main Menu
 class MainMenu : public tsl::Gui {
 public:
     MainMenu() { }
 
-    // Called when this Gui gets loaded to create the UI
-    // Allocate all your elements on the heap. libtesla will make sure to clean them up when not needed anymore
     virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.5");
 		auto list = new tsl::elm::List();
@@ -712,13 +709,12 @@ public:
 			refreshrate = 1;
 		}
 	}
-	// Called once every frame to handle inputs not handled by other UI elements
     virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if (keysHeld & KEY_B) {
 			tsl::goBack();
 			return true;
 		}
-		return false;   // Return true here to signal the inputs have been consumed
+		return false;
     }
 };
 
