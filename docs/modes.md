@@ -11,8 +11,8 @@ This mode you can know from older releases of Status Monitor. It contains all in
 | CPU Usage | Frequency: %.1f<br>Core #0: %.2f<br>Core #1: %.2f<br>Core #2: %.2f<br>Core #3: %.2f | Clockrate of all CPU cores in MHz<br>Load of CPU Core #0 calculated from IdleTickCount to percent value<br>Load of CPU Core #1 calculated from IdleTickCount to percent value<br>Load of CPU Core #2 calculated from IdleTickCount to percent value<br>Load of CPU Core #3 calculated from IdleTickCount to percent value |
 | GPU Usage | Frequency: %.1f<br>Load: %.1f                                                       | Clockrate of GPU in MHz<br>GPU Load provided by PMU in percent                                                                                                                                                                                                                                                            |
 | RAM Usage | Frequency: %.1f<br>%s: %.2f/%.2f                                                    | Clockrate of EMC in MHz<br>%s memory used/%s memory available in MB (not working with FW <5.0.0)                                                                                                                                                                                                                          |
-| Thermal   | SoC: %.2f<br>PCB: %.2f<br>Skin: %.2f<br>Fan: %.2f                                   | SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees*<br>Fan rotation level in percent                                                                                                                                                                          |
-* Explenation provided at the end of file
+| Thermal   | SoC: %.2f<br>PCB: %.2f<br>Skin: %.2f<br>Fan: %.2f                                   | SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees'<br>Fan rotation level in percent                                                                                                                                                                          |
+' Explenation provided at the end of file
 
 ```Optional (shows only when NX-FPS plugin installed)```
 
@@ -32,9 +32,9 @@ Contains most of supported informations with lower precision.
 | CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage, CPU frequency |
 | GPU      | %.1f@%.1f                  | Load, Frequency                                                           |
 | RAM      | %.0f/%.0f@%.1f             | Total RAM used, Total RAM available, EMC frequency                        |
-| TEMP     | %2.1f/%2.1f/%2.1f          | SoC temperature, PCB tempearute, Skin temperature*                         |
+| TEMP     | %2.1f/%2.1f/%2.1f          | SoC temperature, PCB tempearute, Skin temperature'                         |
 | FAN      | %2.2f                      | Fan rotation level                                                        |
-* Explenation provided at the end of file
+' Explenation provided at the end of file
 
 ```Optional (shows only when NX-FPS plugin installed)```
 
