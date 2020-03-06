@@ -12,6 +12,7 @@ This mode you can know from older releases of Status Monitor. It contains all in
 | GPU Usage | Frequency: %.1f<br>Load: %.1f                                                       | Clockrate of GPU in MHz<br>GPU Load provided by PMU in percent                                                                                                                                                                                                                                                            |
 | RAM Usage | Frequency: %.1f<br>%s: %.2f/%.2f                                                    | Clockrate of EMC in MHz<br>%s memory used/%s memory available in MB (not working with FW <5.0.0)                                                                                                                                                                                                                          |
 | Thermal   | SoC: %.2f<br>PCB: %.2f<br>Skin: %.2f<br>Fan: %.2f                                   | SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees'<br>Fan rotation level in percent                                                                                                                                                                         |
+
 ' Explenation provided at the end of file
 
 ```Optional (shows only when NX-FPS plugin installed)```
@@ -34,6 +35,7 @@ Contains most of supported informations with lower precision.
 | RAM      | %.0f/%.0f@%.1f             | Total RAM used, Total RAM available, EMC frequency                        |
 | TEMP     | %2.1f/%2.1f/%2.1f          | SoC temperature, PCB tempearute, Skin temperature'                         |
 | FAN      | %2.2f                      | Fan rotation level                                                        |
+
 ' Explenation provided at the end of file
 
 ```Optional (shows only when NX-FPS plugin installed)```
