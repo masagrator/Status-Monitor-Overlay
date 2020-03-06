@@ -60,22 +60,36 @@ This is temperature calculated from SoC and PCB temperatures that is mainly used
 Explanation provided by CTCaer
 >Temperature (tskin) calculation.
 >
+>
 >Console and Handheld:
+>
 >tsoc >= 84°C - Immediate sleep. No questions asked.
+>
 >tpcb >= 84°C - Immediate sleep. No questions asked.
 >
+>
 >Console only:
+>
 >tskin < 63°C - Clears both timers.
+>
 >tskin >= 63°C - Immediate sleep. No questions asked.
+>
 >
 >Handheld only:
+>
 >tskin < 58°C - Clears both timers.
+>
 >58°C <= tskin < 61°C - Starts 60s timer and clears 10s timer.
+>
 >61°C <= tskin < 63°C - Starts 10s timer.
+>
 >tskin >= 63°C - Immediate sleep. No questions asked.
 >
+>
 >The two timers are separate. If 61°C is reached, the 10s timer is immediatly started.
+>
 >If a timer ends and the temperature is not dropped, goes into sleep.
+>
 >
 >tskin is the specific calculation below:
 ```
