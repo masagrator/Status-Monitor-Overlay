@@ -42,8 +42,8 @@ Contains most of supported informations with lower precision.
 
 | Category | Format            | Explanation                                                              |
 |----------|-------------------|--------------------------------------------------------------------------|
-| PFPS     | %u                | Pushed Frames Per Second - how many frames were displayed in last second |
-| FPS      | %.2f              | Frames Per Second - value calculated by averaging frametime              |
+| PFPS     | %u                | Pushed Frames Per Second |
+| FPS      | %.2f              | Frames Per Second             |
 
 Works only in 1 or 5 Hz + vsync signal. You can change that with ZR + R + D-Pad Up/Down
 
