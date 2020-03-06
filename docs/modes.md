@@ -30,10 +30,10 @@ Contains most of supported informations with lower precision.
 
 | Category | Format                     | Explanation                                                               |
 |----------|----------------------------|---------------------------------------------------------------------------|
-| CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage, CPU frequency |
-| GPU      | %.1f@%.1f                  | Load, Frequency                                                           |
-| RAM      | %.0f/%.0f@%.1f             | Total RAM used, Total RAM available, EMC frequency                        |
-| TEMP     | %2.1f/%2.1f/%2.1f          | SoC temperature, PCB tempearute, Skin temperature'                         |
+| CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU frequency |
+| GPU      | %.1f@%.1f                  | Load@Frequency                                                           |
+| RAM      | %.0f/%.0f@%.1f             | Total RAM used/Total RAM available@EMC frequency                        |
+| TEMP     | %2.1f/%2.1f/%2.1f          | SoC temperature/PCB tempearute/Skin temperature'                         |
 | FAN      | %2.2f                      | Fan rotation level                                                        |
 
 ' Explenation provided at the end of file
