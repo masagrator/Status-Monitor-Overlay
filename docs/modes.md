@@ -28,6 +28,8 @@ Works only in 1 and 5 Hz + vsync signal. You can change that with ZR + R + D-Pad
 
 # Mini
 
+![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/mini.jpg?raw=true)
+
 Contains most of supported informations with lower precision.
 
 | Category | Format                     | Explanation                                                               |
@@ -50,6 +52,8 @@ Contains most of supported informations with lower precision.
 Works only in 1 or 5 Hz + vsync signal. You can change that with ZR + R + D-Pad Up/Down
 
 # FPS Counter
+
+![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/fps.jpg?raw=true)
 
 It shows only FPS value in 31Hz + vsync signal. 
 If games is not launched or plugin/SaltyNX not correctly installed, it will show always 0.0 value.
