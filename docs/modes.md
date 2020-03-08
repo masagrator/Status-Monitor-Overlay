@@ -62,7 +62,8 @@ If games is not launched or plugin/SaltyNX not correctly installed, it will show
 
 > What is Skin temperature (tskin)?
 
-This is temperature calculated from SoC and PCB temperatures that is mainly used to prevent Switch from overheating.
+This is temperature calculated from SoC and PCB temperatures that is mainly used to prevent Switch from overheating. Reading it is not supported on FWs <5.0.0.
+
 Explanation provided by CTCaer
 >Temperature (tskin) calculation.
 >
