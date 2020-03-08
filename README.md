@@ -4,15 +4,13 @@ Monitor Your hardware in real time!
 This is an overlay homebrew dedicated to Nintendo Switch.
 You need to have installed Tesla environment to use it.
 
-Interval between changes is set to 1s + vsync signal by default. You can change that to 200ms + vsync with con of higher Core #3 usage. In case of ~100% core load it can take more time refresh info about this core.
+Tool contains three modes to choose, each one is explained [here](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/modes.md).
 
-I have changed exit button from B to press and hold Left Stick + Right Stick.
-
-If you want to use it simultaneously with game, you need to first start game, then run this homebrew, next press Home button. Now input is detected by all apps.
+You can exit from selected mode by pressing and holding Left Stick + Right Stick. To exit from main menu press B.
 
 If it's not working in dock, you need to first start Status Monitor, then put Nintendo Switch to dock.
 
-# What is currently showing:
+# What is currently supported:
 - CPU Usage for each core (Cores #0-#2 are used by apps/games, Core #3 is used by OS, background processes and also Tesla overlays)
 - GPU Load
 - CPU, GPU & RAM actual frequency
@@ -27,13 +25,10 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 - PFPS and FPS (with help of [NX-FPS](https://github.com/masagrator/NX-FPS), more info in repo. Not installing it results in not showing FPS counters on overlay)
 
 # Planned:
-- Add 3 modes: Minimal, Standard, Graph
+- Add Graph mode
 
 # Requirements:
 - From 0.4.1 you need Tesla Menu >=1.0.2
-
-
-![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/screen.jpg?raw=true)
 
 ---
 
