@@ -4,6 +4,8 @@ Status Monitor Overlay from 0.5 release contains three modes to choose from Main
 
 # Full
 
+![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/screen.jpg?raw=true)
+
 This mode you can know from older releases of Status Monitor. It contains all informations properly described and supported with high precision.
 
 | Category  | Format                                                                              | Explanation                                                                                                                                                                                                                                                                                                               |
