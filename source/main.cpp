@@ -229,8 +229,8 @@ void Misc() {
 		
 		//Temperatures
 		if (R_SUCCEEDED(tsCheck)) {
-			tsGetTemperatureMilliC(TsLocation_Internal, &SoC_temperaturemiliC);
-			tsGetTemperatureMilliC(TsLocation_External, &PCB_temperaturemiliC);
+			tsGetTemperatureMilliC(TsLocation_External, &SoC_temperaturemiliC);
+			tsGetTemperatureMilliC(TsLocation_Internal, &PCB_temperaturemiliC);
 		}
 		if (R_SUCCEEDED(tcCheck)) tcGetSkinTemperatureMilliC(&skin_temperaturemiliC);
 		
