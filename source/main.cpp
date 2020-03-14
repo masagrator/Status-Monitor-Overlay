@@ -35,24 +35,12 @@ Result dmntchtCheck = 1;
 
 //Temperatures
 s32 SoC_temperaturemiliC = 0;
-float SoC_temperatureC = 0;
 s32 PCB_temperaturemiliC = 0;
-float PCB_temperatureC = 0;
 s32 skin_temperaturemiliC = 0;
-float skin_temperatureC = 0;
 char SoCPCB_temperature_c[64];
 char skin_temperature_c[32];
 
 //CPU Usage
-double percent = 0;
-u64 idletick_a0 = 0;
-u64 idletick_a1 = 0;
-u64 idletick_a2 = 0;
-u64 idletick_a3 = 0;
-u64 idletick_b0 = 0;
-u64 idletick_b1 = 0;
-u64 idletick_b2 = 0;
-u64 idletick_b3 = 0;
 u64 idletick0 = 19200000;
 u64 idletick1 = 19200000;
 u64 idletick2 = 19200000;
@@ -66,15 +54,12 @@ char CPU_compressed_c[128];
 //Frequency
 ///CPU
 u32 CPU_Hz = 0;
-float CPU_Hz_f = 0;
 char CPU_Hz_c[32];
 ///GPU
 u32 GPU_Hz = 0;
-float GPU_Hz_f = 0;
 char GPU_Hz_c[32];
 ///RAM
 u32 RAM_Hz = 0;
-float RAM_Hz_f = 0;
 char RAM_Hz_c[32];
 
 //RAM Size
@@ -86,41 +71,28 @@ char RAM_systemunsafe_c[64];
 char RAM_compressed_c[320];
 char RAM_var_compressed_c[320];
 u64 RAM_Total_all_u = 0;
-float RAM_Total_all_f = 0;
 u64 RAM_Total_application_u = 0;
-float RAM_Total_application_f = 0;
 u64 RAM_Total_applet_u = 0;
-float RAM_Total_applet_f = 0;
 u64 RAM_Total_system_u = 0;
-float RAM_Total_system_f = 0;
 u64 RAM_Total_systemunsafe_u = 0;
-float RAM_Total_systemunsafe_f = 0;
 u64 RAM_Used_all_u = 0;
-float RAM_Used_all_f = 0;
 u64 RAM_Used_application_u = 0;
-float RAM_Used_application_f = 0;
 u64 RAM_Used_applet_u = 0;
-float RAM_Used_applet_f = 0;
 u64 RAM_Used_system_u = 0;
-float RAM_Used_system_f = 0;
 u64 RAM_Used_systemunsafe_u = 0;
-float RAM_Used_systemunsafe_f = 0;
 
 //Fan
 float Rotation_SpeedLevel_f = 0;
-float Rotation_SpeedLevel_percent = 0;
 char Rotation_SpeedLevel_c[64];
 
 //GPU Usage
 u32 fd = 0;
 u32 GPU_Load_u = 0;
-float GPU_Load_percent = 0;
 char GPU_Load_c[32];
-float GPU_Load_max = 1000;
 
 //NX-FPS
 bool GameRunning = false;
-uint8_t check = 0;
+bool check = false;
 bool SaltySD = false;
 uintptr_t FPSaddress = 0x0;
 uintptr_t FPSavgaddress = 0x0;
@@ -154,10 +126,10 @@ void CheckIfGameRunning() {
 			uint64_t PID = 0;
 			rc = pmdmntGetApplicationProcessId(&PID);
 			if (R_FAILED(rc)) {
-				if (check == 0) {
+				if (check == false) {
 					remove("sdmc:/SaltySD/FPSoffset.hex");
 				}
-				check = 1;
+				check = true;
 				GameRunning = false;
 			}
 			else if (GameRunning == false) {
@@ -169,7 +141,7 @@ void CheckIfGameRunning() {
 					FPSavgaddress = FPSaddress - 0x8;
 					fclose(FPSoffset);
 					GameRunning = true;
-					check = 0;
+					check = false;
 				}
 			}
 		}
@@ -266,6 +238,8 @@ void Misc() {
 //Check each core for idled ticks in 1s intervals, they cannot read info about other core than they are assigned
 void CheckCore0() {
 	while (threadexit == false) {
+		static u64 idletick_a0 = 0;
+		static u64 idletick_b0 = 0;
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
 		svcSleepThread(1000*1000*1000 / refreshrate);
 		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
@@ -275,6 +249,8 @@ void CheckCore0() {
 
 void CheckCore1() {
 	while (threadexit == false) {
+		static u64 idletick_a1 = 0;
+		static u64 idletick_b1 = 0;
 		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
 		svcSleepThread(1000*1000*1000 / refreshrate);
 		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
@@ -284,6 +260,8 @@ void CheckCore1() {
 
 void CheckCore2() {
 	while (threadexit == false) {
+		static u64 idletick_a2 = 0;
+		static u64 idletick_b2 = 0;
 		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
 		svcSleepThread(1000*1000*1000 / refreshrate);
 		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
@@ -293,6 +271,8 @@ void CheckCore2() {
 
 void CheckCore3() {
 	while (threadexit == false) {
+		static u64 idletick_a3 = 0;
+		static u64 idletick_b3 = 0;
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		svcSleepThread(1000*1000*1000 / refreshrate);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
@@ -466,37 +446,37 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		CPU_Hz_f = (float)CPU_Hz / 1000000;
+		float CPU_Hz_f = (float)CPU_Hz / 1000000;
 		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", CPU_Hz_f);
-		percent = (double) (((double)systemtickfrequency - (double)idletick0) / ((double)systemtickfrequency)) * 100;
+		double percent = ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick1) / ((double)systemtickfrequency)) * 100;
+		percent = ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick2) / ((double)systemtickfrequency)) * 100;
+		percent = ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
+		percent = ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 		
 		///GPU
-		GPU_Hz_f = (float)GPU_Hz / 1000000;
+		float GPU_Hz_f = (float)GPU_Hz / 1000000;
 		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", GPU_Hz_f);
-		GPU_Load_percent = (float)GPU_Load_u / GPU_Load_max * 100;
+		float GPU_Load_percent = (float)GPU_Load_u / 10;
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", GPU_Load_percent, "%");
 		
 		///RAM
-		RAM_Hz_f = (float)RAM_Hz / 1000000;
+		float RAM_Hz_f = (float)RAM_Hz / 1000000;
 		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz", RAM_Hz_f);
-		RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
-		RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
-		RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
-		RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
-		RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
-		RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
-		RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
-		RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
-		RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
-		RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
+		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
+		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
+		float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
+		float RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
+		float RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
+		float RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
+		float RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
+		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
+		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
+		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
 		snprintf(RAM_all_c, sizeof RAM_all_c, "Total:");
 		snprintf(RAM_application_c, sizeof RAM_application_c, "Application:");
 		snprintf(RAM_applet_c, sizeof RAM_applet_c, "Applet:");
@@ -511,12 +491,12 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
 		
 		///Thermal
-		SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
-		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
+		float SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
+		float PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
 		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2.2f \u00B0C\nPCB: %2.2f \u00B0C", SoC_temperatureC, PCB_temperatureC);
-		skin_temperatureC = (float)skin_temperaturemiliC / 1000;
+		float skin_temperatureC = (float)skin_temperaturemiliC / 1000;
 		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %2.2f \u00B0C", skin_temperatureC);
-		Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
+		float Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %2.2f%s", Rotation_SpeedLevel_percent, "%");
 		
 		///FPS
@@ -579,43 +559,43 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		CPU_Hz_f = (float)CPU_Hz / 1000000;
-		percent = (double) (((double)systemtickfrequency - (double)idletick0) / ((double)systemtickfrequency)) * 100;
+		float CPU_Hz_f = (float)CPU_Hz / 1000000;
+		double percent = ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick1) / ((double)systemtickfrequency)) * 100;
+		percent = ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick2) / ((double)systemtickfrequency)) * 100;
+		percent = ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%s", percent, "%");
-		percent = (double) (((double)systemtickfrequency - (double)idletick3) / ((double)systemtickfrequency)) * 100;
+		percent = ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%s", percent, "%");
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]@%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, CPU_Hz_f);
 		
 		///GPU
-		GPU_Hz_f = (float)GPU_Hz / 1000000;
-		GPU_Load_percent = (float)GPU_Load_u / GPU_Load_max * 100;
+		float GPU_Hz_f = (float)GPU_Hz / 1000000;
+		float GPU_Load_percent = (float)GPU_Load_u / 10;
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s@%.1f", GPU_Load_percent, "%", GPU_Hz_f);
 		
 		///RAM
-		RAM_Hz_f = (float)RAM_Hz / 1000000;
-		RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
-		RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
-		RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
-		RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
-		RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
-		RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
-		RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
-		RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
-		RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
-		RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
+		float RAM_Hz_f = (float)RAM_Hz / 1000000;
+		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
+		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
+		float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
+		float RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
+		float RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
+		float RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
+		float RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
+		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
+		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
+		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
 		snprintf(RAM_all_c, sizeof RAM_all_c, "%.0f/%.0fMB", RAM_Used_all_f, RAM_Total_all_f);
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, RAM_Hz_f);
 		
 		///Thermal
-		SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
-		PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
-		skin_temperatureC = (float)skin_temperaturemiliC / 1000;
+		float SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
+		float PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
+		float skin_temperatureC = (float)skin_temperaturemiliC / 1000;
 		snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", SoC_temperatureC, PCB_temperatureC, skin_temperatureC);
-		Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
+		float Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_percent, "%");
 		
 		///FPS
