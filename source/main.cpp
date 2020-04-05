@@ -1,7 +1,5 @@
 #define TESLA_INIT_IMPL
 #include <tesla.hpp>
-#include "services/tc.hpp"
-#include "services/fan.hpp"
 #include "libstratosphere/dmntcht.hpp"
 
 //Common

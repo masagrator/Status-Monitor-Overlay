@@ -41,8 +41,8 @@ APP_TITLE	:=	Status-Monitor
 
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source source/services source/libstratosphere
-INCLUDES	:=	include include/services include/libstratosphere lib/libtesla/include
+SOURCES		:=	source source/libstratosphere
+INCLUDES	:=	include include/libstratosphere lib/libtesla/include
 NO_ICON		:=  1
 
 #---------------------------------------------------------------------------------
