@@ -17,7 +17,7 @@ This mode you can know from older releases of Status Monitor. It contains all in
 
 ' Explenation provided at the end of file
 
-```Optional (shows only when NX-FPS plugin installed)```
+```Optional (shows only when NX-FPS plugin installed and you are using Atmosphere)```
 
 | Category | Format            | Explanation                                                              |
 |----------|-------------------|--------------------------------------------------------------------------|
@@ -42,7 +42,7 @@ Contains most of supported informations with lower precision.
 
 ' Explenation provided at the end of file
 
-```Optional (shows only when NX-FPS plugin installed)```
+```Optional (shows only when NX-FPS plugin installed and you are using Atmosphere)```
 
 | Category | Format            | Explanation                                                              |
 |----------|-------------------|--------------------------------------------------------------------------|
@@ -57,6 +57,7 @@ Works only in 1 or 5 Hz + vsync signal. You can change that with ZR + R + D-Pad 
 
 It shows only FPS value in 31Hz + vsync signal. 
 If game is not launched or plugin/SaltyNX not correctly installed, it will show always 0.0 value.
+Mode available only for Atmosphere.
 
 # Additional info
 
