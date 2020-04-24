@@ -13,6 +13,7 @@ Thread t6;
 u64 systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
+bool Atmosphere_present = false;
 u64 refreshrate = 1;
 FanController g_ICon;
 
@@ -117,8 +118,6 @@ bool CheckPort () {
 	else return true;
 }
 
-bool Atmosphere_present = false;
-
 bool isServiceRunning(const char *serviceName) {	
 	Handle handle;	
 	SmServiceName service_name = smEncodeName(serviceName);	
@@ -133,30 +132,32 @@ bool isServiceRunning(const char *serviceName) {
 
 void CheckIfGameRunning() {
 	while (threadexit2 == false) {
-		Result rc = 1;
-		uint64_t PID = 0;
-		rc = pmdmntGetApplicationProcessId(&PID);
-		if (R_FAILED(rc)) {
-			if (check == false) {
-				remove("sdmc:/SaltySD/FPSoffset.hex");
+		if (R_SUCCEEDED(dmntchtCheck)) {
+			Result rc = 1;
+			uint64_t PID = 0;
+			rc = pmdmntGetApplicationProcessId(&PID);
+			if (R_FAILED(rc)) {
+				if (check == false) {
+					remove("sdmc:/SaltySD/FPSoffset.hex");
+				}
+				check = true;
+				GameRunning = false;
 			}
-			check = true;
-			GameRunning = false;
-		}
-		else if (GameRunning == false) {
-			svcSleepThread(1000*1000*1000);
-			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
-			if ((FPSoffset != NULL)) {
-				dmntchtForceOpenCheatProcess();
-				fread(&FPSaddress, 0x5, 1, FPSoffset);
-				FPSavgaddress = FPSaddress - 0x8;
-				fclose(FPSoffset);
-				GameRunning = true;
-				check = false;
+			else if (GameRunning == false) {
+				svcSleepThread(1000*1000*1000);
+				FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
+				if ((FPSoffset != NULL)) {
+					dmntchtForceOpenCheatProcess();
+					fread(&FPSaddress, 0x5, 1, FPSoffset);
+					FPSavgaddress = FPSaddress - 0x8;
+					fclose(FPSoffset);
+					GameRunning = true;
+					check = false;
+				}
 			}
 		}
+		svcSleepThread(1000*1000*1000);
 	}
-	svcSleepThread(1000*1000*1000);
 }
 
 //Check for input outside of FPS limitations
@@ -685,8 +686,8 @@ public:
 				return false;
 			});
 			list->addItem(comFPS);
-
 		}
+
 		rootFrame->setContent(list);
 
 		return rootFrame;
@@ -716,10 +717,10 @@ public:
 
 	virtual void initServices() override {
 		//Initialize services
-		Atmosphere_present = isServiceRunning("dmnt:cht") && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
-		if (Atmosphere_present == true) SaltySD = CheckPort();
 		smCheck = smInitialize();
 		if (R_SUCCEEDED(smCheck)) {
+			Atmosphere_present = isServiceRunning("dmnt:cht") && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
+			if (Atmosphere_present == true) SaltySD = CheckPort();
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
 			tsCheck = tsInitialize();
@@ -732,22 +733,25 @@ public:
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 			if (SaltySD == true) {
-				dmntchtCheck = dmntchtInitialize();
-				if (R_SUCCEEDED(dmntchtCheck)) {
-					//Assign functions to core of choose
-					threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
-					//Start assigned functions
-					threadStart(&t6);
-				}
+					dmntchtCheck = dmntchtInitialize();
 			}
 		}
 		Hinted = envIsSyscallHinted(0x6F);
+		
+		if (R_SUCCEEDED(dmntchtCheck)) {
+			//Assign functions to core of choose
+			threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
+			
+			//Start assigned functions
+			threadStart(&t6);
+		}
 	}
 
 	virtual void exitServices() override {
 		if (R_SUCCEEDED(dmntchtCheck)) {
 			threadexit2 = true;
 			threadWaitForExit(&t6);
+			//Free thread
 			threadClose(&t6);
 		}
 		
@@ -762,7 +766,6 @@ public:
 		nvClose(fd);
 		nvExit();
 		smExit();
-
 	}
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
