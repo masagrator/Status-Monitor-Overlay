@@ -56,7 +56,9 @@ Works only in 1 or 5 Hz + vsync signal. You can change that with ZR + R + D-Pad 
 ![screen image](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/fps.jpg?raw=true)
 
 It shows only FPS value in 31Hz + vsync signal. 
+
 If game is not launched or plugin/SaltyNX not correctly installed, it will show always 0.0 value.
+
 Mode available only for Atmosphere.
 
 # Additional info
