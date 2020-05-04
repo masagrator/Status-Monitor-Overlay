@@ -109,7 +109,7 @@ bool CheckPort () {
     for (int i = 0; i < 200; i++)
     {
         ret = svcConnectToNamedPort(&saltysd, "InjectServ");
-        svcSleepThread(1000*1000);
+        svcSleepThread(1'000'000);
         
         if (!ret) break;
     }
@@ -130,7 +130,7 @@ bool isServiceRunning(const char *serviceName) {
 	return running;	
 }
 
-void CheckIfGameRunning() {
+void CheckIfGameRunning(void*) {
 	while (threadexit2 == false) {
 		if (R_SUCCEEDED(dmntchtCheck)) {
 			Result rc = 1;
@@ -144,7 +144,7 @@ void CheckIfGameRunning() {
 				GameRunning = false;
 			}
 			else if (GameRunning == false) {
-				svcSleepThread(1000*1000*1000);
+				svcSleepThread(1'000'000'000);
 				FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
 				if ((FPSoffset != NULL)) {
 					dmntchtForceOpenCheatProcess();
@@ -156,12 +156,12 @@ void CheckIfGameRunning() {
 				}
 			}
 		}
-		svcSleepThread(1000*1000*1000);
+		svcSleepThread(1'000'000'000);
 	}
 }
 
 //Check for input outside of FPS limitations
-void CheckButtons() {
+void CheckButtons(void*) {
 	while (threadexit == false) {
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
@@ -183,12 +183,12 @@ void CheckButtons() {
 				}
 			}
 		}
-		svcSleepThread(100*1000*1000);
+		svcSleepThread(100'000'000);
 	}
 }
 
 //Stuff that doesn't need multithreading
-void Misc() {
+void Misc(void*) {
 	while (threadexit == false) {
 		
 		// CPU, GPU and RAM Frequency
@@ -242,50 +242,50 @@ void Misc() {
 		}
 		
 		// 1 sec interval
-		svcSleepThread(1000*1000*1000 / refreshrate);
+		svcSleepThread(1'000'000'000 / refreshrate);
 	}
 }
 
 //Check each core for idled ticks in 1s intervals, they cannot read info about other core than they are assigned
-void CheckCore0() {
+void CheckCore0(void*) {
 	while (threadexit == false) {
 		static u64 idletick_a0 = 0;
 		static u64 idletick_b0 = 0;
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
-		svcSleepThread(1000*1000*1000 / refreshrate);
+		svcSleepThread(1'000'000'000 / refreshrate);
 		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
 		idletick0 = idletick_a0 - idletick_b0;
 	}
 }
 
-void CheckCore1() {
+void CheckCore1(void*) {
 	while (threadexit == false) {
 		static u64 idletick_a1 = 0;
 		static u64 idletick_b1 = 0;
 		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-		svcSleepThread(1000*1000*1000 / refreshrate);
+		svcSleepThread(1'000'000'000 / refreshrate);
 		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
 		idletick1 = idletick_a1 - idletick_b1;
 	}
 }
 
-void CheckCore2() {
+void CheckCore2(void*) {
 	while (threadexit == false) {
 		static u64 idletick_a2 = 0;
 		static u64 idletick_b2 = 0;
 		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-		svcSleepThread(1000*1000*1000 / refreshrate);
+		svcSleepThread(1'000'000'000 / refreshrate);
 		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
 		idletick2 = idletick_a2 - idletick_b2;
 	}
 }
 
-void CheckCore3() {
+void CheckCore3(void*) {
 	while (threadexit == false) {
 		static u64 idletick_a3 = 0;
 		static u64 idletick_b3 = 0;
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		svcSleepThread(1000*1000*1000 / refreshrate);
+		svcSleepThread(1'000'000'000 / refreshrate);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		idletick3 = idletick_a3 - idletick_b3;
 	}
@@ -326,12 +326,12 @@ void CloseThreads() {
 }
 
 //Separate functions dedicated to "FPS Counter" mode
-void FPSCounter() {
+void FPSCounter(void*) {
 	while (threadexit == false) {
 		dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
 		
 		// 1 sec interval
-		svcSleepThread(1000*1000*1000 / refreshrate);
+		svcSleepThread(1'000'000'000 / refreshrate);
 	}
 }
 
