@@ -285,20 +285,21 @@ void CheckCore3(void*) {
 		static u64 idletick_a3 = 0;
 		static u64 idletick_b3 = 0;
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		svcSleepThread(1'000'000'000 / refreshrate);
+		svcSleepThread(1'000'000'000 / refreshrate / 2);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		idletick3 = idletick_a3 - idletick_b3;
+		
 	}
 }
 
 //Start reading all stats
 void StartThreads() {
-	threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x3B, 0);
-	threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x3B, 1);
-	threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x3B, 2);
-	threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x3F, 3);
-	threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3A, -2);
-	threadCreate(&t5, CheckButtons, NULL, NULL, 0x200, 0x39, -2);
+	threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x10, 0);
+	threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x10, 1);
+	threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x10, 2);
+	threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x10, 3);
+	threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3F, -2);
+	threadCreate(&t5, CheckButtons, NULL, NULL, 0x200, 0x3F, -2);
 	threadStart(&t0);
 	threadStart(&t1);
 	threadStart(&t2);
@@ -392,7 +393,7 @@ public:
     FullOverlay() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.5.3");
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.5.4");
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
@@ -639,7 +640,7 @@ public:
     MainMenu() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.5.3");
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.5.4");
 		auto list = new tsl::elm::List();
 		
 		auto Full = new tsl::elm::ListItem("Full");
