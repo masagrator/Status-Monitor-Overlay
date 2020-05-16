@@ -285,7 +285,7 @@ void CheckCore3(void*) {
 		static u64 idletick_a3 = 0;
 		static u64 idletick_b3 = 0;
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		svcSleepThread(1'000'000'000 / refreshrate / 2);
+		svcSleepThread(1'000'000'000 / refreshrate);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		idletick3 = idletick_a3 - idletick_b3;
 		
