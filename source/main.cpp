@@ -98,7 +98,7 @@ uintptr_t FPSavgaddress = 0x0;
 char FPS_c[32];
 uint8_t FPS = 0xFE;
 char FPSavg_c[32];
-float FPSavg = 255;
+float FPSavg = 254;
 char FPS_compressed_c[64];
 char FPS_var_compressed_c[64];
 
