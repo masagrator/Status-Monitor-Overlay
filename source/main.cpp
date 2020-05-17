@@ -193,16 +193,16 @@ void Misc(void*) {
 		
 		// CPU, GPU and RAM Frequency
 		if (R_SUCCEEDED(clkrstCheck)) {
-			ClkrstSession cpuSession;
-			clkrstOpenSession(&cpuSession, PcvModuleId_CpuBus, 3);
-			clkrstGetClockRate(&cpuSession, &CPU_Hz);
-			clkrstCloseSession(&cpuSession);
-			clkrstOpenSession(&cpuSession, PcvModuleId_GPU, 3);
-			clkrstGetClockRate(&cpuSession, &GPU_Hz);
-			clkrstCloseSession(&cpuSession);
-			clkrstOpenSession(&cpuSession, PcvModuleId_EMC, 3);
-			clkrstGetClockRate(&cpuSession, &RAM_Hz);
-			clkrstCloseSession(&cpuSession);
+			ClkrstSession clkSession;
+			clkrstOpenSession(&clkSession, PcvModuleId_CpuBus, 3);
+			clkrstGetClockRate(&clkSession, &CPU_Hz);
+			clkrstCloseSession(&clkSession);
+			clkrstOpenSession(&clkSession, PcvModuleId_GPU, 3);
+			clkrstGetClockRate(&clkSession, &GPU_Hz);
+			clkrstCloseSession(&clkSession);
+			clkrstOpenSession(&clkSession, PcvModuleId_EMC, 3);
+			clkrstGetClockRate(&clkSession, &RAM_Hz);
+			clkrstCloseSession(&clkSession);
 		}
 		else if (R_SUCCEEDED(pcvCheck)) {
 			pcvGetClockRate(PcvModule_CpuBus, &CPU_Hz);
