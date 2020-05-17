@@ -106,13 +106,12 @@ char FPS_var_compressed_c[64];
 bool CheckPort () {
 	Result ret;
 	Handle saltysd;
-    for (int i = 0; i < 200; i++)
-    {
-        ret = svcConnectToNamedPort(&saltysd, "InjectServ");
-        svcSleepThread(1'000'000);
-        
-        if (!ret) break;
-    }
+	for (int i = 0; i < 200; i++) {
+   		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
+        	svcSleepThread(1'000'000);
+        	
+        	if (!ret) break;
+	}
 	svcCloseHandle(saltysd);
 	if (ret != 0x0) return false;
 	else return true;
@@ -733,9 +732,7 @@ public:
 			}
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
-			if (SaltySD == true) {
-					dmntchtCheck = dmntchtInitialize();
-			}
+			if (SaltySD == true) dmntchtCheck = dmntchtInitialize();
 		}
 		Hinted = envIsSyscallHinted(0x6F);
 		
