@@ -107,10 +107,18 @@ bool CheckPort () {
 	Result ret;
 	Handle saltysd;
 	for (int i = 0; i < 200; i++) {
-   		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
-        	svcSleepThread(1'000'000);
-        	
-        	if (!ret) break;
+		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
+		svcSleepThread(1'000'000);
+		
+		if (!ret) break;
+	}
+	svcCloseHandle(saltysd);
+	if (ret != 0x0) return false;
+	for (int i = 0; i < 200; i++) {
+		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
+		svcSleepThread(1'000'000);
+		
+		if (!ret) break;
 	}
 	svcCloseHandle(saltysd);
 	if (ret != 0x0) return false;
@@ -670,7 +678,7 @@ public:
 			return false;
 		});
 		list->addItem(Mini);
-		if (Atmosphere_present == true) {
+		if (Atmosphere_present == true && R_SUCCEEDED(dmntchtCheck)) {
 			auto comFPS = new tsl::elm::ListItem("FPS Counter");
 			comFPS->setClickListener([](u64 keys) {
 				if (keys & KEY_A) {
