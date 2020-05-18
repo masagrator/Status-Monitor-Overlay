@@ -18,7 +18,7 @@ u64 refreshrate = 1;
 FanController g_ICon;
 
 //Mini mode
-char Variables[256];
+char Variables[2096];
 
 //Checks
 Result smCheck = 1;
@@ -48,7 +48,7 @@ char CPU_Usage0[32];
 char CPU_Usage1[32];
 char CPU_Usage2[32];
 char CPU_Usage3[32];
-char CPU_compressed_c[128];
+char CPU_compressed_c[1224];
 
 //Frequency
 ///CPU
@@ -68,7 +68,7 @@ char RAM_applet_c[64];
 char RAM_system_c[64];
 char RAM_systemunsafe_c[64];
 char RAM_compressed_c[320];
-char RAM_var_compressed_c[320];
+char RAM_var_compressed_c[640];
 u64 RAM_Total_all_u = 0;
 u64 RAM_Total_application_u = 0;
 u64 RAM_Total_applet_u = 0;
@@ -400,7 +400,7 @@ public:
     FullOverlay() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.5.4");
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.5.5");
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
@@ -445,7 +445,7 @@ public:
 			}
 			
 			if (refreshrate == 5) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Down to slow down refresh", false, 20, 675, 15, renderer->a(0xFFFF));
-			if (refreshrate == 1) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Up to speed up refresh", false, 20, 675, 15, renderer->a(0xFFFF));
+			else if (refreshrate == 1) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Up to speed up refresh", false, 20, 675, 15, renderer->a(0xFFFF));
 		
 		});
 
@@ -647,7 +647,7 @@ public:
     MainMenu() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.5.4");
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.5.5");
 		auto list = new tsl::elm::List();
 		
 		auto Full = new tsl::elm::ListItem("Full");
@@ -678,7 +678,7 @@ public:
 			return false;
 		});
 		list->addItem(Mini);
-		if (Atmosphere_present == true && R_SUCCEEDED(dmntchtCheck)) {
+		if (R_SUCCEEDED(dmntchtCheck)) {
 			auto comFPS = new tsl::elm::ListItem("FPS Counter");
 			comFPS->setClickListener([](u64 keys) {
 				if (keys & KEY_A) {
@@ -727,37 +727,43 @@ public:
 		//Initialize services
 		smCheck = smInitialize();
 		if (R_SUCCEEDED(smCheck)) {
-			Atmosphere_present = isServiceRunning("dmnt:cht") && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
-			if (Atmosphere_present == true) SaltySD = CheckPort();
+			
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
+			
 			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
+			
 			fanCheck = fanInitialize();
 			if (R_SUCCEEDED(fanCheck)) {
 				if (hosversionAtLeast(7,0,0)) fanCheck = fanOpenController(&g_ICon, 0x3D000001);
 				else fanCheck = fanOpenController(&g_ICon, 1);
 			}
+			
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
+			
+			Atmosphere_present = isServiceRunning("dmnt:cht") && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
+			if (Atmosphere_present == true) SaltySD = CheckPort();
 			if (SaltySD == true) dmntchtCheck = dmntchtInitialize();
+			
 		}
 		Hinted = envIsSyscallHinted(0x6F);
 		
 		if (R_SUCCEEDED(dmntchtCheck)) {
-			//Assign functions to core of choose
+			//Assign NX-FPS to default core
 			threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
 			
-			//Start assigned functions
+			//Start NX-FPS detection
 			threadStart(&t6);
 		}
 	}
 
 	virtual void exitServices() override {
 		if (R_SUCCEEDED(dmntchtCheck)) {
+			//Free NX-FPS thread
 			threadexit2 = true;
 			threadWaitForExit(&t6);
-			//Free thread
 			threadClose(&t6);
 		}
 		
