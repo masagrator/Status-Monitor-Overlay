@@ -18,7 +18,7 @@ u64 refreshrate = 1;
 FanController g_ICon;
 
 //Mini mode
-char Variables[2096];
+char Variables[672];
 
 //Checks
 Result smCheck = 1;
@@ -48,7 +48,7 @@ char CPU_Usage0[32];
 char CPU_Usage1[32];
 char CPU_Usage2[32];
 char CPU_Usage3[32];
-char CPU_compressed_c[1224];
+char CPU_compressed_c[160];
 
 //Frequency
 ///CPU
@@ -68,7 +68,7 @@ char RAM_applet_c[64];
 char RAM_system_c[64];
 char RAM_systemunsafe_c[64];
 char RAM_compressed_c[320];
-char RAM_var_compressed_c[640];
+char RAM_var_compressed_c[320];
 u64 RAM_Total_all_u = 0;
 u64 RAM_Total_application_u = 0;
 u64 RAM_Total_applet_u = 0;
