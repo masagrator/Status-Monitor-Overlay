@@ -57,9 +57,9 @@ Works only in 1 or 5 Hz + vsync signal. You can change that with ZR + R + D-Pad 
 
 It shows only FPS value in 31Hz + vsync signal. 
 
-If game is not launched or plugin/SaltyNX not correctly installed, it will show always 0.0 value.
+If game is not launched, it will show always 0.0 value.
 
-Mode available only for Atmosphere.
+Mode available only for Atmosphere with SaltyNX installed.
 
 # Additional info
 
