@@ -22,7 +22,7 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
   - System Unsafe
 - SoC, PCB & Skin temperatures (Skin temperature not supported by FWs <5.0.0)
 - Fan Rotation Level
-- PFPS and FPS (with help of [NX-FPS](https://github.com/masagrator/NX-FPS), more info in repo. Not installing it results in not showing FPS counters on overlay) [Not available for SX OS]
+- PFPS and FPS (with help of [NX-FPS](https://github.com/masagrator/NX-FPS), more info in repo. Not installing it results in not showing FPS counters on overlay)
 
 # Planned:
 - Add Graph mode
