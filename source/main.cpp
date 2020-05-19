@@ -31,7 +31,6 @@ Result tcCheck = 1;
 Result Hinted = 1;
 Result pmdmntCheck = 1;
 Result dmntchtCheck = 1;
-Result debugproc = 1;
 
 //Temperatures
 s32 SoC_temperaturemiliC = 0;
@@ -94,7 +93,6 @@ char GPU_Load_c[32];
 bool GameRunning = false;
 bool check = false;
 bool SaltySD = false;
-bool checkdebug = false;
 uintptr_t FPSaddress = 0x0;
 uintptr_t FPSavgaddress = 0x0;
 uint64_t PID = 0;
