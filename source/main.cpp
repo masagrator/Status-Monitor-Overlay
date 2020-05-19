@@ -151,7 +151,6 @@ void CheckIfGameRunning(void*) {
 				check = true;
 			}
 			GameRunning = false;
-			checkdebug = false;
 			svcCloseHandle(debug);
 		}
 		else if (GameRunning == false) {
@@ -160,11 +159,11 @@ void CheckIfGameRunning(void*) {
 			if ((FPSoffset != NULL)) {
 				if (Atmosphere_present == true) dmntchtForceOpenCheatProcess();
 				else svcSleepThread(1'000'000'000);
-				GameRunning = true;
-				check = false;
 				fread(&FPSaddress, 0x5, 1, FPSoffset);
 				FPSavgaddress = FPSaddress - 0x8;
 				fclose(FPSoffset);
+				GameRunning = true;
+				check = false;
 			}
 		}
 		svcSleepThread(1'000'000'000);
