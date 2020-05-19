@@ -31,6 +31,7 @@ Result tcCheck = 1;
 Result Hinted = 1;
 Result pmdmntCheck = 1;
 Result dmntchtCheck = 1;
+Result debugproc = 1;
 
 //Temperatures
 s32 SoC_temperaturemiliC = 0;
@@ -93,14 +94,17 @@ char GPU_Load_c[32];
 bool GameRunning = false;
 bool check = false;
 bool SaltySD = false;
+bool checkdebug = false;
 uintptr_t FPSaddress = 0x0;
 uintptr_t FPSavgaddress = 0x0;
-char FPS_c[32];
+uint64_t PID = 0;
 uint8_t FPS = 0xFE;
-char FPSavg_c[32];
 float FPSavg = 254;
+char FPS_c[32];
+char FPSavg_c[32];
 char FPS_compressed_c[64];
 char FPS_var_compressed_c[64];
+Handle debug;
 
 //Check if SaltyNX is working
 bool CheckPort () {
@@ -139,28 +143,28 @@ bool isServiceRunning(const char *serviceName) {
 
 void CheckIfGameRunning(void*) {
 	while (threadexit2 == false) {
-		if (R_SUCCEEDED(dmntchtCheck)) {
-			Result rc = 1;
-			uint64_t PID = 0;
-			rc = pmdmntGetApplicationProcessId(&PID);
-			if (R_FAILED(rc)) {
-				if (check == false) {
-					remove("sdmc:/SaltySD/FPSoffset.hex");
-				}
+		Result rc = 1;
+		rc = pmdmntGetApplicationProcessId(&PID);
+		if (R_FAILED(rc)) {
+			if (check == false) {
+				remove("sdmc:/SaltySD/FPSoffset.hex");
 				check = true;
-				GameRunning = false;
 			}
-			else if (GameRunning == false) {
-				svcSleepThread(1'000'000'000);
-				FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
-				if ((FPSoffset != NULL)) {
-					dmntchtForceOpenCheatProcess();
-					fread(&FPSaddress, 0x5, 1, FPSoffset);
-					FPSavgaddress = FPSaddress - 0x8;
-					fclose(FPSoffset);
-					GameRunning = true;
-					check = false;
-				}
+			GameRunning = false;
+			checkdebug = false;
+			svcCloseHandle(debug);
+		}
+		else if (GameRunning == false) {
+			svcSleepThread(1'000'000'000);
+			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
+			if ((FPSoffset != NULL)) {
+				if (Atmosphere_present == true) dmntchtForceOpenCheatProcess();
+				else svcSleepThread(1'000'000'000);
+				GameRunning = true;
+				check = false;
+				fread(&FPSaddress, 0x5, 1, FPSoffset);
+				FPSavgaddress = FPSaddress - 0x8;
+				fclose(FPSoffset);
 			}
 		}
 		svcSleepThread(1'000'000'000);
@@ -244,8 +248,15 @@ void Misc(void*) {
 		
 		//FPS
 		if (GameRunning == true) {
-			dmntchtReadCheatProcessMemory(FPSaddress, &FPS, 0x1);
-			dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
+			if (Atmosphere_present == true) {
+				dmntchtReadCheatProcessMemory(FPSaddress, &FPS, 0x1);
+				dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
+			}
+			else if (R_SUCCEEDED(svcDebugActiveProcess(&debug, PID))) {
+				svcReadDebugProcessMemory(&FPS, debug, FPSaddress, 0x1);
+				svcReadDebugProcessMemory(&FPSavg, debug, FPSavgaddress, 0x4);
+				svcCloseHandle(debug);
+			}
 		}
 		
 		// 1 sec interval
@@ -336,9 +347,15 @@ void CloseThreads() {
 //Separate functions dedicated to "FPS Counter" mode
 void FPSCounter(void*) {
 	while (threadexit == false) {
-		dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
-		
-		// 1 sec interval
+		if (GameRunning == true) {
+			if (Atmosphere_present == true) dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
+			else if (R_SUCCEEDED(svcDebugActiveProcess(&debug, PID))) {
+				svcReadDebugProcessMemory(&FPSavg, debug, FPSavgaddress, 0x4);
+				svcCloseHandle(debug);
+			}
+		}
+		else FPSavg = 254;
+		//interval
 		svcSleepThread(1'000'000'000 / refreshrate);
 	}
 }
@@ -678,7 +695,7 @@ public:
 			return false;
 		});
 		list->addItem(Mini);
-		if (R_SUCCEEDED(dmntchtCheck)) {
+		if (SaltySD == true) {
 			auto comFPS = new tsl::elm::ListItem("FPS Counter");
 			comFPS->setClickListener([](u64 keys) {
 				if (keys & KEY_A) {
@@ -744,13 +761,13 @@ public:
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 			
 			Atmosphere_present = isServiceRunning("dmnt:cht") && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
-			if (Atmosphere_present == true) SaltySD = CheckPort();
-			if (SaltySD == true) dmntchtCheck = dmntchtInitialize();
+			SaltySD = CheckPort();
+			if (SaltySD == true && Atmosphere_present == true) dmntchtCheck = dmntchtInitialize();
 			
 		}
 		Hinted = envIsSyscallHinted(0x6F);
 		
-		if (R_SUCCEEDED(dmntchtCheck)) {
+		if (SaltySD == true) {
 			//Assign NX-FPS to default core
 			threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
 			
@@ -760,7 +777,7 @@ public:
 	}
 
 	virtual void exitServices() override {
-		if (R_SUCCEEDED(dmntchtCheck)) {
+		if (SaltySD == true) {
 			//Free NX-FPS thread
 			threadexit2 = true;
 			threadWaitForExit(&t6);
@@ -768,6 +785,7 @@ public:
 		}
 		
 		//Exit services
+		svcCloseHandle(debug);
 		dmntchtExit();
 		clkrstExit();
 		pcvExit();
