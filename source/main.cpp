@@ -156,7 +156,10 @@ void CheckIfGameRunning(void*) {
 			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
 			if ((FPSoffset != NULL)) {
 				if (Atmosphere_present == true) dmntchtForceOpenCheatProcess();
-				else svcSleepThread(1'000'000'000);
+				else {
+					svcSleepThread(1'000'000'000);
+					if (R_SUCCEEDED(svcDebugActiveProcess(&debug, PID))) svcContinueDebugEvent(debug, 4 | 2 | 1, NULL, NULL);
+				}
 				fread(&FPSaddress, 0x5, 1, FPSoffset);
 				FPSavgaddress = FPSaddress - 0x8;
 				fclose(FPSoffset);
@@ -249,10 +252,9 @@ void Misc(void*) {
 				dmntchtReadCheatProcessMemory(FPSaddress, &FPS, 0x1);
 				dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
 			}
-			else if (R_SUCCEEDED(svcDebugActiveProcess(&debug, PID))) {
+			else if (debug) {
 				svcReadDebugProcessMemory(&FPS, debug, FPSaddress, 0x1);
 				svcReadDebugProcessMemory(&FPSavg, debug, FPSavgaddress, 0x4);
-				svcCloseHandle(debug);
 			}
 		}
 		
