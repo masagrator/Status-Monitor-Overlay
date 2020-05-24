@@ -177,11 +177,7 @@ void CheckButtons(void*) {
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 		if (kHeld & KEY_ZR) {
-			hidScanInput();
-			u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 			if (kHeld & KEY_R) {
-				hidScanInput();
-				u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 				if (kHeld & KEY_DDOWN) {
 					TeslaFPS = 1;
 					refreshrate = 1;
