@@ -115,7 +115,7 @@ bool CheckPort () {
 		if (!ret) break;
 	}
 	svcCloseHandle(saltysd);
-	if (ret != 0x0) return false;
+	if (R_FAILED(ret)) return false;
 	for (int i = 0; i < 200; i++) {
 		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
 		svcSleepThread(1'000'000);
@@ -123,7 +123,7 @@ bool CheckPort () {
 		if (!ret) break;
 	}
 	svcCloseHandle(saltysd);
-	if (ret != 0x0) return false;
+	if (R_FAILED(ret)) return false;
 	else return true;
 }
 
@@ -140,8 +140,8 @@ bool isServiceRunning(const char *serviceName) {
 }
 
 void CheckIfGameRunning(void*) {
+	Result rc = 1;
 	while (threadexit2 == false) {
-		Result rc = 1;
 		rc = pmdmntGetApplicationProcessId(&PID);
 		if (R_FAILED(rc)) {
 			if (check == false) {
@@ -154,7 +154,7 @@ void CheckIfGameRunning(void*) {
 		else if (GameRunning == false) {
 			svcSleepThread(1'000'000'000);
 			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
-			if ((FPSoffset != NULL)) {
+			if (FPSoffset != NULL) {
 				if (Atmosphere_present == true) dmntchtForceOpenCheatProcess();
 				else {
 					svcSleepThread(1'000'000'000);
@@ -254,7 +254,6 @@ void Misc(void*) {
 			}
 		}
 		
-		// 1 sec interval
 		svcSleepThread(1'000'000'000 / refreshrate);
 	}
 }
@@ -312,7 +311,7 @@ void StartThreads() {
 	threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x10, 2);
 	threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x10, 3);
 	threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3F, -2);
-	threadCreate(&t5, CheckButtons, NULL, NULL, 0x200, 0x3F, -2);
+	threadCreate(&t5, CheckButtons, NULL, NULL, 0x200, 0x3A, -2);
 	threadStart(&t0);
 	threadStart(&t1);
 	threadStart(&t2);
@@ -344,13 +343,10 @@ void FPSCounter(void*) {
 	while (threadexit == false) {
 		if (GameRunning == true) {
 			if (Atmosphere_present == true) dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
-			else if (R_SUCCEEDED(svcDebugActiveProcess(&debug, PID))) {
-				svcReadDebugProcessMemory(&FPSavg, debug, FPSavgaddress, 0x4);
-				svcCloseHandle(debug);
-			}
+			else if (debug) svcReadDebugProcessMemory(&FPSavg, debug, FPSavgaddress, 0x4);
 		}
 		else FPSavg = 254;
-		//interval
+		
 		svcSleepThread(1'000'000'000 / refreshrate);
 	}
 }
