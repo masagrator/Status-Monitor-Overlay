@@ -175,6 +175,8 @@ void CheckIfGameRunning(void*) {
 	}
 }
 
+
+
 //Check for input outside of FPS limitations
 void CheckButtons(void*) {
 	while (threadexit == false) {
@@ -197,6 +199,27 @@ void CheckButtons(void*) {
 		svcSleepThread(1'000'000'000/30);
 	}
 }
+
+void CheckGameThreadStart() {
+	if (SaltySD == true) {
+		//Assign NX-FPS to default core
+		threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
+		
+		//Start NX-FPS detection
+		threadStart(&t6);
+	}
+}
+
+void CheckGameThreadEnd() {
+	if (SaltySD == true) {
+		//Free NX-FPS thread
+		threadexit2 = true;
+		threadWaitForExit(&t6);
+		threadClose(&t6);
+		threadexit2 = false;
+	}
+}
+
 
 //Stuff that doesn't need multithreading
 void Misc(void*) {
@@ -310,6 +333,7 @@ void CheckCore3(void*) {
 
 //Start reading all stats
 void StartThreads() {
+	CheckGameThreadStart();
 	threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x10, 0);
 	threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x10, 1);
 	threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x10, 2);
@@ -326,6 +350,7 @@ void StartThreads() {
 
 //End reading all stats
 void CloseThreads() {
+	CheckGameThreadEnd();
 	threadexit = true;
 	threadWaitForExit(&t0);
 	threadWaitForExit(&t1);
@@ -356,11 +381,13 @@ void FPSCounter(void*) {
 }
 
 void StartFPSCounterThread() {
+	CheckGameThreadStart();
 	threadCreate(&t0, FPSCounter, NULL, NULL, 0x100, 0x39, 3);
 	threadStart(&t0);
 }
 
 void EndFPSCounterThread() {
+	CheckGameThreadEnd();
 	threadexit = true;
 	threadWaitForExit(&t0);
 	threadClose(&t0);
@@ -715,6 +742,7 @@ public:
 
 	virtual void update() override {
 		if (TeslaFPS != 60) {
+			svcCloseHandle(debug);
 			FullMode = true;
 			tsl::hlp::requestForeground(true);
 			TeslaFPS = 60;
@@ -761,14 +789,6 @@ public:
 			
 		}
 		Hinted = envIsSyscallHinted(0x6F);
-		
-		if (SaltySD == true) {
-			//Assign NX-FPS to default core
-			threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
-			
-			//Start NX-FPS detection
-			threadStart(&t6);
-		}
 	}
 
 	virtual void exitServices() override {
