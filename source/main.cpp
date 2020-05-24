@@ -106,24 +106,26 @@ Handle debug;
 
 //Check if SaltyNX is working
 bool CheckPort () {
-	Result ret;
+	Result rc;
 	Handle saltysd;
+
 	for (int i = 0; i < 200; i++) {
-		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
+		rc = svcConnectToNamedPort(&saltysd, "InjectServ");
+		if (R_SUCCEEDED(rc)) break;
+
 		svcSleepThread(1'000'000);
-		
-		if (!ret) break;
 	}
 	svcCloseHandle(saltysd);
-	if (R_FAILED(ret)) return false;
+	if (R_FAILED(rc)) return false;
+
 	for (int i = 0; i < 200; i++) {
-		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
+		rc = svcConnectToNamedPort(&saltysd, "InjectServ");
+		if (R_SUCCEEDED(rc)) break;
+
 		svcSleepThread(1'000'000);
-		
-		if (!ret) break;
 	}
 	svcCloseHandle(saltysd);
-	if (R_FAILED(ret)) return false;
+	if (R_FAILED(rc)) return false;
 	else return true;
 }
 
