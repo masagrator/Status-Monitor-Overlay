@@ -755,7 +755,7 @@ public:
 			nvCheck = nvInitialize();
 			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 			
-			Atmosphere_present = isServiceRunning("dmnt:cht") && !(isServiceRunning("tx") && !isServiceRunning("rnx"
+			Atmosphere_present = isServiceRunning("dmnt:cht");
 			SaltySD = CheckPort();
 			if (SaltySD == true && Atmosphere_present == true) dmntchtCheck = dmntchtInitialize();
 			
