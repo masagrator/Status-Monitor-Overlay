@@ -111,20 +111,22 @@ bool CheckPort () {
 
 	for (int i = 0; i < 200; i++) {
 		rc = svcConnectToNamedPort(&saltysd, "InjectServ");
-		if (R_SUCCEEDED(rc)) break;
-
+		if (R_SUCCEEDED(rc)) {
+			svcCloseHandle(saltysd);
+			break;
+		}
 		svcSleepThread(1'000'000);
 	}
-	svcCloseHandle(saltysd);
 	if (R_FAILED(rc)) return false;
 
 	for (int i = 0; i < 200; i++) {
 		rc = svcConnectToNamedPort(&saltysd, "InjectServ");
-		if (R_SUCCEEDED(rc)) break;
-
+		if (R_SUCCEEDED(rc)) {
+			svcCloseHandle(saltysd);
+			break;
+		}
 		svcSleepThread(1'000'000);
 	}
-	svcCloseHandle(saltysd);
 	if (R_FAILED(rc)) return false;
 	else return true;
 }
@@ -192,7 +194,7 @@ void CheckButtons(void*) {
 				}
 			}
 		}
-		svcSleepThread(100'000'000);
+		svcSleepThread(1'000'000'000/30);
 	}
 }
 
@@ -354,7 +356,7 @@ void FPSCounter(void*) {
 }
 
 void StartFPSCounterThread() {
-	threadCreate(&t0, FPSCounter, NULL, NULL, 0x100, 0x3F, 3);
+	threadCreate(&t0, FPSCounter, NULL, NULL, 0x100, 0x39, 3);
 	threadStart(&t0);
 }
 
