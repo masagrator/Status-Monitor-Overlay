@@ -792,12 +792,7 @@ public:
 	}
 
 	virtual void exitServices() override {
-		if (SaltySD == true) {
-			//Free NX-FPS thread
-			threadexit2 = true;
-			threadWaitForExit(&t6);
-			threadClose(&t6);
-		}
+		CloseThreads();
 		
 		//Exit services
 		svcCloseHandle(debug);
