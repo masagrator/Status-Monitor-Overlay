@@ -155,7 +155,11 @@ void CheckIfGameRunning(void*) {
 			svcSleepThread(1'000'000'000);
 			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
 			if ((FPSoffset != NULL)) {
-				if (Atmosphere_present == true) dmntchtForceOpenCheatProcess();
+				if (Atmosphere_present == true) {
+					bool out = false;
+					dmntchtHasCheatProcess(&out);
+					if (out == false) dmntchtForceOpenCheatProcess();
+				}
 				else svcSleepThread(1'000'000'000);
 				fread(&FPSaddress, 0x5, 1, FPSoffset);
 				FPSavgaddress = FPSaddress - 0x8;
@@ -414,7 +418,7 @@ public:
     FullOverlay() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.6.0");
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.6.1");
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
@@ -661,7 +665,7 @@ public:
     MainMenu() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.6.0");
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.6.1");
 		auto list = new tsl::elm::List();
 		
 		auto Full = new tsl::elm::ListItem("Full");
