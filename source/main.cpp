@@ -111,18 +111,22 @@ bool CheckPort () {
 		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
 		svcSleepThread(1'000'000);
 		
-		if (!ret) break;
+		if (R_SUCCEEDED(ret)) {
+			svcCloseHandle(saltysd);
+			break;
+		}
 	}
-	svcCloseHandle(saltysd);
-	if (ret != 0x0) return false;
+	if (R_FAILED(ret)) return false;
 	for (int i = 0; i < 200; i++) {
 		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
 		svcSleepThread(1'000'000);
 		
-		if (!ret) break;
+		if (R_SUCCEEDED(ret)) {
+			svcCloseHandle(saltysd);
+			break;
+		}
 	}
-	svcCloseHandle(saltysd);
-	if (ret != 0x0) return false;
+	if (R_FAILED(ret)) return false;
 	else return true;
 }
 
@@ -153,7 +157,7 @@ void CheckIfGameRunning(void*) {
 		else if (GameRunning == false) {
 			svcSleepThread(1'000'000'000);
 			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
-			if ((FPSoffset != NULL)) {
+			if (FPSoffset != NULL) {
 				if (Atmosphere_present == true) {
 					bool out = false;
 					dmntchtHasCheatProcess(&out);
@@ -177,11 +181,7 @@ void CheckButtons(void*) {
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 		if (kHeld & KEY_ZR) {
-			hidScanInput();
-			u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 			if (kHeld & KEY_R) {
-				hidScanInput();
-				u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 				if (kHeld & KEY_DDOWN) {
 					TeslaFPS = 1;
 					refreshrate = 1;
@@ -205,15 +205,18 @@ void Misc(void*) {
 		// CPU, GPU and RAM Frequency
 		if (R_SUCCEEDED(clkrstCheck)) {
 			ClkrstSession clkSession;
-			clkrstOpenSession(&clkSession, PcvModuleId_CpuBus, 3);
-			clkrstGetClockRate(&clkSession, &CPU_Hz);
-			clkrstCloseSession(&clkSession);
-			clkrstOpenSession(&clkSession, PcvModuleId_GPU, 3);
-			clkrstGetClockRate(&clkSession, &GPU_Hz);
-			clkrstCloseSession(&clkSession);
-			clkrstOpenSession(&clkSession, PcvModuleId_EMC, 3);
-			clkrstGetClockRate(&clkSession, &RAM_Hz);
-			clkrstCloseSession(&clkSession);
+			if (R_SUCCEEDED(clkrstOpenSession(&clkSession, PcvModuleId_CpuBus, 3))) {
+				clkrstGetClockRate(&clkSession, &CPU_Hz);
+				clkrstCloseSession(&clkSession);
+			}
+			if (R_SUCCEEDED(clkrstOpenSession(&clkSession, PcvModuleId_GPU, 3))) {
+				clkrstGetClockRate(&clkSession, &GPU_Hz);
+				clkrstCloseSession(&clkSession);
+			}
+			if (R_SUCCEEDED(clkrstOpenSession(&clkSession, PcvModuleId_EMC, 3))) {
+				clkrstGetClockRate(&clkSession, &RAM_Hz);
+				clkrstCloseSession(&clkSession);
+			}
 		}
 		else if (R_SUCCEEDED(pcvCheck)) {
 			pcvGetClockRate(PcvModule_CpuBus, &CPU_Hz);
@@ -329,19 +332,23 @@ void StartThreads() {
 //End reading all stats
 void CloseThreads() {
 	threadexit = true;
+	threadexit2 = true;
 	threadWaitForExit(&t0);
 	threadWaitForExit(&t1);
 	threadWaitForExit(&t2);
 	threadWaitForExit(&t3);
 	threadWaitForExit(&t4);
 	threadWaitForExit(&t5);
+	threadWaitForExit(&t6);
 	threadClose(&t0);
 	threadClose(&t1);
 	threadClose(&t2);
 	threadClose(&t3);
 	threadClose(&t4);
 	threadClose(&t5);
+	threadClose(&t6);
 	threadexit = false;
+	threadexit2 = false;
 }
 
 //Separate functions dedicated to "FPS Counter" mode
@@ -423,9 +430,11 @@ public:
 			
 			//Print strings
 			///CPU
-			renderer->drawString("CPU Usage:", false, 20, 120, 20, renderer->a(0xFFFF));
-			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) renderer->drawString(CPU_Hz_c, false, 20, 155, 15, renderer->a(0xFFFF));
-			renderer->drawString(CPU_compressed_c, false, 20, 185, 15, renderer->a(0xFFFF));
+			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) {
+				renderer->drawString("CPU Usage:", false, 20, 120, 20, renderer->a(0xFFFF));
+				renderer->drawString(CPU_Hz_c, false, 20, 155, 15, renderer->a(0xFFFF));
+				renderer->drawString(CPU_compressed_c, false, 20, 185, 15, renderer->a(0xFFFF));
+			}
 			
 			///GPU
 			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(nvCheck)) {
@@ -482,27 +491,19 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		float CPU_Hz_f = (float)CPU_Hz / 1000000;
-		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", CPU_Hz_f);
-		double percent = ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", percent, "%");
-		percent = ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", percent, "%");
-		percent = ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", percent, "%");
-		percent = ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", percent, "%");
+		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", (float)CPU_Hz / 1000000);
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100, "%");
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100, "%");
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100, "%");
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100, "%");
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 		
 		///GPU
-		float GPU_Hz_f = (float)GPU_Hz / 1000000;
-		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", GPU_Hz_f);
-		float GPU_Load_percent = (float)GPU_Load_u / 10;
-		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", GPU_Load_percent, "%");
+		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", (float)GPU_Hz / 1000000);
+		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", (float)GPU_Load_u / 10, "%");
 		
 		///RAM
-		float RAM_Hz_f = (float)RAM_Hz / 1000000;
-		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz", RAM_Hz_f);
+		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz", (float)RAM_Hz / 1000000);
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
 		float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
@@ -527,21 +528,15 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
 		
 		///Thermal
-		float SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
-		float PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
-		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2.2f \u00B0C\nPCB: %2.2f \u00B0C", SoC_temperatureC, PCB_temperatureC);
-		float skin_temperatureC = (float)skin_temperaturemiliC / 1000;
-		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %2.2f \u00B0C", skin_temperatureC);
-		float Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %2.2f%s", Rotation_SpeedLevel_percent, "%");
+		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2.2f \u00B0C\nPCB: %2.2f \u00B0C", (float)SoC_temperaturemiliC / 1000, (float)PCB_temperaturemiliC / 1000);
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %2.2f \u00B0C", (float)skin_temperaturemiliC / 1000);
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %2.2f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
 		snprintf(FPS_c, sizeof FPS_c, "PFPS:"); //Pushed Frames Per Second
 		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
 		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
-		snprintf(FPS_c, sizeof FPS_c, "%u", FPS);
-		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.2f", FPSavg);
-		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
+		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.2f", FPS, FPSavg);
 		
 	}
     virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
@@ -562,8 +557,8 @@ public:
     MiniOverlay() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("", "");
 		
+		auto rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
@@ -595,7 +590,6 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		float CPU_Hz_f = (float)CPU_Hz / 1000000;
 		double percent = ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%s", percent, "%");
 		percent = ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100;
@@ -604,15 +598,12 @@ public:
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%s", percent, "%");
 		percent = ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%s", percent, "%");
-		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]@%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, CPU_Hz_f);
+		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]@%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, (float)CPU_Hz / 1000000);
 		
 		///GPU
-		float GPU_Hz_f = (float)GPU_Hz / 1000000;
-		float GPU_Load_percent = (float)GPU_Load_u / 10;
-		snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s@%.1f", GPU_Load_percent, "%", GPU_Hz_f);
+		snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)GPU_Hz / 1000000);
 		
 		///RAM
-		float RAM_Hz_f = (float)RAM_Hz / 1000000;
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
 		float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
@@ -624,23 +615,17 @@ public:
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
 		snprintf(RAM_all_c, sizeof RAM_all_c, "%.0f/%.0fMB", RAM_Used_all_f, RAM_Total_all_f);
-		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, RAM_Hz_f);
+		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
-		float SoC_temperatureC = (float)SoC_temperaturemiliC / 1000;
-		float PCB_temperatureC = (float)PCB_temperaturemiliC / 1000;
-		float skin_temperatureC = (float)skin_temperaturemiliC / 1000;
-		snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", SoC_temperatureC, PCB_temperatureC, skin_temperatureC);
-		float Rotation_SpeedLevel_percent = Rotation_SpeedLevel_f * 100;
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_percent, "%");
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", (float)SoC_temperaturemiliC / 1000, (float)PCB_temperaturemiliC / 1000, (float)skin_temperaturemiliC / 1000);
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
 		snprintf(FPS_c, sizeof FPS_c, "PFPS:"); //Pushed Frames Per Second
 		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
 		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
-		snprintf(FPS_c, sizeof FPS_c, "%u", FPS);
-		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.2f", FPSavg);
-		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
+		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%u\n%2.2f", FPS, FPSavg);
 
 		if (GameRunning == true) snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, FPS_var_compressed_c);
 		else snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c);
@@ -688,8 +673,8 @@ public:
 				refreshrate = 1;
 				alphabackground = 0x0;
 				tsl::hlp::requestForeground(false);
-				tsl::changeTo<MiniOverlay>();
 				FullMode = false;
+				tsl::changeTo<MiniOverlay>();
 				return true;
 			}
 			return false;
@@ -749,12 +734,12 @@ public:
 			
 			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
-			
+
 			if (R_SUCCEEDED(fanInitialize())) {
 				if (hosversionAtLeast(7,0,0)) fanCheck = fanOpenController(&g_ICon, 0x3D000001);
 				else fanCheck = fanOpenController(&g_ICon, 1);
 			}
-			
+
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 			
 			Atmosphere_present = isServiceRunning("dmnt:cht");
@@ -774,12 +759,7 @@ public:
 	}
 
 	virtual void exitServices() override {
-		if (SaltySD == true) {
-			//Free NX-FPS thread
-			threadexit2 = true;
-			threadWaitForExit(&t6);
-			threadClose(&t6);
-		}
+		CloseThreads();
 		
 		//Exit services
 		svcCloseHandle(debug);
