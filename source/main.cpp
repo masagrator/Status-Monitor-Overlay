@@ -21,7 +21,6 @@ FanController g_ICon;
 char Variables[672];
 
 //Checks
-Result smCheck = 1;
 Result clkrstCheck = 1;
 Result nvCheck = 1;
 Result pcvCheck = 1;
@@ -743,8 +742,7 @@ public:
 
 	virtual void initServices() override {
 		//Initialize services
-		smCheck = smInitialize();
-		if (R_SUCCEEDED(smCheck)) {
+		if (R_SUCCEEDED(smInitialize())) {
 			
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
@@ -752,14 +750,12 @@ public:
 			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 			
-			fanCheck = fanInitialize();
-			if (R_SUCCEEDED(fanCheck)) {
+			if (R_SUCCEEDED(fanInitialize())) {
 				if (hosversionAtLeast(7,0,0)) fanCheck = fanOpenController(&g_ICon, 0x3D000001);
 				else fanCheck = fanOpenController(&g_ICon, 1);
 			}
 			
-			nvCheck = nvInitialize();
-			if (R_SUCCEEDED(nvCheck)) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
+			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 			
 			Atmosphere_present = isServiceRunning("dmnt:cht");
 			SaltySD = CheckPort();
