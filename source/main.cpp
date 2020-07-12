@@ -180,18 +180,16 @@ void CheckButtons(void*) {
 	while (threadexit == false) {
 		hidScanInput();
 		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-		if (kHeld & KEY_ZR) {
-			if (kHeld & KEY_R) {
-				if (kHeld & KEY_DDOWN) {
-					TeslaFPS = 1;
-					refreshrate = 1;
-					systemtickfrequency = 19200000;
-				}
-				else if (kHeld & KEY_DUP) {
-					TeslaFPS = 5;
-					refreshrate = 5;
-					systemtickfrequency = 3840000;
-				}
+		if (kHeld & (KEY_ZR + KEY_R)) {
+			if (kHeld & KEY_DDOWN) {
+				TeslaFPS = 1;
+				refreshrate = 1;
+				systemtickfrequency = 19200000;
+			}
+			else if (kHeld & KEY_DUP) {
+				TeslaFPS = 5;
+				refreshrate = 5;
+				systemtickfrequency = 3840000;
 			}
 		}
 		svcSleepThread(100'000'000);
@@ -407,12 +405,10 @@ public:
 		
 	}
 	virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (keysHeld & KEY_LSTICK) {
-			if (keysHeld & KEY_RSTICK) {
-				EndFPSCounterThread();
-				tsl::goBack();
-				return true;
-			}
+		if (keysHeld & (KEY_LSTICK + KEY_RSTICK)) {
+			EndFPSCounterThread();
+			tsl::goBack();
+			return true;
 		}
 		return false;
 	}
@@ -539,16 +535,14 @@ public:
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.2f", FPS, FPSavg);
 		
 	}
-    virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-        if (keysHeld & KEY_LSTICK) {
-			if (keysHeld & KEY_RSTICK) {
-				CloseThreads();
-				tsl::goBack();
-				return true;
-			}
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if (keysHeld & (KEY_LSTICK + KEY_RSTICK)) {
+			CloseThreads();
+			tsl::goBack();
+			return true;
 		}
 		return false;
-    }
+	}
 };
 
 //Mini mode
@@ -631,16 +625,14 @@ public:
 		else snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c);
 
 	}
-    virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-        if (keysHeld & KEY_LSTICK) {
-			if (keysHeld & KEY_RSTICK) {
-				CloseThreads();
-				tsl::goBack();
-				return true;
-			}
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if (keysHeld & (KEY_LSTICK + KEY_RSTICK)) {
+			CloseThreads();
+			tsl::goBack();
+			return true;
 		}
 		return false;
-    }
+	}
 };
 
 //Main Menu
