@@ -1,6 +1,6 @@
 #define TESLA_INIT_IMPL
 #include <tesla.hpp>
-#include "libstratosphere/dmntcht.hpp"
+#include "dmntcht.h"
 
 //Common
 Thread t0;
