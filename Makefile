@@ -38,7 +38,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	Status-Monitor
-APP_VERSION	:=	0.6.2
+APP_VERSION	:=	0.6.3
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source lib/Atmosphere-libs/libstratosphere/source/dmnt
