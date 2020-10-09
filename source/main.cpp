@@ -2,6 +2,9 @@
 #include <tesla.hpp>
 #include "dmntcht.h"
 
+#define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
+#define FieldDescriptor uint32_t
+
 //Common
 Thread t0;
 Thread t1;
@@ -10,11 +13,11 @@ Thread t3;
 Thread t4;
 Thread t5;
 Thread t6;
-u64 systemtickfrequency = 19200000;
+uint64_t systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
 bool Atmosphere_present = false;
-u64 refreshrate = 1;
+uint64_t refreshrate = 1;
 FanController g_ICon;
 
 //Mini mode
@@ -32,17 +35,17 @@ Result pmdmntCheck = 1;
 Result dmntchtCheck = 1;
 
 //Temperatures
-s32 SoC_temperaturemiliC = 0;
-s32 PCB_temperaturemiliC = 0;
-s32 skin_temperaturemiliC = 0;
+int32_t SoC_temperaturemiliC = 0;
+int32_t PCB_temperaturemiliC = 0;
+int32_t skin_temperaturemiliC = 0;
 char SoCPCB_temperature_c[64];
 char skin_temperature_c[32];
 
 //CPU Usage
-u64 idletick0 = 19200000;
-u64 idletick1 = 19200000;
-u64 idletick2 = 19200000;
-u64 idletick3 = 19200000;
+uint64_t idletick0 = 19200000;
+uint64_t idletick1 = 19200000;
+uint64_t idletick2 = 19200000;
+uint64_t idletick3 = 19200000;
 char CPU_Usage0[32];
 char CPU_Usage1[32];
 char CPU_Usage2[32];
@@ -51,13 +54,13 @@ char CPU_compressed_c[160];
 
 //Frequency
 ///CPU
-u32 CPU_Hz = 0;
+uint32_t CPU_Hz = 0;
 char CPU_Hz_c[32];
 ///GPU
-u32 GPU_Hz = 0;
+uint32_t GPU_Hz = 0;
 char GPU_Hz_c[32];
 ///RAM
-u32 RAM_Hz = 0;
+uint32_t RAM_Hz = 0;
 char RAM_Hz_c[32];
 
 //RAM Size
@@ -68,24 +71,24 @@ char RAM_system_c[64];
 char RAM_systemunsafe_c[64];
 char RAM_compressed_c[320];
 char RAM_var_compressed_c[320];
-u64 RAM_Total_all_u = 0;
-u64 RAM_Total_application_u = 0;
-u64 RAM_Total_applet_u = 0;
-u64 RAM_Total_system_u = 0;
-u64 RAM_Total_systemunsafe_u = 0;
-u64 RAM_Used_all_u = 0;
-u64 RAM_Used_application_u = 0;
-u64 RAM_Used_applet_u = 0;
-u64 RAM_Used_system_u = 0;
-u64 RAM_Used_systemunsafe_u = 0;
+uint64_t RAM_Total_all_u = 0;
+uint64_t RAM_Total_application_u = 0;
+uint64_t RAM_Total_applet_u = 0;
+uint64_t RAM_Total_system_u = 0;
+uint64_t RAM_Total_systemunsafe_u = 0;
+uint64_t RAM_Used_all_u = 0;
+uint64_t RAM_Used_application_u = 0;
+uint64_t RAM_Used_applet_u = 0;
+uint64_t RAM_Used_system_u = 0;
+uint64_t RAM_Used_systemunsafe_u = 0;
 
 //Fan
 float Rotation_SpeedLevel_f = 0;
 char Rotation_SpeedLevel_c[64];
 
 //GPU Usage
-u32 fd = 0;
-u32 GPU_Load_u = 0;
+FieldDescriptor fd = 0;
+uint32_t GPU_Load_u = 0;
 char GPU_Load_c[32];
 
 //NX-FPS
@@ -105,48 +108,41 @@ Handle debug;
 
 //Check if SaltyNX is working
 bool CheckPort () {
-	Result ret;
 	Handle saltysd;
-	for (int i = 0; i < 200; i++) {
-		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
-		svcSleepThread(1'000'000);
-		
-		if (R_SUCCEEDED(ret)) {
+	for (int i = 0; i < 34; i++) {
+		if (R_SUCCEEDED(svcConnectToNamedPort(&saltysd, "InjectServ"))) {
 			svcCloseHandle(saltysd);
 			break;
 		}
-	}
-	if (R_FAILED(ret)) return false;
-	for (int i = 0; i < 200; i++) {
-		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
-		svcSleepThread(1'000'000);
-		
-		if (R_SUCCEEDED(ret)) {
-			svcCloseHandle(saltysd);
-			break;
+		else {
+			if (i == 33) return false;
+			svcSleepThread(1'000'000);
 		}
 	}
-	if (R_FAILED(ret)) return false;
-	else return true;
+	for (int i = 0; i < 34; i++) {
+		if (R_SUCCEEDED(svcConnectToNamedPort(&saltysd, "InjectServ"))) {
+			svcCloseHandle(saltysd);
+			return true;
+		}
+		else svcSleepThread(1'000'000);
+	}
+	return false;
 }
 
 bool isServiceRunning(const char *serviceName) {	
 	Handle handle;	
 	SmServiceName service_name = smEncodeName(serviceName);	
-	bool running = R_FAILED(smRegisterService(&handle, service_name, false, 1));	
-
-	svcCloseHandle(handle);	
-
-	if (!running) smUnregisterService(service_name);	
-
-	return running;	
+	if (R_FAILED(smRegisterService(&handle, service_name, false, 1))) return false;
+	else {
+		svcCloseHandle(handle);	
+		smUnregisterService(service_name);
+		return true;
+	}
 }
 
 void CheckIfGameRunning(void*) {
 	while (threadexit2 == false) {
-		Result rc = 1;
-		rc = pmdmntGetApplicationProcessId(&PID);
-		if (R_FAILED(rc)) {
+		if (R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
 			if (check == false) {
 				remove("sdmc:/SaltySD/FPSoffset.hex");
 				check = true;
@@ -179,8 +175,8 @@ void CheckIfGameRunning(void*) {
 void CheckButtons(void*) {
 	while (threadexit == false) {
 		hidScanInput();
-		u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-		if (kHeld & (KEY_ZR + KEY_R)) {
+		uint64_t kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+		if ((kHeld & KEY_ZR) && (kHeld & KEY_R)) {
 			if (kHeld & KEY_DDOWN) {
 				TeslaFPS = 1;
 				refreshrate = 1;
@@ -245,7 +241,7 @@ void Misc(void*) {
 		if (R_SUCCEEDED(fanCheck)) fanControllerGetRotationSpeedLevel(&g_ICon, &Rotation_SpeedLevel_f);
 		
 		//GPU Load
-		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, 0x80044715, &GPU_Load_u);
+		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
 		
 		//FPS
 		if (GameRunning == true) {
@@ -260,16 +256,16 @@ void Misc(void*) {
 			}
 		}
 		
-		// 1 sec interval
+		// Interval
 		svcSleepThread(1'000'000'000 / refreshrate);
 	}
 }
 
-//Check each core for idled ticks in 1s intervals, they cannot read info about other core than they are assigned
+//Check each core for idled ticks in intervals, they cannot read info about other core than they are assigned
 void CheckCore0(void*) {
 	while (threadexit == false) {
-		static u64 idletick_a0 = 0;
-		static u64 idletick_b0 = 0;
+		static uint64_t idletick_a0 = 0;
+		static uint64_t idletick_b0 = 0;
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
 		svcSleepThread(1'000'000'000 / refreshrate);
 		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
@@ -279,8 +275,8 @@ void CheckCore0(void*) {
 
 void CheckCore1(void*) {
 	while (threadexit == false) {
-		static u64 idletick_a1 = 0;
-		static u64 idletick_b1 = 0;
+		static uint64_t idletick_a1 = 0;
+		static uint64_t idletick_b1 = 0;
 		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
 		svcSleepThread(1'000'000'000 / refreshrate);
 		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
@@ -290,8 +286,8 @@ void CheckCore1(void*) {
 
 void CheckCore2(void*) {
 	while (threadexit == false) {
-		static u64 idletick_a2 = 0;
-		static u64 idletick_b2 = 0;
+		static uint64_t idletick_a2 = 0;
+		static uint64_t idletick_b2 = 0;
 		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
 		svcSleepThread(1'000'000'000 / refreshrate);
 		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
@@ -301,8 +297,8 @@ void CheckCore2(void*) {
 
 void CheckCore3(void*) {
 	while (threadexit == false) {
-		static u64 idletick_a3 = 0;
-		static u64 idletick_b3 = 0;
+		static uint64_t idletick_a3 = 0;
+		static uint64_t idletick_b3 = 0;
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		svcSleepThread(1'000'000'000 / refreshrate);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
@@ -404,7 +400,7 @@ public:
 		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f", FPSavg);
 		
 	}
-	virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
 			EndFPSCounterThread();
 			tsl::goBack();
@@ -420,7 +416,7 @@ public:
     FullOverlay() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.6.3");
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
@@ -535,7 +531,7 @@ public:
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.2f", FPS, FPSavg);
 		
 	}
-	virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
 			CloseThreads();
 			tsl::goBack();
@@ -625,7 +621,7 @@ public:
 		else snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c);
 
 	}
-	virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
 			CloseThreads();
 			tsl::goBack();
@@ -641,11 +637,11 @@ public:
     MainMenu() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "v0.6.3");
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 		auto list = new tsl::elm::List();
 		
 		auto Full = new tsl::elm::ListItem("Full");
-		Full->setClickListener([](u64 keys) {
+		Full->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				StartThreads();
 				TeslaFPS = 1;
@@ -658,7 +654,7 @@ public:
 		});
 		list->addItem(Full);
 		auto Mini = new tsl::elm::ListItem("Mini");
-		Mini->setClickListener([](u64 keys) {
+		Mini->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				StartThreads();
 				TeslaFPS = 1;
@@ -674,7 +670,7 @@ public:
 		list->addItem(Mini);
 		if (SaltySD == true) {
 			auto comFPS = new tsl::elm::ListItem("FPS Counter");
-			comFPS->setClickListener([](u64 keys) {
+			comFPS->setClickListener([](uint64_t keys) {
 				if (keys & KEY_A) {
 					StartFPSCounterThread();
 					TeslaFPS = 31;
@@ -705,7 +701,7 @@ public:
 			systemtickfrequency = 19200000;
 		}
 	}
-    virtual bool handleInput(u64 keysDown, u64 keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+    virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if (keysHeld & KEY_B) {
 			tsl::goBack();
 			return true;
@@ -738,16 +734,16 @@ public:
 			SaltySD = CheckPort();
 			if (SaltySD == true && Atmosphere_present == true) dmntchtCheck = dmntchtInitialize();
 			
+			if (SaltySD == true) {
+				//Assign NX-FPS to default core
+				threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
+				
+				//Start NX-FPS detection
+				threadStart(&t6);
+			}
+			smExit();
 		}
 		Hinted = envIsSyscallHinted(0x6F);
-		
-		if (SaltySD == true) {
-			//Assign NX-FPS to default core
-			threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
-			
-			//Start NX-FPS detection
-			threadStart(&t6);
-		}
 	}
 
 	virtual void exitServices() override {
@@ -764,7 +760,6 @@ public:
 		fanExit();
 		nvClose(fd);
 		nvExit();
-		smExit();
 	}
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
