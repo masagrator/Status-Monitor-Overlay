@@ -108,29 +108,25 @@ Handle debug;
 
 //Check if SaltyNX is working
 bool CheckPort () {
-	Result ret;
 	Handle saltysd;
 	for (int i = 0; i < 34; i++) {
-		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
-		svcSleepThread(1'000'000);
-		
-		if (R_SUCCEEDED(ret)) {
+		if (R_SUCCEEDED(svcConnectToNamedPort(&saltysd, "InjectServ"))) {
 			svcCloseHandle(saltysd);
 			break;
 		}
+		else {
+			if (i == 33) return false;
+			svcSleepThread(1'000'000);
+		}
 	}
-	if (R_FAILED(ret)) return false;
 	for (int i = 0; i < 34; i++) {
-		ret = svcConnectToNamedPort(&saltysd, "InjectServ");
-		svcSleepThread(1'000'000);
-		
-		if (R_SUCCEEDED(ret)) {
+		if (R_SUCCEEDED(svcConnectToNamedPort(&saltysd, "InjectServ"))) {
 			svcCloseHandle(saltysd);
-			break;
+			return true;
 		}
+		else svcSleepThread(1'000'000);
 	}
-	if (R_FAILED(ret)) return false;
-	else return true;
+	return false;
 }
 
 bool isServiceRunning(const char *serviceName) {	
