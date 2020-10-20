@@ -132,11 +132,11 @@ bool CheckPort () {
 bool isServiceRunning(const char *serviceName) {	
 	Handle handle;	
 	SmServiceName service_name = smEncodeName(serviceName);	
-	if (R_FAILED(smRegisterService(&handle, service_name, false, 1))) return false;
+	if (R_FAILED(smRegisterService(&handle, service_name, false, 1))) return true;
 	else {
 		svcCloseHandle(handle);	
 		smUnregisterService(service_name);
-		return true;
+		return false;
 	}
 }
 
