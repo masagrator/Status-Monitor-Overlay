@@ -2,6 +2,10 @@
 #include <tesla.hpp>
 #include "dmntcht.h"
 
+#ifdef CUSTOM
+#include "Battery.hpp"
+#endif
+
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
 
@@ -13,7 +17,8 @@ Thread t3;
 Thread t4;
 Thread t5;
 Thread t6;
-uint64_t systemtickfrequency = 19200000;
+Thread t7;
+constinit uint64_t systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
 bool Atmosphere_present = false;
@@ -33,6 +38,14 @@ Result tcCheck = 1;
 Result Hinted = 1;
 Result pmdmntCheck = 1;
 Result dmntchtCheck = 1;
+#ifdef CUSTOM
+Result psmCheck = 1;
+
+//Battery
+Service* psmService = 0;
+BatteryChargeInfoFields* _batteryChargeInfoFields = 0;
+char Battery_c[320];
+#endif
 
 //Temperatures
 int32_t SoC_temperaturemiliC = 0;
@@ -335,6 +348,7 @@ void CloseThreads() {
 	threadWaitForExit(&t4);
 	threadWaitForExit(&t5);
 	threadWaitForExit(&t6);
+	threadWaitForExit(&t7);
 	threadClose(&t0);
 	threadClose(&t1);
 	threadClose(&t2);
@@ -342,6 +356,7 @@ void CloseThreads() {
 	threadClose(&t4);
 	threadClose(&t5);
 	threadClose(&t6);
+	threadClose(&t7);
 	threadexit = false;
 	threadexit2 = false;
 }
@@ -363,7 +378,7 @@ void FPSCounter(void*) {
 }
 
 void StartFPSCounterThread() {
-	threadCreate(&t0, FPSCounter, NULL, NULL, 0x100, 0x3F, 3);
+	threadCreate(&t0, FPSCounter, NULL, NULL, 0x1000, 0x3F, 3);
 	threadStart(&t0);
 }
 
@@ -632,6 +647,126 @@ public:
 	}
 };
 
+#ifdef CUSTOM
+void BatteryChecker(void*) {
+	if (R_SUCCEEDED(psmCheck)){
+		_batteryChargeInfoFields = new BatteryChargeInfoFields;
+		while (!threadexit) {
+			psmGetBatteryChargeInfoFields(psmService, _batteryChargeInfoFields);
+			svcSleepThread(5'000'000'000);
+		}
+		delete _batteryChargeInfoFields;
+	}
+}
+
+void StartBatteryThread() {
+	threadCreate(&t7, BatteryChecker, NULL, NULL, 0x4000, 0x3F, 3);
+	threadStart(&t7);
+}
+
+//CustomOverlay
+class CustomOverlay : public tsl::Gui {
+public:
+    CustomOverlay() { }
+
+    virtual tsl::elm::Element* createUI() override {
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
+
+		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+			
+			//Print strings
+			///CPU
+			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) {
+				renderer->drawString("CPU Usage:", false, 20, 120, 20, renderer->a(0xFFFF));
+				renderer->drawString(CPU_Hz_c, false, 20, 155, 15, renderer->a(0xFFFF));
+				renderer->drawString(CPU_compressed_c, false, 20, 185, 15, renderer->a(0xFFFF));
+			}
+			
+			///GPU
+			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(nvCheck)) {
+				
+				renderer->drawString("GPU Usage:", false, 20, 285, 20, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) renderer->drawString(GPU_Hz_c, false, 20, 320, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(nvCheck)) renderer->drawString(GPU_Load_c, false, 20, 335, 15, renderer->a(0xFFFF));
+				
+			}
+			
+			///RAM
+			if (R_SUCCEEDED(psmCheck)) {
+				
+				renderer->drawString("Battery Stats:", false, 20, 375, 20, renderer->a(0xFFFF));
+				renderer->drawString(Battery_c, false, 20, 410, 15, renderer->a(0xFFFF));
+			}
+			
+			///Thermal
+			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
+				renderer->drawString("Thermal:", false, 20, 540, 20, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tsCheck)) renderer->drawString(SoCPCB_temperature_c, false, 20, 575, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tcCheck)) renderer->drawString(skin_temperature_c, false, 20, 605, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(fanCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, 20, 620, 15, renderer->a(0xFFFF));
+			}
+			
+			if (refreshrate == 5) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Down to slow down refresh", false, 20, 675, 15, renderer->a(0xFFFF));
+			else if (refreshrate == 1) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Up to speed up refresh", false, 20, 675, 15, renderer->a(0xFFFF));
+		
+		});
+
+		rootFrame->setContent(Status);
+
+		return rootFrame;
+	}
+
+	virtual void update() override {
+		if (TeslaFPS == 60) TeslaFPS = 1;
+		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
+		//This is because making each loop also takes time, which is not considered because this will take also additional time
+		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
+		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
+		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
+		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
+		
+		//Make stuff ready to print
+		///CPU
+		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", (float)CPU_Hz / 1000000);
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100, "%");
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100, "%");
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100, "%");
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100, "%");
+		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
+		
+		///GPU
+		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", (float)GPU_Hz / 1000000);
+		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", (float)GPU_Load_u / 10, "%");
+		
+		///Battery
+		snprintf(Battery_c, sizeof Battery_c,
+			"Battery Temperature: %.1f\u00B0C\n"
+			"Raw Battery Charge: %.1f%s\n"
+			"Voltage Avg: %u mV\n"
+			"Charger Type: %u\n",
+			(float)_batteryChargeInfoFields->BatteryTemperature / 1000,
+			(float)_batteryChargeInfoFields->RawBatteryCharge / 1000, "%",
+			_batteryChargeInfoFields->VoltageAvg,
+			_batteryChargeInfoFields->ChargerType
+		);
+		
+		///Thermal
+		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2.2f \u00B0C\nPCB: %2.2f \u00B0C", (float)SoC_temperaturemiliC / 1000, (float)PCB_temperaturemiliC / 1000);
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %2.2f \u00B0C", (float)skin_temperaturemiliC / 1000);
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %2.2f%s", Rotation_SpeedLevel_f * 100, "%");
+		
+	}
+	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
+			CloseThreads();
+			tsl::goBack();
+			return true;
+		}
+		return false;
+	}
+};
+#endif
+
 //Main Menu
 class MainMenu : public tsl::Gui {
 public:
@@ -686,6 +821,22 @@ public:
 			});
 			list->addItem(comFPS);
 		}
+#ifdef CUSTOM
+		auto Custom = new tsl::elm::ListItem("Custom");
+		Custom->setClickListener([](uint64_t keys) {
+			if (keys & KEY_A) {
+				StartThreads();
+				StartBatteryThread();
+				TeslaFPS = 1;
+				refreshrate = 1;
+				tsl::hlp::requestForeground(false);
+				tsl::changeTo<CustomOverlay>();
+				return true;
+			}
+			return false;
+		});
+		list->addItem(Custom);
+#endif
 
 		rootFrame->setContent(list);
 
@@ -731,6 +882,11 @@ public:
 
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 			
+#ifdef CUSTOM
+			psmCheck = psmInitialize();
+			if (R_SUCCEEDED(psmCheck)) psmService = psmGetServiceSession();
+#endif
+			
 			Atmosphere_present = isServiceRunning("dmnt:cht");
 			SaltySD = CheckPort();
 			if (SaltySD == true && Atmosphere_present == true) dmntchtCheck = dmntchtInitialize();
@@ -761,6 +917,9 @@ public:
 		fanExit();
 		nvClose(fd);
 		nvExit();
+#ifdef CUSTOM
+		psmExit();
+#endif
 	}
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
