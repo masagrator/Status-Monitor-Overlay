@@ -173,9 +173,10 @@ void CheckIfGameRunning(void*) {
 
 //Check for input outside of FPS limitations
 void CheckButtons(void*) {
+	static uint64_t kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 	while (threadexit == false) {
 		hidScanInput();
-		static uint64_t kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+		kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 		if ((kHeld & KEY_ZR) && (kHeld & KEY_R)) {
 			if (kHeld & KEY_DDOWN) {
 				TeslaFPS = 1;
