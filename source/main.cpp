@@ -175,7 +175,7 @@ void CheckIfGameRunning(void*) {
 void CheckButtons(void*) {
 	while (threadexit == false) {
 		hidScanInput();
-		uint64_t kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+		static uint64_t kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
 		if ((kHeld & KEY_ZR) && (kHeld & KEY_R)) {
 			if (kHeld & KEY_DDOWN) {
 				TeslaFPS = 1;
@@ -314,7 +314,7 @@ void StartThreads() {
 	threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x10, 2);
 	threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x10, 3);
 	threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3F, -2);
-	threadCreate(&t5, CheckButtons, NULL, NULL, 0x200, 0x3F, -2);
+	threadCreate(&t5, CheckButtons, NULL, NULL, 0x400, 0x3F, -2);
 	threadStart(&t0);
 	threadStart(&t1);
 	threadStart(&t2);
