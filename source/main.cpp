@@ -48,8 +48,8 @@ char Battery_c[320];
 #endif
 
 //Temperatures
-int32_t SoC_temperaturemiliC = 0;
-int32_t PCB_temperaturemiliC = 0;
+int32_t SOC_temperatureC = 0;
+int32_t PCB_temperatureC = 0;
 int32_t skin_temperaturemiliC = 0;
 char SoCPCB_temperature_c[64];
 char skin_temperature_c[32];
@@ -234,8 +234,14 @@ void Misc(void*) {
 		
 		//Temperatures
 		if (R_SUCCEEDED(tsCheck)) {
-			tsGetTemperatureMilliC(TsLocation_External, &SoC_temperaturemiliC);
-			tsGetTemperatureMilliC(TsLocation_Internal, &PCB_temperaturemiliC);
+			if (hosversionAtLeast(14,0,0)) {
+				tsGetTemperature(TsLocation_External, &SOC_temperatureC);
+				tsGetTemperature(TsLocation_Internal, &PCB_temperatureC);
+			}
+			else {
+				tsGetTemperatureMilliC(TsLocation_External, &SOC_temperatureC);
+				tsGetTemperatureMilliC(TsLocation_Internal, &PCB_temperatureC);
+			}
 		}
 		if (R_SUCCEEDED(tcCheck)) tcGetSkinTemperatureMilliC(&skin_temperaturemiliC);
 		
@@ -536,7 +542,10 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
 		
 		///Thermal
-		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2.2f \u00B0C\nPCB: %2.2f \u00B0C", (float)SoC_temperaturemiliC / 1000, (float)PCB_temperaturemiliC / 1000);
+		if (hosversionAtLeast(14,0,0))
+			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2d \u00B0C\nPCB: %2d \u00B0C", SOC_temperatureC, PCB_temperatureC);
+		else 
+			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2.2f \u00B0C\nPCB: %2.2f \u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000);
 		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %2.2f \u00B0C", (float)skin_temperaturemiliC / 1000);
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %2.2f%s", Rotation_SpeedLevel_f * 100, "%");
 		
@@ -624,7 +633,10 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
-		snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", (float)SoC_temperaturemiliC / 1000, (float)PCB_temperaturemiliC / 1000, (float)skin_temperaturemiliC / 1000);
+		if (hosversionAtLeast(14,0,0))
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
+		else
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
@@ -751,7 +763,10 @@ public:
 		);
 		
 		///Thermal
-		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2.2f \u00B0C\nPCB: %2.2f \u00B0C", (float)SoC_temperaturemiliC / 1000, (float)PCB_temperaturemiliC / 1000);
+		if (hosversionAtLeast(14,0,0))
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
+		else
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
 		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %2.2f \u00B0C", (float)skin_temperaturemiliC / 1000);
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %2.2f%s", Rotation_SpeedLevel_f * 100, "%");
 		
