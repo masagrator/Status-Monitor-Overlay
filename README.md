@@ -41,7 +41,7 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 Q: This homebrew has any impact on games?
 
 A: 
-- When not using FPS Counter: Negligible, you won't see any difference. Almost everything is done on Core #3, other cores usage is below 0.001%.
+- When not using FPS Counter: Negligible, you won't see any difference. Almost everything is done on Core `#3`, other cores usage is below 0.001%.
 - When using FPS Counter: it may impact timing between threads, so in some games it may result f.e. in stuck loading screens or jumping audio. It's found rarely, but issue exists and this is because of nature how Status Monitor gets info about FPS currently.
 
 # Troubleshooting:
