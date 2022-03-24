@@ -37,7 +37,7 @@ Contains most of supported informations with lower precision.
 | CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU frequency |
 | GPU      | %.1f@%.1f                  | Load@GPU Frequency                                                           |
 | RAM      | %.0f/%.0f@%.1f             | Total RAM used/Total RAM available@EMC frequency                        |
-| TEMP     | %2.1f/%2.1f/%2.1f<br>(FW 14.0.0+: %2d/%2d/%2d) | SoC temperature/PCB temperature/Skin temperature'                         |
+| TEMP     | %2.1f/%2.1f/%2.1f<br>(FW 14.0.0+: %2d/%2d/%2.1f) | SoC temperature/PCB temperature/Skin temperature'                         |
 | FAN      | %2.2f                      | Fan rotation level                                                        |
 
 ' Explenation provided at the end of file
