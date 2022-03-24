@@ -11,7 +11,7 @@ You can exit from selected mode by pressing and holding Left Stick + Right Stick
 If it's not working in dock, you need to first start Status Monitor, then put Nintendo Switch to dock.
 
 # What is currently supported:
-- CPU Usage for each core (Cores #0-#2 are used by apps/games, Core #3 is used by OS, background processes and also Tesla overlays)
+- CPU Usage for each core (Cores `#0`-`#2` are used by apps/games, Core `#3` is used by OS, background processes and also Tesla overlays)
 - GPU Load
 - CPU, GPU & RAM actual frequency
 - Used RAM categorized to: (not supported by FWs <5.0.0)
