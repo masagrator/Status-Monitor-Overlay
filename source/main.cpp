@@ -1,6 +1,6 @@
 #define TESLA_INIT_IMPL
 #include <tesla.hpp>
-#include "SaltyNX.h"
+#include "dmntcht.h"
 
 #ifdef CUSTOM
 #include "Battery.hpp"
@@ -37,6 +37,7 @@ Result fanCheck = 1;
 Result tcCheck = 1;
 Result Hinted = 1;
 Result pmdmntCheck = 1;
+Result dmntchtCheck = 1;
 #ifdef CUSTOM
 Result psmCheck = 1;
 
@@ -107,38 +108,16 @@ char GPU_Load_c[32];
 bool GameRunning = false;
 bool check = false;
 bool SaltySD = false;
-uintptr_t FPSaddress = 0;
-uintptr_t FPSavgaddress = 0;
+uintptr_t FPSaddress = 0x0;
+uintptr_t FPSavgaddress = 0x0;
 uint64_t PID = 0;
-uint32_t FPS = 0xFE;
+uint8_t FPS = 0xFE;
 float FPSavg = 254;
 char FPS_c[32];
 char FPSavg_c[32];
 char FPS_compressed_c[64];
 char FPS_var_compressed_c[64];
-SharedMemory _sharedmemory = {};
-bool SharedMemoryUsed = false;
-uint8_t* FPS_shared = 0;
-float* FPSavg_shared = 0;
-Handle remoteSharedMemory = 1;
-
-void LoadSharedMemory() {
-	if (SaltySD_Connect())
-		return;
-
-	ptrdiff_t offset = 0;
-	SaltySD_CheckIfSharedMemoryAvailable(&offset, 0);
-	SaltySD_GetSharedMemoryHandle(&remoteSharedMemory);
-	SaltySD_Term();
-
-	shmemLoadRemote(&_sharedmemory, remoteSharedMemory, 0x1000, Perm_Rw);
-	if (!shmemMap(&_sharedmemory)) {
-		FPS_shared = (uint8_t*)shmemGetAddr(&_sharedmemory);
-		FPSavg_shared = (float*)(FPS_shared + 1);
-		SharedMemoryUsed = true;
-	}
-	else FPS = 1234;
-}
+Handle debug;
 
 //Check if SaltyNX is working
 bool CheckPort () {
@@ -163,6 +142,17 @@ bool CheckPort () {
 	return false;
 }
 
+bool isServiceRunning(const char *serviceName) {	
+	Handle handle;	
+	SmServiceName service_name = smEncodeName(serviceName);	
+	if (R_FAILED(smRegisterService(&handle, service_name, false, 1))) return true;
+	else {
+		svcCloseHandle(handle);	
+		smUnregisterService(service_name);
+		return false;
+	}
+}
+
 void CheckIfGameRunning(void*) {
 	while (threadexit2 == false) {
 		if (R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
@@ -171,15 +161,21 @@ void CheckIfGameRunning(void*) {
 				check = true;
 			}
 			GameRunning = false;
-			shmemClose(&_sharedmemory);
+			svcCloseHandle(debug);
 		}
 		else if (GameRunning == false) {
 			svcSleepThread(1'000'000'000);
 			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
 			if (FPSoffset != NULL) {
+				if (Atmosphere_present == true) {
+					bool out = false;
+					dmntchtHasCheatProcess(&out);
+					if (out == false) dmntchtForceOpenCheatProcess();
+				}
+				else svcSleepThread(1'000'000'000);
+				fread(&FPSaddress, 0x5, 1, FPSoffset);
+				FPSavgaddress = FPSaddress - 0x8;
 				fclose(FPSoffset);
-				svcSleepThread(1'000'000'000);
-				LoadSharedMemory();
 				GameRunning = true;
 				check = false;
 			}
@@ -269,9 +265,14 @@ void Misc(void*) {
 		
 		//FPS
 		if (GameRunning == true) {
-			if (SharedMemoryUsed) {
-				FPS = *FPS_shared;
-				FPSavg = *FPSavg_shared;
+			if (Atmosphere_present == true) {
+				dmntchtReadCheatProcessMemory(FPSaddress, &FPS, 0x1);
+				dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
+			}
+			else if (R_SUCCEEDED(svcDebugActiveProcess(&debug, PID))) {
+				svcReadDebugProcessMemory(&FPS, debug, FPSaddress, 0x1);
+				svcReadDebugProcessMemory(&FPSavg, debug, FPSavgaddress, 0x4);
+				svcCloseHandle(debug);
 			}
 		}
 		
@@ -370,9 +371,10 @@ void CloseThreads() {
 void FPSCounter(void*) {
 	while (threadexit == false) {
 		if (GameRunning == true) {
-			if (SharedMemoryUsed) {
-				FPS = *FPS_shared;
-				FPSavg = *FPSavg_shared;
+			if (Atmosphere_present == true) dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
+			else if (R_SUCCEEDED(svcDebugActiveProcess(&debug, PID))) {
+				svcReadDebugProcessMemory(&FPSavg, debug, FPSavgaddress, 0x4);
+				svcCloseHandle(debug);
 			}
 		}
 		else FPSavg = 254;
@@ -900,7 +902,9 @@ public:
 			if (R_SUCCEEDED(psmCheck)) psmService = psmGetServiceSession();
 #endif
 			
+			Atmosphere_present = isServiceRunning("dmnt:cht");
 			SaltySD = CheckPort();
+			if (SaltySD == true && Atmosphere_present == true) dmntchtCheck = dmntchtInitialize();
 			
 			if (SaltySD == true) {
 				//Assign NX-FPS to default core
@@ -918,6 +922,8 @@ public:
 		CloseThreads();
 		
 		//Exit services
+		svcCloseHandle(debug);
+		dmntchtExit();
 		clkrstExit();
 		pcvExit();
 		tsExit();
