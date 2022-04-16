@@ -169,7 +169,7 @@ void CheckIfGameRunning(void*) {
 	while (!threadexit2) {
 		if (R_FAILED(pmdmntGetApplicationProcessId(&PID)))
 			GameRunning = false;
-		else if (!GameRunning) {
+		else if (!GameRunning && SharedMemoryUsed) {
 				*pluginActive = false;
 				svcSleepThread(100'000'000);
 				if (*pluginActive) {
@@ -911,6 +911,8 @@ public:
 
 	virtual void exitServices() override {
 		CloseThreads();
+
+		shmemUnmap(&_sharedmemory);
 		
 		//Exit services
 		clkrstExit();
