@@ -896,6 +896,7 @@ public:
 			SaltySD = CheckPort();
 			
 			if (SaltySD) {
+				LoadSharedMemory();
 				//Assign NX-FPS to default core
 				threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
 				
@@ -903,7 +904,6 @@ public:
 				threadStart(&t6);
 			}
 
-			LoadSharedMemory();
 			smExit();
 		}
 		Hinted = envIsSyscallHinted(0x6F);
@@ -912,7 +912,7 @@ public:
 	virtual void exitServices() override {
 		CloseThreads();
 
-		shmemUnmap(&_sharedmemory);
+		shmemClose(&_sharedmemory);
 		
 		//Exit services
 		clkrstExit();
