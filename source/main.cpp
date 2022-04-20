@@ -167,8 +167,13 @@ bool CheckPort () {
 
 void CheckIfGameRunning(void*) {
 	while (!threadexit2) {
-		if (R_FAILED(pmdmntGetApplicationProcessId(&PID)))
+		if (R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
 			GameRunning = false;
+			if (SharedMemoryUsed) {
+				*FPS_shared = 254;
+				*FPSavg_shared = 254;
+			}
+		}
 		else if (!GameRunning && SharedMemoryUsed) {
 				*pluginActive = false;
 				svcSleepThread(100'000'000);
