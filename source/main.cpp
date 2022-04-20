@@ -171,9 +171,11 @@ void CheckIfGameRunning(void*) {
 			GameRunning = false;
 			if (SharedMemoryUsed) {
 				*pluginActive = false;
-				*FPS_shared = 254;
-				*FPSavg_shared = 254.0;
+				*FPS_shared = 0;
+				*FPSavg_shared = 0.0;
 			}
+			FPS = 254;
+			FPSavg = 254.0;
 		}
 		else if (!GameRunning && SharedMemoryUsed) {
 				*pluginActive = false;
