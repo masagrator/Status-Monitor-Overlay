@@ -18,10 +18,9 @@ Thread t4;
 Thread t5;
 Thread t6;
 Thread t7;
-constinit uint64_t systemtickfrequency = 19200000;
+uint64_t systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
-bool Atmosphere_present = false;
 uint64_t refreshrate = 1;
 FanController g_ICon;
 
@@ -54,10 +53,7 @@ char SoCPCB_temperature_c[64];
 char skin_temperature_c[32];
 
 //CPU Usage
-uint64_t idletick0 = 19200000;
-uint64_t idletick1 = 19200000;
-uint64_t idletick2 = 19200000;
-uint64_t idletick3 = 19200000;
+uint64_t idletick0, idletick1, idletick2, idletick3 = systemtickfrequency;
 char CPU_Usage0[32];
 char CPU_Usage1[32];
 char CPU_Usage2[32];
@@ -167,16 +163,16 @@ bool CheckPort () {
 
 void CheckIfGameRunning(void*) {
 	while (!threadexit2) {
-		if (R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
+		if (!check && R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
 			GameRunning = false;
-			if (!check && SharedMemoryUsed) {
+			if (SharedMemoryUsed) {
 				*pluginActive = false;
 				*FPS_shared = 0;
 				*FPSavg_shared = 0.0;
 				FPS = 254;
 				FPSavg = 254.0;
-				check = true;
 			}
+			check = true;
 		}
 		else if (!GameRunning && SharedMemoryUsed) {
 				*pluginActive = false;
@@ -405,9 +401,9 @@ public:
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 				static uint8_t avg = 0;
-				if (FPSavg < 10) avg = 0;
-				if (FPSavg >= 10) avg = 23;
 				if (FPSavg >= 100) avg = 46;
+				else if (FPSavg >= 10) avg = 23;
+				else avg = 0;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 370 + avg, 50, a(0x7111));
 				renderer->drawString(FPSavg_c, false, 5, 40, 40, renderer->a(0xFFFF));
 		});
