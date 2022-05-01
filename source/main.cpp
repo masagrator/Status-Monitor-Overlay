@@ -114,6 +114,7 @@ char FPS_compressed_c[64];
 char FPS_var_compressed_c[64];
 SharedMemory _sharedmemory = {};
 bool SharedMemoryUsed = false;
+uint32_t* MAGIC_shared = 0;
 uint8_t* FPS_shared = 0;
 float* FPSavg_shared = 0;
 bool* pluginActive = 0;
@@ -129,13 +130,25 @@ void LoadSharedMemory() {
 	SaltySD_Term();
 
 	shmemLoadRemote(&_sharedmemory, remoteSharedMemory, 0x1000, Perm_Rw);
-	if (!shmemMap(&_sharedmemory)) {
-		FPS_shared = (uint8_t*)shmemGetAddr(&_sharedmemory);
-		FPSavg_shared = (float*)(FPS_shared + 1);
-		pluginActive = (bool*)(FPS_shared + 5);
+	if (!shmemMap(&_sharedmemory))
 		SharedMemoryUsed = true;
-	}
 	else FPS = 1234;
+}
+
+ptrdiff_t searchSharedMemoryBlock(void* base) {
+	ptrdiff_t offset = 0;
+	while(true) {
+		if (!*((uint16_t*)base + offset))
+			return 0;
+		else if (*(uint16_t*)base + offset != 10)
+			offset += *(uint16_t*)base + 2;
+		else {
+			MAGIC_shared = ((uint32_t*)base + offset + 2);
+			if (*MAGIC_shared == 0x465053)
+				return offset + 2;
+			else offset += *(uint16_t*)base + 2;
+		}
+	}
 }
 
 //Check if SaltyNX is working
@@ -175,11 +188,18 @@ void CheckIfGameRunning(void*) {
 			check = true;
 		}
 		else if (!GameRunning && SharedMemoryUsed) {
-				*pluginActive = false;
-				svcSleepThread(100'000'000);
-				if (*pluginActive) {
-					GameRunning = true;
-					check = false;
+				void* base = (uint16_t*)shmemGetAddr(&_sharedmemory);
+				ptrdiff_t offset = searchSharedMemoryBlock(base);
+				if (offset != 0) {
+					FPS_shared = (uint8_t*)base + offset + 4;
+					FPSavg_shared = (float*)base + offset + 5;
+					pluginActive = (bool*)base + offset + 9;
+					*pluginActive = false;
+					svcSleepThread(100'000'000);
+					if (*pluginActive) {
+						GameRunning = true;
+						check = false;
+					}
 				}
 			}
 		svcSleepThread(1'000'000'000);
