@@ -140,7 +140,7 @@ ptrdiff_t searchSharedMemoryBlock(void* base) {
 	while(true) {
 		if (!*((uint16_t*)base + offset))
 			return 0;
-		else if (*(uint16_t*)base + offset != 10)
+		else if (*((uint16_t*)base + offset) != 10)
 			offset += *(uint16_t*)base + 2;
 		else {
 			MAGIC_shared = ((uint32_t*)base + offset + 2);
