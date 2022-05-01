@@ -18,10 +18,9 @@ Thread t4;
 Thread t5;
 Thread t6;
 Thread t7;
-constinit uint64_t systemtickfrequency = 19200000;
+uint64_t systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
-bool Atmosphere_present = false;
 uint64_t refreshrate = 1;
 FanController g_ICon;
 
@@ -54,10 +53,10 @@ char SoCPCB_temperature_c[64];
 char skin_temperature_c[32];
 
 //CPU Usage
-uint64_t idletick0 = 19200000;
-uint64_t idletick1 = 19200000;
-uint64_t idletick2 = 19200000;
-uint64_t idletick3 = 19200000;
+uint64_t idletick0 = systemtickfrequency;
+uint64_t idletick1 = systemtickfrequency;
+uint64_t idletick2 = systemtickfrequency;
+uint64_t idletick3 = systemtickfrequency;
 char CPU_Usage0[32];
 char CPU_Usage1[32];
 char CPU_Usage2[32];
@@ -105,7 +104,7 @@ char GPU_Load_c[32];
 
 //NX-FPS
 bool GameRunning = false;
-bool check = false;
+bool check = true;
 bool SaltySD = false;
 uintptr_t FPSaddress = 0;
 uintptr_t FPSavgaddress = 0;
@@ -118,6 +117,7 @@ char FPS_compressed_c[64];
 char FPS_var_compressed_c[64];
 SharedMemory _sharedmemory = {};
 bool SharedMemoryUsed = false;
+uint32_t* MAGIC_shared = 0;
 uint8_t* FPS_shared = 0;
 float* FPSavg_shared = 0;
 bool* pluginActive = 0;
@@ -133,13 +133,28 @@ void LoadSharedMemory() {
 	SaltySD_Term();
 
 	shmemLoadRemote(&_sharedmemory, remoteSharedMemory, 0x1000, Perm_Rw);
-	if (!shmemMap(&_sharedmemory)) {
-		FPS_shared = (uint8_t*)shmemGetAddr(&_sharedmemory);
-		FPSavg_shared = (float*)(FPS_shared + 1);
-		pluginActive = (bool*)(FPS_shared + 5);
+	if (!shmemMap(&_sharedmemory))
 		SharedMemoryUsed = true;
-	}
 	else FPS = 1234;
+}
+
+ptrdiff_t searchSharedMemoryBlock(uintptr_t base) {
+	ptrdiff_t search_offset = 0;
+	while(true) {
+		uint16_t* check_size = (uint16_t*)(base + search_offset);
+		if (search_offset > 0xFFE)
+			return 0;
+		else if (!*check_size)
+			return 0;
+		else if (*check_size != 10)
+			search_offset += *check_size + 2;
+		else {
+			MAGIC_shared = (uint32_t*)(base + search_offset + 2);
+			if (*MAGIC_shared == 0x465053)
+				return search_offset + 2;
+			else search_offset += *check_size + 2;
+		}
+	}
 }
 
 //Check if SaltyNX is working
@@ -167,14 +182,30 @@ bool CheckPort () {
 
 void CheckIfGameRunning(void*) {
 	while (!threadexit2) {
-		if (R_FAILED(pmdmntGetApplicationProcessId(&PID)))
+		if (!check && R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
 			GameRunning = false;
-		else if (!GameRunning && SharedMemoryUsed) {
+			if (SharedMemoryUsed) {
 				*pluginActive = false;
-				svcSleepThread(100'000'000);
-				if (*pluginActive) {
-					GameRunning = true;
-					check = false;
+				*FPS_shared = 0;
+				*FPSavg_shared = 0.0;
+				FPS = 254;
+				FPSavg = 254.0;
+			}
+			check = true;
+		}
+		else if (!GameRunning && SharedMemoryUsed) {
+				uintptr_t base = (uintptr_t)shmemGetAddr(&_sharedmemory);
+				ptrdiff_t rel_offset = searchSharedMemoryBlock(base);
+				if (rel_offset) {
+					FPS_shared = (uint8_t*)(base + rel_offset + 4);
+					FPSavg_shared = (float*)(base + rel_offset + 5);
+					pluginActive = (bool*)(base + rel_offset + 9);
+					*pluginActive = false;
+					svcSleepThread(100'000'000);
+					if (*pluginActive) {
+						GameRunning = true;
+						check = false;
+					}
 				}
 			}
 		svcSleepThread(1'000'000'000);
@@ -396,9 +427,9 @@ public:
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 				static uint8_t avg = 0;
-				if (FPSavg < 10) avg = 0;
-				if (FPSavg >= 10) avg = 23;
 				if (FPSavg >= 100) avg = 46;
+				else if (FPSavg >= 10) avg = 23;
+				else avg = 0;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 370 + avg, 50, a(0x7111));
 				renderer->drawString(FPSavg_c, false, 5, 40, 40, renderer->a(0xFFFF));
 		});
@@ -896,6 +927,7 @@ public:
 			SaltySD = CheckPort();
 			
 			if (SaltySD) {
+				LoadSharedMemory();
 				//Assign NX-FPS to default core
 				threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
 				
@@ -903,7 +935,6 @@ public:
 				threadStart(&t6);
 			}
 
-			LoadSharedMemory();
 			smExit();
 		}
 		Hinted = envIsSyscallHinted(0x6F);
@@ -912,7 +943,7 @@ public:
 	virtual void exitServices() override {
 		CloseThreads();
 
-		shmemUnmap(&_sharedmemory);
+		shmemClose(&_sharedmemory);
 		
 		//Exit services
 		clkrstExit();
