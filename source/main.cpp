@@ -185,6 +185,7 @@ void CheckIfGameRunning(void*) {
 		if (!check && R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
 			GameRunning = false;
 			if (SharedMemoryUsed) {
+				*MAGIC_shared = 0;
 				*pluginActive = false;
 				*FPS_shared = 0;
 				*FPSavg_shared = 0.0;
