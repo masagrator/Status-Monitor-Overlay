@@ -24,6 +24,7 @@ bool threadexit2 = false;
 bool Atmosphere_present = false;
 uint64_t refreshrate = 1;
 FanController g_ICon;
+NvChannel nvdecChannel;
 
 //Mini mode
 char Variables[672];
@@ -38,6 +39,7 @@ Result tcCheck = 1;
 Result Hinted = 1;
 Result pmdmntCheck = 1;
 Result dmntchtCheck = 1;
+Result nvdecCheck = 1;
 #ifdef CUSTOM
 Result psmCheck = 1;
 
@@ -72,6 +74,9 @@ char CPU_Hz_c[32];
 ///GPU
 uint32_t GPU_Hz = 0;
 char GPU_Hz_c[32];
+//NVDEC
+uint32_t NVDEC_Hz = 0;
+char NVDEC_Hz_c[32];
 ///RAM
 uint32_t RAM_Hz = 0;
 char RAM_Hz_c[32];
@@ -151,6 +156,23 @@ bool isServiceRunning(const char *serviceName) {
 		smUnregisterService(service_name);
 		return false;
 	}
+}
+
+Result getNvChannelClockRate(NvChannel *channel, u32 module_id, u32 *clock_rate) {
+	struct nvhost_clk_rate_args {
+	    uint32_t rate;
+	    uint32_t moduleid;
+	} args = {
+		.rate     = 0,
+		.moduleid = module_id,
+	};
+
+	u32 id = hosversionBefore(8,0,0) ? _NV_IOWR(0, 0x14, args) : _NV_IOWR(0, 0x23, args);
+	Result rc = nvIoctl(channel->fd, id, &args);
+	if (R_SUCCEEDED(rc) && clock_rate)
+		*clock_rate = args.rate;
+
+	return rc;
 }
 
 void CheckIfGameRunning(void*) {
@@ -262,6 +284,9 @@ void Misc(void*) {
 		
 		//GPU Load
 		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
+
+		//NVDEC clock rate
+		if (R_SUCCEEDED(nvdecCheck)) getNvChannelClockRate(&nvdecChannel, 0x75, &NVDEC_Hz);
 		
 		//FPS
 		if (GameRunning == true) {
@@ -458,6 +483,12 @@ public:
 				if (R_SUCCEEDED(nvCheck)) renderer->drawString(GPU_Load_c, false, 20, 335, 15, renderer->a(0xFFFF));
 				
 			}
+
+			//NVDEC
+			if (R_SUCCEEDED(nvdecCheck)) {
+				renderer->drawString("NVDEC clock rate:", false, 235, 285, 20, renderer->a(0xFFFF));
+				renderer->drawString(NVDEC_Hz_c, false, 235, 320, 15, renderer->a(0xFFFF));
+			}
 			
 			///RAM
 			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(Hinted)) {
@@ -515,6 +546,9 @@ public:
 		///GPU
 		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", (float)GPU_Hz / 1000000);
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", (float)GPU_Load_u / 10, "%");
+
+		//NVDEC
+		snprintf(NVDEC_Hz_c, sizeof NVDEC_Hz_c, "Frequency: %.1f MHz", (float)NVDEC_Hz / 1000);
 		
 		///RAM
 		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz", (float)RAM_Hz / 1000000);
@@ -896,6 +930,8 @@ public:
 			}
 
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
+
+			if (R_SUCCEEDED(nvMapInit())) nvdecCheck = nvChannelCreate(&nvdecChannel, "/dev/nvhost-nvdec");
 			
 #ifdef CUSTOM
 			psmCheck = psmInitialize();
@@ -930,6 +966,8 @@ public:
 		tcExit();
 		fanControllerClose(&g_ICon);
 		fanExit();
+		nvChannelClose(&nvdecChannel);
+		nvMapExit();
 		nvClose(fd);
 		nvExit();
 #ifdef CUSTOM
