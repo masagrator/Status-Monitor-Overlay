@@ -4,7 +4,7 @@ Monitor Your hardware in real time!
 This is an overlay homebrew dedicated to Nintendo Switch.
 You need to have installed Tesla environment to use it.
 
-Tool contains three modes to choose, each one is explained [here](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/modes.md).
+Tool contains five modes to choose, each one is explained [here](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/modes.md).
 
 You can exit from selected mode by pressing and holding Left Stick + Right Stick. To exit from main menu press B.
 
@@ -23,6 +23,11 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 - SoC, PCB & Skin temperatures (Skin temperature not supported by FWs <5.0.0)
 - Fan Rotation Level
 - PFPS and FPS (with help of [NX-FPS](https://github.com/masagrator/NX-FPS), more info in repo. Not installing it results in not showing FPS counters on overlay)
+- Battery temperature, raw charge, age, and average voltage
+- Charger type, max voltage, and max current
+- DSP usage
+- NVDEC clock rate
+- Network type + Wi-fi password
 
 # Planned:
 - Add Graph mode

@@ -2,11 +2,9 @@
 #include <tesla.hpp>
 #include "dmntcht.h"
 
-#ifdef CUSTOM
 #include "Battery.hpp"
-#endif
-
 #include "audsnoop.h"
+#include "Misc.hpp"
 
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
@@ -27,6 +25,9 @@ bool Atmosphere_present = false;
 uint64_t refreshrate = 1;
 FanController g_ICon;
 
+//Misc2
+NvChannel nvdecChannel;
+
 //Mini mode
 char Variables[672];
 
@@ -40,15 +41,32 @@ Result tcCheck = 1;
 Result Hinted = 1;
 Result pmdmntCheck = 1;
 Result dmntchtCheck = 1;
-Result audsnoopCheck = 1;
-#ifdef CUSTOM
 Result psmCheck = 1;
+Result audsnoopCheck = 1;
+Result nvdecCheck = 1;
+Result nifmCheck = 1;
+
+//Wi-Fi
+NifmInternetConnectionType NifmConnectionType = (NifmInternetConnectionType)-1;
+NifmInternetConnectionStatus NifmConnectionStatus = (NifmInternetConnectionStatus)-1;
+bool Nifm_showpass = false;
+Result Nifm_internet_rc = -1;
+Result Nifm_profile_rc = -1;
+NifmNetworkProfileData_new* Nifm_profile = 0;
+char Nifm_pass[96];
+
+//NVDEC
+uint32_t NVDEC_Hz = 0;
+char NVDEC_Hz_c[32];
+
+//DSP
+uint32_t DSP_Load_u = -1;
+char DSP_Load_c[16];
 
 //Battery
 Service* psmService = 0;
 BatteryChargeInfoFields* _batteryChargeInfoFields = 0;
 char Battery_c[320];
-#endif
 
 //Temperatures
 int32_t SOC_temperatureC = 0;
@@ -106,10 +124,6 @@ char Rotation_SpeedLevel_c[64];
 FieldDescriptor fd = 0;
 uint32_t GPU_Load_u = 0;
 char GPU_Load_c[32];
-
-//DSP
-uint32_t DSP_Load_u = -1;
-char DSP_Load_c[16];
 
 //NX-FPS
 bool GameRunning = false;
@@ -269,9 +283,6 @@ void Misc(void*) {
 		
 		//GPU Load
 		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
-
-		//DSP
-		if (R_SUCCEEDED(audsnoopCheck)) audsnoopGetDspUsage(&DSP_Load_u);
 		
 		//FPS
 		if (GameRunning == true) {
@@ -288,6 +299,25 @@ void Misc(void*) {
 		
 		// Interval
 		svcSleepThread(1'000'000'000 / refreshrate);
+	}
+}
+
+void Misc2(void*) {
+	while (threadexit == false) {
+		//DSP
+		if (R_SUCCEEDED(audsnoopCheck)) audsnoopGetDspUsage(&DSP_Load_u);
+
+		//NVDEC clock rate
+		if (R_SUCCEEDED(nvdecCheck)) getNvChannelClockRate(&nvdecChannel, 0x75, &NVDEC_Hz);
+
+		if (R_SUCCEEDED(nifmCheck)) {
+			u32 dummy = 0;
+			Nifm_internet_rc = nifmGetInternetConnectionStatus(&NifmConnectionType, &dummy, &NifmConnectionStatus);
+			if (!Nifm_internet_rc && (NifmConnectionType == NifmInternetConnectionType_WiFi))
+				Nifm_profile_rc = nifmGetCurrentNetworkProfile((NifmNetworkProfileData*)Nifm_profile);
+		}
+		// Interval
+		svcSleepThread(100'000'000);
 	}
 }
 
@@ -493,11 +523,6 @@ public:
 				renderer->drawString(FPS_compressed_c, false, 235, 120, 20, renderer->a(0xFFFF));
 				renderer->drawString(FPS_var_compressed_c, false, 295, 120, 20, renderer->a(0xFFFF));
 			}
-
-			///DSP
-			if (R_SUCCEEDED(audsnoopCheck)) {
-				renderer->drawString(DSP_Load_c, false, 235, GameRunning ? 285 : 120, 20, renderer->a(0xFFFF));
-			}
 			
 			if (refreshrate == 5) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Down to slow down refresh", false, 20, 675, 15, renderer->a(0xFFFF));
 			else if (refreshrate == 1) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Up to speed up refresh", false, 20, 675, 15, renderer->a(0xFFFF));
@@ -569,8 +594,7 @@ public:
 		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
 		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.2f", FPS, FPSavg);
-
-		snprintf(DSP_Load_c, sizeof DSP_Load_c, "DSP: %u%%", DSP_Load_u);
+		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
@@ -675,13 +699,12 @@ public:
 	}
 };
 
-#ifdef CUSTOM
 void BatteryChecker(void*) {
 	if (R_SUCCEEDED(psmCheck)){
 		_batteryChargeInfoFields = new BatteryChargeInfoFields;
 		while (!threadexit) {
 			psmGetBatteryChargeInfoFields(psmService, _batteryChargeInfoFields);
-			svcSleepThread(5'000'000'000);
+			svcSleepThread(1'000'000'000);
 		}
 		delete _batteryChargeInfoFields;
 	}
@@ -692,51 +715,22 @@ void StartBatteryThread() {
 	threadStart(&t7);
 }
 
-//CustomOverlay
-class CustomOverlay : public tsl::Gui {
+//Battery
+class BatteryOverlay : public tsl::Gui {
 public:
-    CustomOverlay() { }
+    BatteryOverlay() { }
 
     virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
-			//Print strings
-			///CPU
-			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) {
-				renderer->drawString("CPU Usage:", false, 20, 120, 20, renderer->a(0xFFFF));
-				renderer->drawString(CPU_Hz_c, false, 20, 155, 15, renderer->a(0xFFFF));
-				renderer->drawString(CPU_compressed_c, false, 20, 185, 15, renderer->a(0xFFFF));
-			}
-			
-			///GPU
-			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(nvCheck)) {
-				
-				renderer->drawString("GPU Usage:", false, 20, 285, 20, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) renderer->drawString(GPU_Hz_c, false, 20, 320, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(nvCheck)) renderer->drawString(GPU_Load_c, false, 20, 335, 15, renderer->a(0xFFFF));
-				
-			}
-			
-			///RAM
 			if (R_SUCCEEDED(psmCheck)) {
 				
-				renderer->drawString("Battery Stats:", false, 20, 375, 20, renderer->a(0xFFFF));
-				renderer->drawString(Battery_c, false, 20, 410, 15, renderer->a(0xFFFF));
+				renderer->drawString("Battery/Charger Stats:", false, 20, 120, 20, renderer->a(0xFFFF));
+				renderer->drawString(Battery_c, false, 20, 155, 18, renderer->a(0xFFFF));
 			}
-			
-			// Thermal
-			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
-				renderer->drawString("Thermal:", false, 20, 540, 20, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tsCheck)) renderer->drawString(SoCPCB_temperature_c, false, 20, 575, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tcCheck)) renderer->drawString(skin_temperature_c, false, 20, 605, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(fanCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, 20, 620, 15, renderer->a(0xFFFF));
-			}
-			
-			if (refreshrate == 5) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Down to slow down refresh", false, 20, 675, 15, renderer->a(0xFFFF));
-			else if (refreshrate == 1) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Up to speed up refresh", false, 20, 675, 15, renderer->a(0xFFFF));
-		
+
 		});
 
 		rootFrame->setContent(Status);
@@ -745,58 +739,145 @@ public:
 	}
 
 	virtual void update() override {
-		if (TeslaFPS == 60) TeslaFPS = 1;
-		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
-		//This is because making each loop also takes time, which is not considered because this will take also additional time
-		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
-		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
-		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
-		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
-		
-		//Make stuff ready to print
-		///CPU
-		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", (float)CPU_Hz / 1000000);
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100, "%");
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100, "%");
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100, "%");
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100, "%");
-		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
-		
-		///GPU
-		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", (float)GPU_Hz / 1000000);
-		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", (float)GPU_Load_u / 10, "%");
-		
+
 		///Battery
-		snprintf(Battery_c, sizeof Battery_c,
-			"Battery Temperature: %.1f\u00B0C\n"
-			"Raw Battery Charge: %.1f%s\n"
-			"Voltage Avg: %u mV\n"
-			"Charger Type: %u\n",
-			(float)_batteryChargeInfoFields->BatteryTemperature / 1000,
-			(float)_batteryChargeInfoFields->RawBatteryCharge / 1000, "%",
-			_batteryChargeInfoFields->VoltageAvg,
-			_batteryChargeInfoFields->ChargerType
-		);
-		
-		///Thermal
-		if (hosversionAtLeast(14,0,0))
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
+		if (_batteryChargeInfoFields->ChargerType)
+			snprintf(Battery_c, sizeof Battery_c,
+				"Battery Temperature: %.1f\u00B0C\n"
+				"Battery Raw Charge: %.1f%s\n"
+				"Battery Age: %.1f%s\n"
+				"Battery Voltage (45s Avg): %u mV\n"
+				"Charger Type: %u\n"
+				"Charger Max Voltage: %u mV\n"
+				"Charger Max Current: %u mA\n",
+				(float)_batteryChargeInfoFields->BatteryTemperature / 1000,
+				(float)_batteryChargeInfoFields->RawBatteryCharge / 1000, "%",
+				(float)_batteryChargeInfoFields->BatteryAge / 1000, "%",
+				_batteryChargeInfoFields->VoltageAvg,
+				_batteryChargeInfoFields->ChargerType,
+				_batteryChargeInfoFields->ChargerVoltageLimit,
+				_batteryChargeInfoFields->ChargerCurrentLimit
+			);
 		else
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
-		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %2.2f \u00B0C", (float)skin_temperaturemiliC / 1000);
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %2.2f%s", Rotation_SpeedLevel_f * 100, "%");
+			snprintf(Battery_c, sizeof Battery_c,
+				"Battery Temperature: %.1f\u00B0C\n"
+				"Battery Raw Charge: %.1f%s\n"
+				"Battery Age: %.1f%s\n"
+				"Battery Voltage (45s Avg): %u mV\n"
+				"Charger Type: Not connected\n",
+				(float)_batteryChargeInfoFields->BatteryTemperature / 1000,
+				(float)_batteryChargeInfoFields->RawBatteryCharge / 1000, "%",
+				(float)_batteryChargeInfoFields->BatteryAge / 1000, "%",
+				_batteryChargeInfoFields->VoltageAvg
+			);
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
+		if (keysHeld & KEY_B) {
 			CloseThreads();
+			svcSleepThread(500'000'000);
 			tsl::goBack();
 			return true;
 		}
 		return false;
 	}
 };
-#endif
+
+void StartMiscThread() {
+	threadCreate(&t0, Misc2, NULL, NULL, 0x1000, 0x3F, 3);
+	threadStart(&t0);
+}
+
+void EndMiscThread() {
+	threadexit = true;
+	threadWaitForExit(&t0);
+	threadClose(&t0);
+	threadexit = false;
+}
+
+class MiscOverlay : public tsl::Gui {
+public:
+    MiscOverlay() { }
+
+    virtual tsl::elm::Element* createUI() override {
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
+
+		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+			
+			///DSP
+			if (R_SUCCEEDED(audsnoopCheck)) {
+				renderer->drawString(DSP_Load_c, false, 20, 120, 20, renderer->a(0xFFFF));
+			}
+
+			//NVDEC
+			if (R_SUCCEEDED(nvdecCheck)) {
+				renderer->drawString(NVDEC_Hz_c, false, 20, 165, 20, renderer->a(0xFFFF));
+			}
+
+			if (R_SUCCEEDED(nifmCheck)) {
+				renderer->drawString("Network", false, 20, 210, 20, renderer->a(0xFFFF));
+				if (!Nifm_internet_rc) {
+					if (NifmConnectionType == NifmInternetConnectionType_WiFi) {
+						renderer->drawString("Type: Wi-Fi", false, 20, 235, 18, renderer->a(0xFFFF));
+						if (!Nifm_profile_rc) {
+							if (Nifm_showpass)
+								renderer->drawString(Nifm_pass, false, 20, 260, 15, renderer->a(0xFFFF));
+							else
+								renderer->drawString("Press Y to show password", false, 20, 260, 15, renderer->a(0xFFFF));
+						}
+					}
+					else if (NifmConnectionType == NifmInternetConnectionType_Ethernet)
+						renderer->drawString("Type: Ethernet", false, 20, 235, 18, renderer->a(0xFFFF));
+				}
+				else
+					renderer->drawString("Type: Not connected", false, 20, 235, 18, renderer->a(0xFFFF));
+		}
+
+		});
+
+		rootFrame->setContent(Status);
+
+		return rootFrame;
+	}
+
+	virtual void update() override {
+
+		snprintf(DSP_Load_c, sizeof DSP_Load_c, "DSP usage: %u%%", DSP_Load_u);
+		snprintf(NVDEC_Hz_c, sizeof NVDEC_Hz_c, "NVDEC clock rate: %.1f MHz", (float)NVDEC_Hz / 1000);
+		char pass_temp1[25] = "";
+		char pass_temp2[25] = "";
+		char pass_temp3[17] = "";
+		if (Nifm_profile->wireless_setting_data.passphrase_len > 48) {
+			memcpy(&pass_temp1, &(Nifm_profile->wireless_setting_data.passphrase[0]), 24);
+			memcpy(&pass_temp2, &(Nifm_profile->wireless_setting_data.passphrase[24]), 24);
+			memcpy(&pass_temp3, &(Nifm_profile->wireless_setting_data.passphrase[48]), 16);
+		}
+		else if (Nifm_profile->wireless_setting_data.passphrase_len > 24) {
+			memcpy(&pass_temp1, &(Nifm_profile->wireless_setting_data.passphrase[0]), 24);
+			memcpy(&pass_temp2, &(Nifm_profile->wireless_setting_data.passphrase[24]), 24);
+		}
+		else {
+			memcpy(&pass_temp1, &(Nifm_profile->wireless_setting_data.passphrase[0]), 24);
+		}
+		snprintf(Nifm_pass, sizeof Nifm_pass, "%s\n%s\n%s", pass_temp1, pass_temp2, pass_temp3);	
+	}
+
+	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if (keysHeld & KEY_Y) {
+			Nifm_showpass = true;
+		}
+		else Nifm_showpass = false;
+
+		if (keysHeld & KEY_B) {
+			EndMiscThread();
+			nifmExit();
+			svcSleepThread(500'000'000);
+			tsl::goBack();
+			return true;
+		}
+		return false;
+	}
+};
 
 //Main Menu
 class MainMenu : public tsl::Gui {
@@ -852,22 +933,30 @@ public:
 			});
 			list->addItem(comFPS);
 		}
-#ifdef CUSTOM
-		auto Custom = new tsl::elm::ListItem("Custom");
-		Custom->setClickListener([](uint64_t keys) {
+		auto Battery = new tsl::elm::ListItem("Battery/Charger");
+		Battery->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
-				StartThreads();
 				StartBatteryThread();
-				TeslaFPS = 1;
-				refreshrate = 1;
-				tsl::hlp::requestForeground(false);
-				tsl::changeTo<CustomOverlay>();
+				tsl::changeTo<BatteryOverlay>();
 				return true;
 			}
 			return false;
 		});
-		list->addItem(Custom);
-#endif
+		list->addItem(Battery);
+
+		auto Misc = new tsl::elm::ListItem("Miscellaneous");
+		Misc->setClickListener([](uint64_t keys) {
+			if (keys & KEY_A) {
+				smInitialize();
+				nifmCheck = nifmInitialize(NifmServiceType_Admin);
+				smExit();
+				StartMiscThread();
+				tsl::changeTo<MiscOverlay>();
+				return true;
+			}
+			return false;
+		});
+		list->addItem(Misc);
 
 		rootFrame->setContent(list);
 
@@ -912,13 +1001,14 @@ public:
 			}
 
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
-
-			if (R_SUCCEEDED(audsnoopInitialize())) audsnoopCheck = audsnoopEnableDspUsageMeasurement();
+			if (R_SUCCEEDED(nvMapInit())) nvdecCheck = nvChannelCreate(&nvdecChannel, "/dev/nvhost-nvdec");
 			
-#ifdef CUSTOM
+			if (R_SUCCEEDED(audsnoopInitialize())) audsnoopCheck = audsnoopEnableDspUsageMeasurement();
+
+			Nifm_profile = (NifmNetworkProfileData_new*)malloc(sizeof(NifmNetworkProfileData_new));
+
 			psmCheck = psmInitialize();
 			if (R_SUCCEEDED(psmCheck)) psmService = psmGetServiceSession();
-#endif
 			
 			Atmosphere_present = isServiceRunning("dmnt:cht");
 			SaltySD = CheckPort();
@@ -948,16 +1038,15 @@ public:
 		tcExit();
 		fanControllerClose(&g_ICon);
 		fanExit();
+		nvChannelClose(&nvdecChannel);
+		nvMapExit();
 		nvClose(fd);
 		nvExit();
-
+		psmExit();
 		if (R_SUCCEEDED(audsnoopCheck)) {
 			audsnoopDisableDspUsageMeasurement();
 			audsnoopExit();
 		}
-#ifdef CUSTOM
-		psmExit();
-#endif
 	}
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state

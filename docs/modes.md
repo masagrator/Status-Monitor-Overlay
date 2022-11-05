@@ -1,6 +1,6 @@
 # Modes
 
-Status Monitor Overlay from 0.5 release contains three modes to choose from Main Menu
+Status Monitor Overlay from 0.7 release contains five modes to choose from Main Menu
 
 # Full
 
@@ -60,6 +60,31 @@ It shows only FPS value in 31Hz + vsync signal.
 If game is not launched, it will show always 254.0 value.
 
 Mode available only with SaltyNX installed.
+
+# Battery
+
+| Category | Format            | Explanation                                                              |
+|----------|-------------------|--------------------------------------------------------------------------|
+| Battery Temperature       | %.2f                | Battery temperature in Celsius                                                   |
+| Battery Raw Charge        | %.2f                | Raw battery charged capacity in percent                                                    |
+| Battery Voltage (45s avg) | %.2f                | Battery average voltage in mV                                                    |
+| Charger Type              | %u                  | Connected charger type, more in Battery.hpp "BatteryChargeInfoFieldsChargerType" |
+
+Shows only if charger type is other than 0:
+| Category | Format            | Explanation                                                              |
+|----------|-------------------|--------------------------------------------------------------------------|
+| Charger Max Voltage       | %u                  | Charger and external device voltage limit in mV       |
+| Charger Max Current       | %u                  | Charger and external device current limit in mA       |
+
+#  Miscellaneous
+
+| Category | Format            | Explanation                                                              |
+|----------|-------------------|--------------------------------------------------------------------------|
+| DSP Usage              | %u                | In percent                                                                       |
+| NVDEC clock rate       | %.2f              | NVDEC frequency in MHz                                                           |
+| Network Type           | %s                | It shows if Switch is connected to internet, and if it's using Ethernet or Wi-Fi |
+
+If Network Type is "Wi-Fi", you can press Y to show password. Since max password length is 64 characters, it may show in up to 3 lines.
 
 # Additional info
 
