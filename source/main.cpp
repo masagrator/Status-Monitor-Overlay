@@ -6,6 +6,8 @@
 #include "Battery.hpp"
 #endif
 
+#include "audsnoop.h"
+
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
 
@@ -38,6 +40,7 @@ Result tcCheck = 1;
 Result Hinted = 1;
 Result pmdmntCheck = 1;
 Result dmntchtCheck = 1;
+Result audsnoopCheck = 1;
 #ifdef CUSTOM
 Result psmCheck = 1;
 
@@ -103,6 +106,10 @@ char Rotation_SpeedLevel_c[64];
 FieldDescriptor fd = 0;
 uint32_t GPU_Load_u = 0;
 char GPU_Load_c[32];
+
+//DSP
+uint32_t DSP_Load_u = -1;
+char DSP_Load_c[16];
 
 //NX-FPS
 bool GameRunning = false;
@@ -262,6 +269,9 @@ void Misc(void*) {
 		
 		//GPU Load
 		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
+
+		//DSP
+		if (R_SUCCEEDED(audsnoopCheck)) audsnoopGetDspUsage(&DSP_Load_u);
 		
 		//FPS
 		if (GameRunning == true) {
@@ -483,6 +493,11 @@ public:
 				renderer->drawString(FPS_compressed_c, false, 235, 120, 20, renderer->a(0xFFFF));
 				renderer->drawString(FPS_var_compressed_c, false, 295, 120, 20, renderer->a(0xFFFF));
 			}
+
+			///DSP
+			if (R_SUCCEEDED(audsnoopCheck)) {
+				renderer->drawString(DSP_Load_c, false, 235, GameRunning ? 285 : 120, 20, renderer->a(0xFFFF));
+			}
 			
 			if (refreshrate == 5) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Down to slow down refresh", false, 20, 675, 15, renderer->a(0xFFFF));
 			else if (refreshrate == 1) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Up to speed up refresh", false, 20, 675, 15, renderer->a(0xFFFF));
@@ -554,7 +569,8 @@ public:
 		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
 		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.2f", FPS, FPSavg);
-		
+
+		snprintf(DSP_Load_c, sizeof DSP_Load_c, "DSP: %u%%", DSP_Load_u);
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
@@ -710,7 +726,7 @@ public:
 				renderer->drawString(Battery_c, false, 20, 410, 15, renderer->a(0xFFFF));
 			}
 			
-			///Thermal
+			// Thermal
 			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
 				renderer->drawString("Thermal:", false, 20, 540, 20, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(tsCheck)) renderer->drawString(SoCPCB_temperature_c, false, 20, 575, 15, renderer->a(0xFFFF));
@@ -896,6 +912,8 @@ public:
 			}
 
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
+
+			if (R_SUCCEEDED(audsnoopInitialize())) audsnoopCheck = audsnoopEnableDspUsageMeasurement();
 			
 #ifdef CUSTOM
 			psmCheck = psmInitialize();
@@ -932,6 +950,11 @@ public:
 		fanExit();
 		nvClose(fd);
 		nvExit();
+
+		if (R_SUCCEEDED(audsnoopCheck)) {
+			audsnoopDisableDspUsageMeasurement();
+			audsnoopExit();
+		}
 #ifdef CUSTOM
 		psmExit();
 #endif
