@@ -84,7 +84,7 @@ Shows only if charger type is other than 0:
 | NVDEC clock rate       | %.2f              | NVDEC frequency in MHz                                                           |
 | Network Type           | %s                | It shows if Switch is connected to internet, and if it's using Ethernet or Wi-Fi |
 
-If Network Type is "Wi-Fi", you can press Y to show password. Since max password length is 64 characters, it may show in max 3 lines.
+If Network Type is "Wi-Fi", you can press Y to show password. Since max password length is 64 characters, it may show in up to 3 lines.
 
 # Additional info
 
