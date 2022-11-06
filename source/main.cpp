@@ -1,3 +1,5 @@
+#include <utility>
+
 #define TESLA_INIT_IMPL
 #include <tesla.hpp>
 #include "dmntcht.h"
@@ -5,6 +7,8 @@
 #include "Battery.hpp"
 #include "audsnoop.h"
 #include "Misc.hpp"
+
+extern "C" u32 __nx_applet_type;
 
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
@@ -26,7 +30,9 @@ uint64_t refreshrate = 1;
 FanController g_ICon;
 
 //Misc2
-NvChannel nvdecChannel;
+FieldDescriptor nvdecFd;
+FieldDescriptor nvencFd;
+FieldDescriptor vicFd;
 
 //Mini mode
 char Variables[672];
@@ -44,6 +50,8 @@ Result dmntchtCheck = 1;
 Result psmCheck = 1;
 Result audsnoopCheck = 1;
 Result nvdecCheck = 1;
+Result nvencCheck = 1;
+Result vicCheck = 1;
 Result nifmCheck = 1;
 
 //Wi-Fi
@@ -55,9 +63,14 @@ Result Nifm_profile_rc = -1;
 NifmNetworkProfileData_new* Nifm_profile = 0;
 char Nifm_pass[96];
 
-//NVDEC
+//Multimedia
 uint32_t NVDEC_Hz = 0;
+uint32_t NVENC_Hz = 0;
+uint32_t VIC_Hz = 0;
 char NVDEC_Hz_c[32];
+char NVENC_Hz_c[32];
+char VIC_Hz_c[32];
+
 
 //DSP
 uint32_t DSP_Load_u = -1;
@@ -307,8 +320,10 @@ void Misc2(void*) {
 		//DSP
 		if (R_SUCCEEDED(audsnoopCheck)) audsnoopGetDspUsage(&DSP_Load_u);
 
-		//NVDEC clock rate
-		if (R_SUCCEEDED(nvdecCheck)) getNvChannelClockRate(&nvdecChannel, 0x75, &NVDEC_Hz);
+		//Multimedia clock rates
+		if (R_SUCCEEDED(nvdecCheck)) getNvChannelClockRate(nvdecFd, 0x75, &NVDEC_Hz);
+		if (R_SUCCEEDED(nvencCheck)) getNvChannelClockRate(nvencFd, 0x6d, &NVENC_Hz);
+		if (R_SUCCEEDED(vicCheck))   getNvChannelClockRate(vicFd,   0x6a, &VIC_Hz);
 
 		if (R_SUCCEEDED(nifmCheck)) {
 			u32 dummy = 0;
@@ -809,10 +824,14 @@ public:
 				renderer->drawString(DSP_Load_c, false, 20, 120, 20, renderer->a(0xFFFF));
 			}
 
-			//NVDEC
-			if (R_SUCCEEDED(nvdecCheck)) {
-				renderer->drawString(NVDEC_Hz_c, false, 20, 165, 20, renderer->a(0xFFFF));
-			}
+			//Multimedia
+			renderer->drawString("Multimedia engines:", false, 20, 165, 20, renderer->a(0xFFFF));
+			if (R_SUCCEEDED(nvdecCheck))
+				renderer->drawString(NVDEC_Hz_c, false, 20, 190, 15, renderer->a(0xFFFF));
+			if (R_SUCCEEDED(nvencCheck))
+				renderer->drawString(NVENC_Hz_c, false, 20, 210, 15, renderer->a(0xFFFF));
+			if (R_SUCCEEDED(vicCheck))
+				renderer->drawString(VIC_Hz_c,   false, 20, 230, 15, renderer->a(0xFFFF));
 
 			if (R_SUCCEEDED(nifmCheck)) {
 				renderer->drawString("Network", false, 20, 210, 20, renderer->a(0xFFFF));
@@ -844,6 +863,8 @@ public:
 
 		snprintf(DSP_Load_c, sizeof DSP_Load_c, "DSP usage: %u%%", DSP_Load_u);
 		snprintf(NVDEC_Hz_c, sizeof NVDEC_Hz_c, "NVDEC clock rate: %.1f MHz", (float)NVDEC_Hz / 1000);
+		snprintf(NVENC_Hz_c, sizeof NVENC_Hz_c, "NVENC clock rate: %.1f MHz", (float)NVENC_Hz / 1000);
+		snprintf(VIC_Hz_c,   sizeof VIC_Hz_c,   "VIC clock rate: %.1f MHz",   (float)VIC_Hz   / 1000);
 		char pass_temp1[25] = "";
 		char pass_temp2[25] = "";
 		char pass_temp3[17] = "";
@@ -1000,8 +1021,15 @@ public:
 				else fanCheck = fanOpenController(&g_ICon, 1);
 			}
 
-			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
-			if (R_SUCCEEDED(nvMapInit())) nvdecCheck = nvChannelCreate(&nvdecChannel, "/dev/nvhost-nvdec");
+			// Library applets don't have access to nvenc
+			u32 saved_applet_type = std::exchange(__nx_applet_type, AppletType_Default);
+			if (R_SUCCEEDED(nvInitialize())) {
+				nvCheck    = nvOpen(&fd,      "/dev/nvhost-ctrl-gpu");
+				nvdecCheck = nvOpen(&nvdecFd, "/dev/nvhost-nvdec");
+				nvencCheck = nvOpen(&nvencFd, "/dev/nvhost-msenc");
+				vicCheck   = nvOpen(&vicFd,   "/dev/nvhost-vic");
+			}
+			__nx_applet_type = saved_applet_type;
 			
 			if (R_SUCCEEDED(audsnoopInitialize())) audsnoopCheck = audsnoopEnableDspUsageMeasurement();
 
@@ -1038,9 +1066,10 @@ public:
 		tcExit();
 		fanControllerClose(&g_ICon);
 		fanExit();
-		nvChannelClose(&nvdecChannel);
-		nvMapExit();
 		nvClose(fd);
+		nvClose(nvdecFd);
+		nvClose(nvencFd);
+		nvClose(vicFd);
 		nvExit();
 		psmExit();
 		if (R_SUCCEEDED(audsnoopCheck)) {
