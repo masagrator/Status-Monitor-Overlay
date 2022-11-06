@@ -834,22 +834,22 @@ public:
 				renderer->drawString(VIC_Hz_c,   false, 20, 230, 15, renderer->a(0xFFFF));
 
 			if (R_SUCCEEDED(nifmCheck)) {
-				renderer->drawString("Network", false, 20, 210, 20, renderer->a(0xFFFF));
+				renderer->drawString("Network", false, 20, 280, 20, renderer->a(0xFFFF));
 				if (!Nifm_internet_rc) {
 					if (NifmConnectionType == NifmInternetConnectionType_WiFi) {
-						renderer->drawString("Type: Wi-Fi", false, 20, 235, 18, renderer->a(0xFFFF));
+						renderer->drawString("Type: Wi-Fi", false, 20, 305, 18, renderer->a(0xFFFF));
 						if (!Nifm_profile_rc) {
 							if (Nifm_showpass)
-								renderer->drawString(Nifm_pass, false, 20, 260, 15, renderer->a(0xFFFF));
+								renderer->drawString(Nifm_pass, false, 20, 330, 15, renderer->a(0xFFFF));
 							else
-								renderer->drawString("Press Y to show password", false, 20, 260, 15, renderer->a(0xFFFF));
+								renderer->drawString("Press Y to show password", false, 20, 330, 15, renderer->a(0xFFFF));
 						}
 					}
 					else if (NifmConnectionType == NifmInternetConnectionType_Ethernet)
-						renderer->drawString("Type: Ethernet", false, 20, 235, 18, renderer->a(0xFFFF));
+						renderer->drawString("Type: Ethernet", false, 20, 305, 18, renderer->a(0xFFFF));
 				}
 				else
-					renderer->drawString("Type: Not connected", false, 20, 235, 18, renderer->a(0xFFFF));
+					renderer->drawString("Type: Not connected", false, 20, 305, 18, renderer->a(0xFFFF));
 		}
 
 		});
