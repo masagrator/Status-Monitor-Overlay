@@ -30,9 +30,8 @@ uint64_t refreshrate = 1;
 FanController g_ICon;
 
 //Misc2
-FieldDescriptor nvdecFd;
-FieldDescriptor nvencFd;
-FieldDescriptor vicFd;
+MmuRequest nvdecRequest;
+MmuRequest nvencRequest;
 
 //Mini mode
 char Variables[672];
@@ -66,10 +65,8 @@ char Nifm_pass[96];
 //Multimedia
 uint32_t NVDEC_Hz = 0;
 uint32_t NVENC_Hz = 0;
-uint32_t VIC_Hz = 0;
 char NVDEC_Hz_c[32];
 char NVENC_Hz_c[32];
-char VIC_Hz_c[32];
 
 
 //DSP
@@ -321,9 +318,8 @@ void Misc2(void*) {
 		if (R_SUCCEEDED(audsnoopCheck)) audsnoopGetDspUsage(&DSP_Load_u);
 
 		//Multimedia clock rates
-		if (R_SUCCEEDED(nvdecCheck)) getNvChannelClockRate(nvdecFd, 0x75, &NVDEC_Hz);
-		if (R_SUCCEEDED(nvencCheck)) getNvChannelClockRate(nvencFd, 0x6d, &NVENC_Hz);
-		if (R_SUCCEEDED(vicCheck))   getNvChannelClockRate(vicFd,   0x6a, &VIC_Hz);
+		if (R_SUCCEEDED(nvdecCheck)) mmuRequestGet(&nvdecRequest, &NVDEC_Hz);
+		if (R_SUCCEEDED(nvencCheck)) mmuRequestGet(&nvencRequest, &NVENC_Hz);
 
 		if (R_SUCCEEDED(nifmCheck)) {
 			u32 dummy = 0;
@@ -830,8 +826,6 @@ public:
 				renderer->drawString(NVDEC_Hz_c, false, 20, 190, 15, renderer->a(0xFFFF));
 			if (R_SUCCEEDED(nvencCheck))
 				renderer->drawString(NVENC_Hz_c, false, 20, 210, 15, renderer->a(0xFFFF));
-			if (R_SUCCEEDED(vicCheck))
-				renderer->drawString(VIC_Hz_c,   false, 20, 230, 15, renderer->a(0xFFFF));
 
 			if (R_SUCCEEDED(nifmCheck)) {
 				renderer->drawString("Network", false, 20, 280, 20, renderer->a(0xFFFF));
@@ -862,9 +856,8 @@ public:
 	virtual void update() override {
 
 		snprintf(DSP_Load_c, sizeof DSP_Load_c, "DSP usage: %u%%", DSP_Load_u);
-		snprintf(NVDEC_Hz_c, sizeof NVDEC_Hz_c, "NVDEC clock rate: %.1f MHz", (float)NVDEC_Hz / 1000);
-		snprintf(NVENC_Hz_c, sizeof NVENC_Hz_c, "NVENC clock rate: %.1f MHz", (float)NVENC_Hz / 1000);
-		snprintf(VIC_Hz_c,   sizeof VIC_Hz_c,   "VIC clock rate: %.1f MHz",   (float)VIC_Hz   / 1000);
+		snprintf(NVDEC_Hz_c, sizeof NVDEC_Hz_c, "NVDEC clock rate: %.1f MHz", (float)NVDEC_Hz / 1000000);
+		snprintf(NVENC_Hz_c, sizeof NVENC_Hz_c, "NVENC clock rate: %.1f MHz", (float)NVENC_Hz / 1000000);
 		char pass_temp1[25] = "";
 		char pass_temp2[25] = "";
 		char pass_temp3[17] = "";
@@ -1021,15 +1014,12 @@ public:
 				else fanCheck = fanOpenController(&g_ICon, 1);
 			}
 
-			// Library applets don't have access to nvenc
-			u32 saved_applet_type = std::exchange(__nx_applet_type, AppletType_Default);
-			if (R_SUCCEEDED(nvInitialize())) {
-				nvCheck    = nvOpen(&fd,      "/dev/nvhost-ctrl-gpu");
-				nvdecCheck = nvOpen(&nvdecFd, "/dev/nvhost-nvdec");
-				nvencCheck = nvOpen(&nvencFd, "/dev/nvhost-msenc");
-				vicCheck   = nvOpen(&vicFd,   "/dev/nvhost-vic");
+			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
+
+			if (R_SUCCEEDED(mmuInitialize())) {
+				nvdecCheck = mmuRequestInitialize(&nvdecRequest, MmuModuleId(5), 8, false);
+				nvencCheck = mmuRequestInitialize(&nvencRequest, MmuModuleId(6), 8, false);
 			}
-			__nx_applet_type = saved_applet_type;
 			
 			if (R_SUCCEEDED(audsnoopInitialize())) audsnoopCheck = audsnoopEnableDspUsageMeasurement();
 
@@ -1067,9 +1057,9 @@ public:
 		fanControllerClose(&g_ICon);
 		fanExit();
 		nvClose(fd);
-		nvClose(nvdecFd);
-		nvClose(nvencFd);
-		nvClose(vicFd);
+		mmuRequestFinalize(&nvdecRequest);
+		mmuRequestFinalize(&nvencRequest);
+		mmuExit();
 		nvExit();
 		psmExit();
 		if (R_SUCCEEDED(audsnoopCheck)) {
