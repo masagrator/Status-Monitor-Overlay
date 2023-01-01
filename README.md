@@ -54,3 +54,9 @@ A:
 Q: Game sometimes hangs when using Status Monitor Overlay. Why?
 
 A: This is because of dmnt:cht nature. Some games don't like that it's peaking constantly at its memory and they stuck. This happens only if you are using NX-FPS plugin. Solution is to just close Status Monitor Overlay (you don't need to close Tesla Menu) and wait few seconds until game will resume.
+
+Q: When opening Full or Mini mode, overlay is showing that Core #3 usage is at 100% while everything else is showing 0, eventually leading to crash. Why this happens?
+
+A: There are 2 possible explanations: 
+1. You're using nifm services connection test patches (in short `nifm ctest patches`) that are included in various packs. Those patches allow to connect to network that has no internet connection. But they cause nifm to randomly rampage when connected to network. Find any folder in `atmosphere/exefs_patches` that has in folder name `nifm`, `nfim` and/or `ctest`, delete this folder and restart Switch. If you must use it, only solution is to use this overlay only in airplane mode.
+2. You're using some untested custom sysmodule that has no proper thread sleeping implemented. Find out in atmosphere/contents any sysmodule that you don't need, delete it and restart Switch.
