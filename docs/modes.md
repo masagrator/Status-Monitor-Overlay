@@ -1,6 +1,6 @@
 # Modes
 
-Status Monitor Overlay from 0.7 release contains five modes to choose from Main Menu
+Status Monitor Overlay from 0.8 release contains six modes to choose from Main Menu
 
 # Full
 
