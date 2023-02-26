@@ -4,7 +4,7 @@ Monitor Your hardware in real time!
 This is an overlay homebrew dedicated to Nintendo Switch.
 You need to have installed Tesla environment to use it.
 
-Tool contains five modes to choose, each one is explained [here](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/modes.md).
+Tool contains six modes to choose, each one is explained [here](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/modes.md).
 
 You can exit from selected mode by pressing and holding Left Stick + Right Stick. To exit from main menu press B.
 
