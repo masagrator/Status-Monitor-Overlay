@@ -1207,11 +1207,13 @@ public:
 
 	virtual void initServices() override {
 		//Initialize services
-		if (R_SUCCEEDED(smInitialize())) {
+		tsl::hlp::doWithSmSession([this]{
 			
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
 			
+			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
+
 			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
@@ -1232,7 +1234,7 @@ public:
 				threadStart(&t6);
 			}
 			smExit();
-		}
+		});
 		Hinted = envIsSyscallHinted(0x6F);
 	}
 
