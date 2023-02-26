@@ -24,6 +24,7 @@ bool threadexit2 = false;
 bool Atmosphere_present = false;
 uint64_t refreshrate = 1;
 FanController g_ICon;
+std::string filepath = "sdmc:/switch/.overlays/Status-Monitor-Overlay.ovl";
 
 //Misc2
 NvChannel nvdecChannel;
@@ -612,7 +613,7 @@ public:
     MiniOverlay() { }
 
     virtual tsl::elm::Element* createUI() override {
-		
+
 		auto rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
@@ -693,6 +694,137 @@ public:
 		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
 			CloseThreads();
 			tsl::goBack();
+			return true;
+		}
+		return false;
+	}
+};
+
+//Mini mode
+class MicroOverlay : public tsl::Gui {
+public:
+    MicroOverlay() { }
+
+    virtual tsl::elm::Element* createUI() override {
+
+		auto rootFrame = new tsl::elm::OverlayFrame("", "");
+
+		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+			
+			if (!GameRunning) {
+				uint32_t size = 18;
+				uint32_t offset1 = 0;
+				uint32_t offset2 = offset1 + 385;
+				uint32_t offset3 = offset2 + 230;
+				uint32_t offset4 = offset3 + 295;
+				uint32_t offset5 = offset4 + 260;
+				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
+				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
+				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
+				renderer->drawString("RAM", false, offset3, size, size, renderer->a(0xFCCF));
+				renderer->drawString("TEMP", false, offset4, size, size, renderer->a(0xFCCF));
+				renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
+				renderer->drawString(CPU_compressed_c, false, offset1+42, size, size, renderer->a(0xFFFF));
+				renderer->drawString(GPU_Load_c, false, offset2+45, size, size, renderer->a(0xFFFF));
+				renderer->drawString(RAM_var_compressed_c, false, offset3+47, size, size, renderer->a(0xFFFF));
+				renderer->drawString(skin_temperature_c, false, offset4+53, size, size, renderer->a(0xFFFF));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset5+43, size, size, renderer->a(0xFFFF));
+			}
+			else {
+				uint32_t size = 18;
+				uint32_t offset1 = 0;
+				uint32_t offset2 = offset1 + 355;
+				uint32_t offset3 = offset2 + 200;
+				uint32_t offset4 = offset3 + 265;
+				uint32_t offset5 = offset4 + 230;
+				uint32_t offset6 = offset5 + 140;
+				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
+				/*
+				renderer->drawString(CPU_compressed_c, false, 0, size, size, renderer->a(0xFFFF));
+				renderer->drawString(GPU_Load_c, false, 120, size, size, renderer->a(0xFFFF));
+				renderer->drawString(RAM_var_compressed_c, false, 240, size, size, renderer->a(0xFFFF));
+				renderer->drawString(skin_temperature_c, false, 360, size, size, renderer->a(0xFFFF));
+				renderer->drawString(Rotation_SpeedLevel_c, false, 480, size, size, renderer->a(0xFFFF));
+				renderer->drawString(FPS_var_compressed_c, false, 720, size, size, renderer->a(0xFFFF));
+				*/
+				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
+				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
+				renderer->drawString("RAM", false, offset3, size, size, renderer->a(0xFCCF));
+				renderer->drawString("TEMP", false, offset4, size, size, renderer->a(0xFCCF));
+				renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
+				renderer->drawString("FPS", false, offset6, size, size, renderer->a(0xFCCF));
+				renderer->drawString(CPU_compressed_c, false, offset1+42, size, size, renderer->a(0xFFFF));
+				renderer->drawString(GPU_Load_c, false, offset2+45, size, size, renderer->a(0xFFFF));
+				renderer->drawString(RAM_var_compressed_c, false, offset3+47, size, size, renderer->a(0xFFFF));
+				renderer->drawString(skin_temperature_c, false, offset4+53, size, size, renderer->a(0xFFFF));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset5+43, size, size, renderer->a(0xFFFF));
+				renderer->drawString(FPS_var_compressed_c, false, offset6+40, size, size, renderer->a(0xFFFF));
+			}
+		});
+
+		rootFrame->setContent(Status);
+
+		return rootFrame;
+	}
+
+	virtual void update() override {
+		if (TeslaFPS == 60) {
+			TeslaFPS = 1;
+			tsl::hlp::requestForeground(false);
+		}
+		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
+		//This is because making each loop also takes time, which is not considered because this will take also additional time
+		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
+		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
+		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
+		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
+		
+		//Make stuff ready to print
+		///CPU
+		double percent = ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100;
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%s", percent, "%");
+		percent = ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100;
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%s", percent, "%");
+		percent = ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100;
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%s", percent, "%");
+		percent = ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100;
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%s", percent, "%");
+		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]@%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, (float)CPU_Hz / 1000000);
+		
+		///GPU
+		snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)GPU_Hz / 1000000);
+		
+		///RAM
+		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
+		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
+		float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
+		float RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
+		float RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
+		float RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
+		float RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
+		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
+		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
+		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
+		snprintf(RAM_all_c, sizeof RAM_all_c, "%.0f/%.0fMB", RAM_Used_all_f, RAM_Total_all_f);
+		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
+		
+		///Thermal
+		if (hosversionAtLeast(14,0,0))
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
+		else
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
+		
+		///FPS
+		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", FPSavg);
+	}
+	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
+			TeslaFPS = 60;
+			refreshrate = 60;
+			CloseThreads();
+			tsl::setNextOverlay(filepath);
+			tsl::Overlay::get()->close();
 			return true;
 		}
 		return false;
@@ -916,6 +1048,20 @@ public:
 			return false;
 		});
 		list->addItem(Mini);
+		FILE* test = fopen(filepath.c_str(), "rb");
+		if (test) {
+			fclose(test);
+			auto Micro = new tsl::elm::ListItem("Micro");
+			Micro->setClickListener([](uint64_t keys) {
+				if (keys & KEY_A) {
+					tsl::setNextOverlay(filepath, "--microOverlay");
+					tsl::Overlay::get()->close();
+					return true;
+				}
+				return false;
+			});
+			list->addItem(Micro);
+		}
 		if (SaltySD == true) {
 			auto comFPS = new tsl::elm::ListItem("FPS Counter");
 			comFPS->setClickListener([](uint64_t keys) {
@@ -987,7 +1133,7 @@ public:
 
 	virtual void initServices() override {
 		//Initialize services
-		if (R_SUCCEEDED(smInitialize())) {
+		tsl::hlp::doWithSmSession([this]{
 			
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
@@ -1021,8 +1167,7 @@ public:
 				//Start NX-FPS detection
 				threadStart(&t6);
 			}
-			smExit();
-		}
+		});
 		Hinted = envIsSyscallHinted(0x6F);
 	}
 
@@ -1057,7 +1202,76 @@ public:
     }
 };
 
+class MicroMode : public tsl::Overlay {
+public:
+
+	virtual void initServices() override {
+		//Initialize services
+		if (R_SUCCEEDED(smInitialize())) {
+			
+			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
+			else pcvCheck = pcvInitialize();
+			
+			tsCheck = tsInitialize();
+			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
+
+			if (R_SUCCEEDED(fanInitialize())) {
+				if (hosversionAtLeast(7,0,0)) fanCheck = fanOpenController(&g_ICon, 0x3D000001);
+				else fanCheck = fanOpenController(&g_ICon, 1);
+			}
+			
+			Atmosphere_present = isServiceRunning("dmnt:cht");
+			SaltySD = CheckPort();
+			if (SaltySD == true && Atmosphere_present == true) dmntchtCheck = dmntchtInitialize();
+			
+			if (SaltySD == true) {
+				//Assign NX-FPS to default core
+				threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
+				
+				//Start NX-FPS detection
+				threadStart(&t6);
+			}
+			smExit();
+		}
+		Hinted = envIsSyscallHinted(0x6F);
+	}
+
+	virtual void exitServices() override {
+		CloseThreads();
+		
+		//Exit services
+		svcCloseHandle(debug);
+		dmntchtExit();
+		clkrstExit();
+		pcvExit();
+		tsExit();
+		tcExit();
+		fanControllerClose(&g_ICon);
+		fanExit();
+		nvClose(fd);
+		nvExit();
+	}
+
+    virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
+    virtual void onHide() override {}    // Called before overlay wants to change from visible to invisible state
+
+    virtual std::unique_ptr<tsl::Gui> loadInitialGui() override {
+		StartThreads();
+		refreshrate = 1;
+        return initially<MicroOverlay>();  // Initial Gui to load. It's possible to pass arguments to it's constructor like this
+    }
+};
+
 // This function gets called on startup to create a new Overlay object
 int main(int argc, char **argv) {
+	for (u8 arg = 0; arg < argc; arg++) {
+		if (strcasecmp(argv[arg], "--microOverlay") == 0) {
+			framebufferWidth = 1280;
+			framebufferHeight = 28;
+			FullMode = false;
+			alphabackground = 0x0;
+			return tsl::loop<MicroMode>(argc, argv);
+		}
+	}
     return tsl::loop<MonitorOverlay>(argc, argv);
 }
