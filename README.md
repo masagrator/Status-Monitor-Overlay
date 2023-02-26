@@ -51,10 +51,6 @@ A:
 
 # Troubleshooting:
 
-Q: Game sometimes hangs when using Status Monitor Overlay. Why?
-
-A: This is because of dmnt:cht nature. Some games don't like that it's peaking constantly at its memory and they stuck. This happens only if you are using NX-FPS plugin. Solution is to just close Status Monitor Overlay (you don't need to close Tesla Menu) and wait few seconds until game will resume.
-
 Q: When opening Full or Mini mode, overlay is showing that Core #3 usage is at 100% while everything else is showing 0, eventually leading to crash. Why this happens?
 
 A: There are few possible explanations: 
