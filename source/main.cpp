@@ -312,9 +312,10 @@ void Misc(void*) {
 				FPSavg = *FPSavg_shared;
 			}
 		}
+		else FPSavg = 254;
 		
 		// Interval
-		svcSleepThread(1'000'000'000 / refreshrate);
+		svcSleepThread(100'000'000);
 	}
 }
 
