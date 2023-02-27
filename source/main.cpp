@@ -1243,7 +1243,6 @@ public:
 				//Start NX-FPS detection
 				threadStart(&t6);
 			}
-			smExit();
 		});
 		Hinted = envIsSyscallHinted(0x6F);
 	}
