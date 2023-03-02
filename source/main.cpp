@@ -1,6 +1,6 @@
 #define TESLA_INIT_IMPL
 #include <tesla.hpp>
-#include "dmntcht.h"
+#include "SaltyNX.h"
 
 #include "Battery.hpp"
 #include "audsnoop.h"
@@ -18,10 +18,9 @@ Thread t4;
 Thread t5;
 Thread t6;
 Thread t7;
-constinit uint64_t systemtickfrequency = 19200000;
+uint64_t systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
-bool Atmosphere_present = false;
 uint64_t refreshrate = 1;
 FanController g_ICon;
 std::string filepath = "sdmc:/switch/.overlays/Status-Monitor-Overlay.ovl";
@@ -41,7 +40,6 @@ Result fanCheck = 1;
 Result tcCheck = 1;
 Result Hinted = 1;
 Result pmdmntCheck = 1;
-Result dmntchtCheck = 1;
 Result psmCheck = 1;
 Result audsnoopCheck = 1;
 Result nvdecCheck = 1;
@@ -77,10 +75,10 @@ char SoCPCB_temperature_c[64];
 char skin_temperature_c[32];
 
 //CPU Usage
-uint64_t idletick0 = 19200000;
-uint64_t idletick1 = 19200000;
-uint64_t idletick2 = 19200000;
-uint64_t idletick3 = 19200000;
+uint64_t idletick0 = systemtickfrequency;
+uint64_t idletick1 = systemtickfrequency;
+uint64_t idletick2 = systemtickfrequency;
+uint64_t idletick3 = systemtickfrequency;
 char CPU_Usage0[32];
 char CPU_Usage1[32];
 char CPU_Usage2[32];
@@ -128,18 +126,49 @@ char GPU_Load_c[32];
 
 //NX-FPS
 bool GameRunning = false;
-bool check = false;
+bool check = true;
 bool SaltySD = false;
-uintptr_t FPSaddress = 0x0;
-uintptr_t FPSavgaddress = 0x0;
+uintptr_t FPSaddress = 0;
+uintptr_t FPSavgaddress = 0;
 uint64_t PID = 0;
-uint8_t FPS = 0xFE;
+uint32_t FPS = 0xFE;
 float FPSavg = 254;
 char FPS_c[32];
 char FPSavg_c[32];
 char FPS_compressed_c[64];
 char FPS_var_compressed_c[64];
-Handle debug;
+SharedMemory _sharedmemory = {};
+bool SharedMemoryUsed = false;
+uint32_t* MAGIC_shared = 0;
+uint8_t* FPS_shared = 0;
+float* FPSavg_shared = 0;
+bool* pluginActive = 0;
+Handle remoteSharedMemory = 1;
+
+void LoadSharedMemory() {
+	if (SaltySD_Connect())
+		return;
+
+	SaltySD_GetSharedMemoryHandle(&remoteSharedMemory);
+	SaltySD_Term();
+
+	shmemLoadRemote(&_sharedmemory, remoteSharedMemory, 0x1000, Perm_Rw);
+	if (!shmemMap(&_sharedmemory))
+		SharedMemoryUsed = true;
+	else FPS = 1234;
+}
+
+ptrdiff_t searchSharedMemoryBlock(uintptr_t base) {
+	ptrdiff_t search_offset = 0;
+	while(search_offset < 0x1000) {
+		MAGIC_shared = (uint32_t*)(base + search_offset);
+		if (*MAGIC_shared == 0x465053) {
+			return search_offset;
+		}
+		else search_offset += 4;
+	}
+	return -1;
+}
 
 //Check if SaltyNX is working
 bool CheckPort () {
@@ -164,43 +193,34 @@ bool CheckPort () {
 	return false;
 }
 
-bool isServiceRunning(const char *serviceName) {	
-	Handle handle;	
-	SmServiceName service_name = smEncodeName(serviceName);	
-	if (R_FAILED(smRegisterService(&handle, service_name, false, 1))) return true;
-	else {
-		svcCloseHandle(handle);	
-		smUnregisterService(service_name);
-		return false;
-	}
-}
-
 void CheckIfGameRunning(void*) {
-	while (threadexit2 == false) {
-		if (R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
-			if (check == false) {
-				remove("sdmc:/SaltySD/FPSoffset.hex");
-				check = true;
-			}
+	while (!threadexit2) {
+		if (!check && R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
 			GameRunning = false;
-			svcCloseHandle(debug);
-		}
-		else if (GameRunning == false) {
-			svcSleepThread(1'000'000'000);
-			FILE* FPSoffset = fopen("sdmc:/SaltySD/FPSoffset.hex", "rb");
-			if (FPSoffset != NULL) {
-				if (Atmosphere_present == true) {
-					bool out = false;
-					dmntchtHasCheatProcess(&out);
-					if (out == false) dmntchtForceOpenCheatProcess();
-				}
-				else svcSleepThread(1'000'000'000);
-				fread(&FPSaddress, 0x5, 1, FPSoffset);
-				FPSavgaddress = FPSaddress - 0x8;
-				fclose(FPSoffset);
-				GameRunning = true;
-				check = false;
+			if (SharedMemoryUsed) {
+				*MAGIC_shared = 0;
+				*pluginActive = false;
+				*FPS_shared = 0;
+				*FPSavg_shared = 0.0;
+				FPS = 254;
+				FPSavg = 254.0;
 			}
+			check = true;
+		}
+		else if (!GameRunning && SharedMemoryUsed) {
+				uintptr_t base = (uintptr_t)shmemGetAddr(&_sharedmemory);
+				ptrdiff_t rel_offset = searchSharedMemoryBlock(base);
+				if (rel_offset > -1) {
+					FPS_shared = (uint8_t*)(base + rel_offset + 4);
+					FPSavg_shared = (float*)(base + rel_offset + 5);
+					pluginActive = (bool*)(base + rel_offset + 9);
+					*pluginActive = false;
+					svcSleepThread(100'000'000);
+					if (*pluginActive) {
+						GameRunning = true;
+						check = false;
+					}
+				}
 		}
 		svcSleepThread(1'000'000'000);
 	}
@@ -209,7 +229,7 @@ void CheckIfGameRunning(void*) {
 //Check for input outside of FPS limitations
 void CheckButtons(void*) {
 	static uint64_t kHeld = padGetButtons(&pad);
-	while (threadexit == false) {
+	while (!threadexit) {
 		padUpdate(&pad);
 		kHeld = padGetButtons(&pad);
 		if ((kHeld & KEY_ZR) && (kHeld & KEY_R)) {
@@ -230,7 +250,7 @@ void CheckButtons(void*) {
 
 //Stuff that doesn't need multithreading
 void Misc(void*) {
-	while (threadexit == false) {
+	while (!threadexit) {
 		
 		// CPU, GPU and RAM Frequency
 		if (R_SUCCEEDED(clkrstCheck)) {
@@ -286,25 +306,21 @@ void Misc(void*) {
 		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
 		
 		//FPS
-		if (GameRunning == true) {
-			if (Atmosphere_present == true) {
-				dmntchtReadCheatProcessMemory(FPSaddress, &FPS, 0x1);
-				dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
-			}
-			else if (R_SUCCEEDED(svcDebugActiveProcess(&debug, PID))) {
-				svcReadDebugProcessMemory(&FPS, debug, FPSaddress, 0x1);
-				svcReadDebugProcessMemory(&FPSavg, debug, FPSavgaddress, 0x4);
-				svcCloseHandle(debug);
+		if (GameRunning) {
+			if (SharedMemoryUsed) {
+				FPS = *FPS_shared;
+				FPSavg = *FPSavg_shared;
 			}
 		}
+		else FPSavg = 254;
 		
 		// Interval
-		svcSleepThread(1'000'000'000 / refreshrate);
+		svcSleepThread(100'000'000);
 	}
 }
 
 void Misc2(void*) {
-	while (threadexit == false) {
+	while (!threadexit) {
 		//DSP
 		if (R_SUCCEEDED(audsnoopCheck)) audsnoopGetDspUsage(&DSP_Load_u);
 
@@ -324,7 +340,7 @@ void Misc2(void*) {
 
 //Check each core for idled ticks in intervals, they cannot read info about other core than they are assigned
 void CheckCore0(void*) {
-	while (threadexit == false) {
+	while (!threadexit) {
 		static uint64_t idletick_a0 = 0;
 		static uint64_t idletick_b0 = 0;
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
@@ -335,7 +351,7 @@ void CheckCore0(void*) {
 }
 
 void CheckCore1(void*) {
-	while (threadexit == false) {
+	while (!threadexit) {
 		static uint64_t idletick_a1 = 0;
 		static uint64_t idletick_b1 = 0;
 		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
@@ -346,7 +362,7 @@ void CheckCore1(void*) {
 }
 
 void CheckCore2(void*) {
-	while (threadexit == false) {
+	while (!threadexit) {
 		static uint64_t idletick_a2 = 0;
 		static uint64_t idletick_b2 = 0;
 		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
@@ -357,7 +373,7 @@ void CheckCore2(void*) {
 }
 
 void CheckCore3(void*) {
-	while (threadexit == false) {
+	while (!threadexit) {
 		static uint64_t idletick_a3 = 0;
 		static uint64_t idletick_b3 = 0;
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
@@ -410,16 +426,14 @@ void CloseThreads() {
 
 //Separate functions dedicated to "FPS Counter" mode
 void FPSCounter(void*) {
-	while (threadexit == false) {
-		if (GameRunning == true) {
-			if (Atmosphere_present == true) dmntchtReadCheatProcessMemory(FPSavgaddress, &FPSavg, 0x4);
-			else if (R_SUCCEEDED(svcDebugActiveProcess(&debug, PID))) {
-				svcReadDebugProcessMemory(&FPSavg, debug, FPSavgaddress, 0x4);
-				svcCloseHandle(debug);
+	while (!threadexit) {
+		if (GameRunning) {
+			if (SharedMemoryUsed) {
+				FPS = *FPS_shared;
+				FPSavg = *FPSavg_shared;
 			}
 		}
 		else FPSavg = 254;
-		//interval
 		svcSleepThread(1'000'000'000 / refreshrate);
 	}
 }
@@ -446,9 +460,9 @@ public:
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 				static uint8_t avg = 0;
-				if (FPSavg < 10) avg = 0;
-				if (FPSavg >= 10) avg = 23;
 				if (FPSavg >= 100) avg = 46;
+				else if (FPSavg >= 10) avg = 23;
+				else avg = 0;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 370 + avg, 50, a(0x7111));
 				renderer->drawString(FPSavg_c, false, 5, 40, 40, renderer->a(0xFFFF));
 		});
@@ -520,7 +534,7 @@ public:
 			}
 			
 			///FPS
-			if (GameRunning == true) {
+			if (GameRunning) {
 				renderer->drawString(FPS_compressed_c, false, 235, 120, 20, renderer->a(0xFFFF));
 				renderer->drawString(FPS_var_compressed_c, false, 295, 120, 20, renderer->a(0xFFFF));
 			}
@@ -618,12 +632,12 @@ public:
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
-			if (GameRunning == false) renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 80, a(0x7111));
+			if (!GameRunning) renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 80, a(0x7111));
 			else renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 110, a(0x7111));
 			
 			//Print strings
 			///CPU
-			if (GameRunning == true) renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN\nPFPS\nFPS", false, 0, 15, 15, renderer->a(0xFFFF));
+			if (GameRunning) renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN\nPFPS\nFPS", false, 0, 15, 15, renderer->a(0xFFFF));
 			else renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN", false, 0, 15, 15, renderer->a(0xFFFF));
 			
 			///GPU
@@ -686,7 +700,7 @@ public:
 		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
 		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%u\n%2.2f", FPS, FPSavg);
 
-		if (GameRunning == true) snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, FPS_var_compressed_c);
+		if (GameRunning) snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, FPS_var_compressed_c);
 		else snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c);
 
 	}
@@ -1062,7 +1076,7 @@ public:
 			});
 			list->addItem(Micro);
 		}
-		if (SaltySD == true) {
+		if (SaltySD) {
 			auto comFPS = new tsl::elm::ListItem("FPS Counter");
 			comFPS->setClickListener([](uint64_t keys) {
 				if (keys & KEY_A) {
@@ -1156,11 +1170,10 @@ public:
 			psmCheck = psmInitialize();
 			if (R_SUCCEEDED(psmCheck)) psmService = psmGetServiceSession();
 			
-			Atmosphere_present = isServiceRunning("dmnt:cht");
 			SaltySD = CheckPort();
-			if (SaltySD == true && Atmosphere_present == true) dmntchtCheck = dmntchtInitialize();
 			
-			if (SaltySD == true) {
+			if (SaltySD) {
+				LoadSharedMemory();
 				//Assign NX-FPS to default core
 				threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
 				
@@ -1173,10 +1186,8 @@ public:
 
 	virtual void exitServices() override {
 		CloseThreads();
-		
+		shmemClose(&_sharedmemory);
 		//Exit services
-		svcCloseHandle(debug);
-		dmntchtExit();
 		clkrstExit();
 		pcvExit();
 		tsExit();
@@ -1222,28 +1233,24 @@ public:
 				else fanCheck = fanOpenController(&g_ICon, 1);
 			}
 			
-			Atmosphere_present = isServiceRunning("dmnt:cht");
 			SaltySD = CheckPort();
-			if (SaltySD == true && Atmosphere_present == true) dmntchtCheck = dmntchtInitialize();
 			
-			if (SaltySD == true) {
+			if (SaltySD) {
+				LoadSharedMemory();
 				//Assign NX-FPS to default core
 				threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
 				
 				//Start NX-FPS detection
 				threadStart(&t6);
 			}
-			smExit();
 		});
 		Hinted = envIsSyscallHinted(0x6F);
 	}
 
 	virtual void exitServices() override {
 		CloseThreads();
-		
+		shmemClose(&_sharedmemory);
 		//Exit services
-		svcCloseHandle(debug);
-		dmntchtExit();
 		clkrstExit();
 		pcvExit();
 		tsExit();

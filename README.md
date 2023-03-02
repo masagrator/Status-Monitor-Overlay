@@ -45,15 +45,9 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 # FAQ:
 Q: This homebrew has any impact on games?
 
-A: 
-- When not using FPS Counter: Negligible, you won't see any difference. Almost everything is done on Core `#3`, other cores usage is below 0.001%.
-- When using FPS Counter: it may impact timing between threads, so in some games it may result f.e. in stuck loading screens or jumping audio. It's found rarely, but issue exists and this is because of nature how Status Monitor gets info about FPS currently.
+A: Negligible, you won't see any difference. Almost everything is done on Core `#3`, other cores usage is below 0.001%.
 
 # Troubleshooting:
-
-Q: Game sometimes hangs when using Status Monitor Overlay. Why?
-
-A: This is because of dmnt:cht nature. Some games don't like that it's peaking constantly at its memory and they stuck. This happens only if you are using NX-FPS plugin. Solution is to just close Status Monitor Overlay (you don't need to close Tesla Menu) and wait few seconds until game will resume.
 
 Q: When opening Full or Mini mode, overlay is showing that Core #3 usage is at 100% while everything else is showing 0, eventually leading to crash. Why this happens?
 
