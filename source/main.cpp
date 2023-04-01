@@ -1201,8 +1201,9 @@ public:
 		psmExit();
 		if (R_SUCCEEDED(audsnoopCheck)) {
 			audsnoopDisableDspUsageMeasurement();
-			audsnoopExit();
 		}
+		audsnoopExit();
+		free(Nifm_profile);
 	}
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
