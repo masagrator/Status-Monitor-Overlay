@@ -937,9 +937,9 @@ public:
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
-				"Battery Voltage (5s AVG): %.0f mV\n"
-				"Battery Current Flow (5s AVG): %+.0f mA\n"
-				"Battery Average Power Flow: %+.3f W\n"
+				"Battery Voltage (AVG of 5): %.0f mV\n"
+				"Battery Current Flow (AVG of 5): %+.0f mA\n"
+				"Battery Power Flow (AVG of 5): %+.3f W\n"
 				"Charger Type: %u\n"
 				"Charger Max Voltage: %u mV\n"
 				"Charger Max Current: %u mA",
@@ -958,9 +958,9 @@ public:
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
-				"Battery Voltage (5s AVG): %.0f mV\n"
-				"Battery Current Flow (5s AVG): %.0f mA\n"
-				"Battery Power Flow (5s AVG): %+.3f W",
+				"Battery Voltage (AVG of 5): %.0f mV\n"
+				"Battery Current Flow (AVG of 5): %.0f mA\n"
+				"Battery Power Flow (AVG of 5): %+.3f W",
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000, "%",
 				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
