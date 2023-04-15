@@ -70,6 +70,7 @@ BatteryChargeInfoFields _batteryChargeInfoFields = {0};
 char Battery_c[320];
 char BatteryDraw_c[64];
 float batCurrentAvg = 0;
+float batVoltageAvg = 0;
 
 //Temperatures
 int32_t SOC_temperatureC = 0;
@@ -255,16 +256,24 @@ void CheckButtons(void*) {
 void BatteryChecker(void*) {
 	if (R_SUCCEEDED(psmCheck)){
 		u16 data = 0;
+		float temp = 0;
 		if (Max17050ReadReg(MAX17050_Current, &data)) {
 			batCurrentAvg = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
+		}
+		if (Max17050ReadReg(MAX17050_VCELL, &data)) {
+			batVoltageAvg = 0.625 * (data >> 3);
 		}
 		while (!threadexit) {
 			psmGetBatteryChargeInfoFields(psmService, &_batteryChargeInfoFields);
 			// Calculation is based on Hekate's max17050.c
 			// Source: https://github.com/CTCaer/hekate/blob/master/bdk/power/max17050.c
 			if (Max17050ReadReg(MAX17050_Current, &data)) {
-				float temp = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
+				temp = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
 				batCurrentAvg = ((4 * batCurrentAvg) + temp) / 5;
+			}
+			if (Max17050ReadReg(MAX17050_VCELL, &data)) {
+				temp = 0.625 * (data >> 3);
+				batVoltageAvg = ((4 * batVoltageAvg) + temp) / 5;
 			}
 			svcSleepThread(1'000'000'000);
 		}
@@ -628,8 +637,8 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
 		
 		///Thermal
-		float PowerConsumption = (((batCurrentAvg * -1) / 1000) * ((float)_batteryChargeInfoFields.VoltageAvg / 1000));
-		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Draw: %0.2f W", PowerConsumption);
+		float PowerConsumption = ((batCurrentAvg / 1000) * (batVoltageAvg / 1000));
+		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW", PowerConsumption);
 		if (hosversionAtLeast(14,0,0)) {
 			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2d \u00B0C\n%2d \u00B0C\n%2.2f \u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
 		}
@@ -721,7 +730,7 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
-		float PowerConsumption = (((batCurrentAvg * -1) / 1000) * ((float)_batteryChargeInfoFields.VoltageAvg / 1000));
+		float PowerConsumption = ((batCurrentAvg / 1000) * (batVoltageAvg / 1000));
 		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW", PowerConsumption);
 		if (hosversionAtLeast(14,0,0))
 			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
@@ -850,20 +859,20 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
-		float PowerConsumption = (((batCurrentAvg * -1) / 1000) * ((float)_batteryChargeInfoFields.VoltageAvg / 1000));
+		float PowerConsumption = ((batCurrentAvg / 1000) * (batVoltageAvg / 1000));
 		if (GameRunning) {
 			if (hosversionAtLeast(14,0,0)) {
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.0f\u00B0C@%.2fW", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.0f\u00B0C@%+.2fW", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption);
 			}
 			else
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.0f\u00B0C@%.2fW", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.0f\u00B0C@%+.2fW", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption);
 		}
 		else {
 			if (hosversionAtLeast(14,0,0)) {
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.1f\u00B0C@%.2fW", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.1f\u00B0C@%+.2fW", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption);
 			}
 			else
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%.2fW", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.2fW", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption);
 		}
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
 		
@@ -928,7 +937,7 @@ public:
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
-				"Battery Voltage (45s AVG): %u mV\n"
+				"Battery Voltage (5s AVG): %.0f mV\n"
 				"Battery Current Flow (5s AVG): %+.0f mA\n"
 				"Battery Average Power Flow: %+.3f W\n"
 				"Charger Type: %u\n"
@@ -937,9 +946,9 @@ public:
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000, "%",
 				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
-				_batteryChargeInfoFields.VoltageAvg,
+				batVoltageAvg,
 				batCurrentAvg,
-				(((float)_batteryChargeInfoFields.VoltageAvg / 1000) * (batCurrentAvg / 1000)),
+				((batVoltageAvg * batCurrentAvg) / 1'000'000),
 				_batteryChargeInfoFields.ChargerType,
 				_batteryChargeInfoFields.ChargerVoltageLimit,
 				_batteryChargeInfoFields.ChargerCurrentLimit
@@ -949,15 +958,15 @@ public:
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
-				"Battery Voltage (45s AVG): %u mV\n"
+				"Battery Voltage (5s AVG): %.0f mV\n"
 				"Battery Current Flow (5s AVG): %.0f mA\n"
-				"Battery Average Power Flow: %+.3f W",
+				"Battery Power Flow (5s AVG): %+.3f W",
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000, "%",
 				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
-				_batteryChargeInfoFields.VoltageAvg,
+				batVoltageAvg,
 				batCurrentAvg,
-				(((float)_batteryChargeInfoFields.VoltageAvg / 1000) * (batCurrentAvg / 1000))
+				((batVoltageAvg * batCurrentAvg) / 1'000'000)
 			);
 		
 	}
