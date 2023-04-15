@@ -5,6 +5,7 @@
 #include "Battery.hpp"
 #include "audsnoop.h"
 #include "Misc.hpp"
+#include "i2c.h"
 
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
@@ -66,6 +67,9 @@ char DSP_Load_c[16];
 Service* psmService = 0;
 BatteryChargeInfoFields* _batteryChargeInfoFields = 0;
 char Battery_c[320];
+float batCurrent = 0;
+float batCurrentAvg = 0;
+float batVoltage = 0;
 
 //Temperatures
 int32_t SOC_temperatureC = 0;
@@ -848,8 +852,14 @@ public:
 void BatteryChecker(void*) {
 	if (R_SUCCEEDED(psmCheck)){
 		_batteryChargeInfoFields = new BatteryChargeInfoFields;
+		u16 data = 0;
 		while (!threadexit) {
 			psmGetBatteryChargeInfoFields(psmService, _batteryChargeInfoFields);
+			// Calculation is based on Hekate's max17050.c
+			// Source: https://github.com/CTCaer/hekate/blob/master/bdk/power/max17050.c
+			if (Max17050ReadReg(Max17050Reg_CurrentAvg, &data)) {
+				batCurrentAvg = std::abs((1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data);
+			}
 			svcSleepThread(1'000'000'000);
 		}
 		delete _batteryChargeInfoFields;
@@ -892,14 +902,18 @@ public:
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
-				"Battery Voltage (45s Avg): %u mV\n"
+				"Battery Voltage (45s avg): %u mV\n"
+				"Battery Current (45s avg): %.0f mA\n"
+				"Power consumption (45s avg): %.3f W\n"
 				"Charger Type: %u\n"
 				"Charger Max Voltage: %u mV\n"
-				"Charger Max Current: %u mA\n",
+				"Charger Max Current: %u mA",
 				(float)_batteryChargeInfoFields->BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields->RawBatteryCharge / 1000, "%",
 				(float)_batteryChargeInfoFields->BatteryAge / 1000, "%",
 				_batteryChargeInfoFields->VoltageAvg,
+				batCurrentAvg,
+				((float)_batteryChargeInfoFields->VoltageAvg / 1000) * (batCurrentAvg / 1000),
 				_batteryChargeInfoFields->ChargerType,
 				_batteryChargeInfoFields->ChargerVoltageLimit,
 				_batteryChargeInfoFields->ChargerCurrentLimit
@@ -909,12 +923,15 @@ public:
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
-				"Battery Voltage (45s Avg): %u mV\n"
-				"Charger Type: Not connected\n",
+				"Battery Voltage (45s avg): %u mV\n"
+				"Battery Current (45s avg): %.0f mA\n"
+				"Power consumption (45s avg): %.3f W",
 				(float)_batteryChargeInfoFields->BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields->RawBatteryCharge / 1000, "%",
 				(float)_batteryChargeInfoFields->BatteryAge / 1000, "%",
-				_batteryChargeInfoFields->VoltageAvg
+				_batteryChargeInfoFields->VoltageAvg,
+				batCurrentAvg,
+				((float)_batteryChargeInfoFields->VoltageAvg / 1000) * (batCurrentAvg / 1000)
 			);
 		
 	}
@@ -1168,7 +1185,10 @@ public:
 			Nifm_profile = (NifmNetworkProfileData_new*)malloc(sizeof(NifmNetworkProfileData_new));
 
 			psmCheck = psmInitialize();
-			if (R_SUCCEEDED(psmCheck)) psmService = psmGetServiceSession();
+			if (R_SUCCEEDED(psmCheck)) {
+				psmService = psmGetServiceSession();
+				i2cInitialize();
+			}
 			
 			SaltySD = CheckPort();
 			
@@ -1198,6 +1218,7 @@ public:
 		nvMapExit();
 		nvClose(fd);
 		nvExit();
+		i2cExit();
 		psmExit();
 		if (R_SUCCEEDED(audsnoopCheck)) {
 			audsnoopDisableDspUsageMeasurement();
