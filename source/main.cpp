@@ -68,9 +68,7 @@ char DSP_Load_c[16];
 Service* psmService = 0;
 BatteryChargeInfoFields* _batteryChargeInfoFields = 0;
 char Battery_c[320];
-float batCurrent = 0;
 float batCurrentAvg = 0;
-float batVoltage = 0;
 
 //Temperatures
 int32_t SOC_temperatureC = 0;
