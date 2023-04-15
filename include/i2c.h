@@ -8,11 +8,6 @@ Original repository link (Deleted, last checked 15.04.2023): https://github.com/
 constexpr float max17050SenseResistor = MAX17050_BOARD_SNS_RESISTOR_UOHM / 1000; // in uOhm
 constexpr float max17050CGain = 1.99993;
 
-typedef enum
-{
-	Max17050Reg_CurrentAvg  = MAX17050_AvgCurrent
-} Max17050Reg;
-
 Result I2cReadRegHandler(u8 reg, I2cDevice dev, u16 *out)
 {
 	// I2C Bus Communication Reference: https://www.ti.com/lit/an/slva704/slva704.pdf

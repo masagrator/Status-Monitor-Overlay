@@ -6,6 +6,7 @@
 #include "audsnoop.h"
 #include "Misc.hpp"
 #include "i2c.h"
+#include "max17050.h"
 
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
@@ -857,7 +858,7 @@ void BatteryChecker(void*) {
 			psmGetBatteryChargeInfoFields(psmService, _batteryChargeInfoFields);
 			// Calculation is based on Hekate's max17050.c
 			// Source: https://github.com/CTCaer/hekate/blob/master/bdk/power/max17050.c
-			if (Max17050ReadReg(Max17050Reg_CurrentAvg, &data)) {
+			if (Max17050ReadReg(MAX17050_AvgCurrent, &data)) {
 				batCurrentAvg = std::abs((1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data);
 			}
 			svcSleepThread(1'000'000'000);
