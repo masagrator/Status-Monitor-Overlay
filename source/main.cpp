@@ -53,7 +53,7 @@ NifmInternetConnectionStatus NifmConnectionStatus = (NifmInternetConnectionStatu
 bool Nifm_showpass = false;
 Result Nifm_internet_rc = -1;
 Result Nifm_profile_rc = -1;
-NifmNetworkProfileData_new* Nifm_profile = 0;
+NifmNetworkProfileData_new Nifm_profile = {0};
 char Nifm_pass[96];
 
 //NVDEC
@@ -66,7 +66,7 @@ char DSP_Load_c[16];
 
 //Battery
 Service* psmService = 0;
-BatteryChargeInfoFields _batteryChargeInfoFields = {};
+BatteryChargeInfoFields _batteryChargeInfoFields = {0};
 char Battery_c[320];
 char BatteryDraw_c[64];
 float batCurrentAvg = 0;
@@ -255,12 +255,16 @@ void CheckButtons(void*) {
 void BatteryChecker(void*) {
 	if (R_SUCCEEDED(psmCheck)){
 		u16 data = 0;
+		if (Max17050ReadReg(MAX17050_Current, &data)) {
+			batCurrentAvg = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
+		}
 		while (!threadexit) {
 			psmGetBatteryChargeInfoFields(psmService, &_batteryChargeInfoFields);
 			// Calculation is based on Hekate's max17050.c
 			// Source: https://github.com/CTCaer/hekate/blob/master/bdk/power/max17050.c
-			if (Max17050ReadReg(MAX17050_AvgCurrent, &data)) {
-				batCurrentAvg = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
+			if (Max17050ReadReg(MAX17050_Current, &data)) {
+				float temp = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
+				batCurrentAvg = ((4 * batCurrentAvg) + temp) / 5;
 			}
 			svcSleepThread(1'000'000'000);
 		}
@@ -356,7 +360,7 @@ void Misc2(void*) {
 			u32 dummy = 0;
 			Nifm_internet_rc = nifmGetInternetConnectionStatus(&NifmConnectionType, &dummy, &NifmConnectionStatus);
 			if (!Nifm_internet_rc && (NifmConnectionType == NifmInternetConnectionType_WiFi))
-				Nifm_profile_rc = nifmGetCurrentNetworkProfile((NifmNetworkProfileData*)Nifm_profile);
+				Nifm_profile_rc = nifmGetCurrentNetworkProfile((NifmNetworkProfileData*)&Nifm_profile);
 		}
 		// Interval
 		svcSleepThread(100'000'000);
@@ -925,8 +929,8 @@ public:
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
 				"Battery Voltage (45s AVG): %u mV\n"
-				"Battery Current Flow (45s AVG): %+.0f mA\n"
-				"Battery Power Flow (45s AVG): %+.3f W\n"
+				"Battery Current Flow (5s AVG): %+.0f mA\n"
+				"Battery Average Power Flow: %+.3f W\n"
 				"Charger Type: %u\n"
 				"Charger Max Voltage: %u mV\n"
 				"Charger Max Current: %u mA",
@@ -946,8 +950,8 @@ public:
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
 				"Battery Voltage (45s AVG): %u mV\n"
-				"Battery Current Flow (45s AVG): %.0f mA\n"
-				"Battery Power Flow (45s AVG): %+.3f W",
+				"Battery Current Flow (5s AVG): %.0f mA\n"
+				"Battery Average Power Flow: %+.3f W",
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000, "%",
 				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
@@ -1032,17 +1036,17 @@ public:
 		char pass_temp1[25] = "";
 		char pass_temp2[25] = "";
 		char pass_temp3[17] = "";
-		if (Nifm_profile->wireless_setting_data.passphrase_len > 48) {
-			memcpy(&pass_temp1, &(Nifm_profile->wireless_setting_data.passphrase[0]), 24);
-			memcpy(&pass_temp2, &(Nifm_profile->wireless_setting_data.passphrase[24]), 24);
-			memcpy(&pass_temp3, &(Nifm_profile->wireless_setting_data.passphrase[48]), 16);
+		if (Nifm_profile.wireless_setting_data.passphrase_len > 48) {
+			memcpy(&pass_temp1, &(Nifm_profile.wireless_setting_data.passphrase[0]), 24);
+			memcpy(&pass_temp2, &(Nifm_profile.wireless_setting_data.passphrase[24]), 24);
+			memcpy(&pass_temp3, &(Nifm_profile.wireless_setting_data.passphrase[48]), 16);
 		}
-		else if (Nifm_profile->wireless_setting_data.passphrase_len > 24) {
-			memcpy(&pass_temp1, &(Nifm_profile->wireless_setting_data.passphrase[0]), 24);
-			memcpy(&pass_temp2, &(Nifm_profile->wireless_setting_data.passphrase[24]), 24);
+		else if (Nifm_profile.wireless_setting_data.passphrase_len > 24) {
+			memcpy(&pass_temp1, &(Nifm_profile.wireless_setting_data.passphrase[0]), 24);
+			memcpy(&pass_temp2, &(Nifm_profile.wireless_setting_data.passphrase[24]), 24);
 		}
 		else {
-			memcpy(&pass_temp1, &(Nifm_profile->wireless_setting_data.passphrase[0]), 24);
+			memcpy(&pass_temp1, &(Nifm_profile.wireless_setting_data.passphrase[0]), 24);
 		}
 		snprintf(Nifm_pass, sizeof Nifm_pass, "%s\n%s\n%s", pass_temp1, pass_temp2, pass_temp3);	
 	}
@@ -1204,8 +1208,6 @@ public:
 			
 			if (R_SUCCEEDED(audsnoopInitialize())) audsnoopCheck = audsnoopEnableDspUsageMeasurement();
 
-			Nifm_profile = (NifmNetworkProfileData_new*)malloc(sizeof(NifmNetworkProfileData_new));
-
 			psmCheck = psmInitialize();
 			if (R_SUCCEEDED(psmCheck)) {
 				psmService = psmGetServiceSession();
@@ -1246,7 +1248,6 @@ public:
 			audsnoopDisableDspUsageMeasurement();
 		}
 		audsnoopExit();
-		free(Nifm_profile);
 	}
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
