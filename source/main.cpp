@@ -5,6 +5,8 @@
 #include "Battery.hpp"
 #include "audsnoop.h"
 #include "Misc.hpp"
+#include "i2c.h"
+#include "max17050.h"
 
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
@@ -29,7 +31,7 @@ std::string filepath = "sdmc:/switch/.overlays/Status-Monitor-Overlay.ovl";
 NvChannel nvdecChannel;
 
 //Mini mode
-char Variables[672];
+char Variables[768];
 
 //Checks
 Result clkrstCheck = 1;
@@ -51,7 +53,7 @@ NifmInternetConnectionStatus NifmConnectionStatus = (NifmInternetConnectionStatu
 bool Nifm_showpass = false;
 Result Nifm_internet_rc = -1;
 Result Nifm_profile_rc = -1;
-NifmNetworkProfileData_new* Nifm_profile = 0;
+NifmNetworkProfileData_new Nifm_profile = {0};
 char Nifm_pass[96];
 
 //NVDEC
@@ -64,8 +66,11 @@ char DSP_Load_c[16];
 
 //Battery
 Service* psmService = 0;
-BatteryChargeInfoFields* _batteryChargeInfoFields = 0;
+BatteryChargeInfoFields _batteryChargeInfoFields = {0};
 char Battery_c[320];
+char BatteryDraw_c[64];
+float batCurrentAvg = 0;
+float batVoltageAvg = 0;
 
 //Temperatures
 int32_t SOC_temperatureC = 0;
@@ -248,6 +253,39 @@ void CheckButtons(void*) {
 	}
 }
 
+void BatteryChecker(void*) {
+	if (R_SUCCEEDED(psmCheck)){
+		u16 data = 0;
+		float temp = 0;
+		if (Max17050ReadReg(MAX17050_Current, &data)) {
+			batCurrentAvg = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
+		}
+		if (Max17050ReadReg(MAX17050_VCELL, &data)) {
+			batVoltageAvg = 0.625 * (data >> 3);
+		}
+		while (!threadexit) {
+			psmGetBatteryChargeInfoFields(psmService, &_batteryChargeInfoFields);
+			// Calculation is based on Hekate's max17050.c
+			// Source: https://github.com/CTCaer/hekate/blob/master/bdk/power/max17050.c
+			if (Max17050ReadReg(MAX17050_Current, &data)) {
+				temp = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
+				batCurrentAvg = ((4 * batCurrentAvg) + temp) / 5;
+			}
+			if (Max17050ReadReg(MAX17050_VCELL, &data)) {
+				temp = 0.625 * (data >> 3);
+				batVoltageAvg = ((4 * batVoltageAvg) + temp) / 5;
+			}
+			svcSleepThread(1'000'000'000);
+		}
+		_batteryChargeInfoFields = {0};
+	}
+}
+
+void StartBatteryThread() {
+	threadCreate(&t7, BatteryChecker, NULL, NULL, 0x4000, 0x3F, 3);
+	threadStart(&t7);
+}
+
 //Stuff that doesn't need multithreading
 void Misc(void*) {
 	while (!threadexit) {
@@ -331,7 +369,7 @@ void Misc2(void*) {
 			u32 dummy = 0;
 			Nifm_internet_rc = nifmGetInternetConnectionStatus(&NifmConnectionType, &dummy, &NifmConnectionStatus);
 			if (!Nifm_internet_rc && (NifmConnectionType == NifmInternetConnectionType_WiFi))
-				Nifm_profile_rc = nifmGetCurrentNetworkProfile((NifmNetworkProfileData*)Nifm_profile);
+				Nifm_profile_rc = nifmGetCurrentNetworkProfile((NifmNetworkProfileData*)&Nifm_profile);
 		}
 		// Interval
 		svcSleepThread(100'000'000);
@@ -398,6 +436,7 @@ void StartThreads() {
 	threadStart(&t3);
 	threadStart(&t4);
 	threadStart(&t5);
+	StartBatteryThread();
 }
 
 //End reading all stats
@@ -527,10 +566,11 @@ public:
 			
 			///Thermal
 			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
-				renderer->drawString("Thermal:", false, 20, 540, 20, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tsCheck)) renderer->drawString(SoCPCB_temperature_c, false, 20, 575, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tcCheck)) renderer->drawString(skin_temperature_c, false, 20, 605, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(fanCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, 20, 620, 15, renderer->a(0xFFFF));
+				renderer->drawString("Board:", false, 20, 540, 20, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tsCheck)) renderer->drawString(BatteryDraw_c, false, 20, 575, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tsCheck)) renderer->drawString("Temperatures: SoC\n\t\t\t\t\t\t\t PCB\n\t\t\t\t\t\t\t Skin", false, 20, 590, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tsCheck)) renderer->drawString(SoCPCB_temperature_c, false, 170, 590, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(fanCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, 20, 635, 15, renderer->a(0xFFFF));
 			}
 			
 			///FPS
@@ -597,12 +637,14 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
 		
 		///Thermal
-		if (hosversionAtLeast(14,0,0))
-			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2d \u00B0C\nPCB: %2d \u00B0C", SOC_temperatureC, PCB_temperatureC);
+		float PowerConsumption = ((batCurrentAvg / 1000) * (batVoltageAvg / 1000));
+		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW", PowerConsumption);
+		if (hosversionAtLeast(14,0,0)) {
+			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2d \u00B0C\n%2d \u00B0C\n%2.2f \u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
+		}
 		else 
-			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "SoC: %2.2f \u00B0C\nPCB: %2.2f \u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000);
-		snprintf(skin_temperature_c, sizeof skin_temperature_c, "Skin: %2.2f \u00B0C", (float)skin_temperaturemiliC / 1000);
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan: %2.2f%s", Rotation_SpeedLevel_f * 100, "%");
+			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2.2f \u00B0C\n%2.2f\u00B0C\n%2.2f \u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level:\t%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
 		snprintf(FPS_c, sizeof FPS_c, "PFPS:"); //Pushed Frames Per Second
@@ -632,13 +674,13 @@ public:
 
 		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
-			if (!GameRunning) renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 80, a(0x7111));
-			else renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 110, a(0x7111));
+			if (!GameRunning) renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 95, a(0x7111));
+			else renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 125, a(0x7111));
 			
 			//Print strings
 			///CPU
-			if (GameRunning) renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN\nPFPS\nFPS", false, 0, 15, 15, renderer->a(0xFFFF));
-			else renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN", false, 0, 15, 15, renderer->a(0xFFFF));
+			if (GameRunning) renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN\nDRAW\nPFPS\nFPS", false, 0, 15, 15, renderer->a(0xFFFF));
+			else renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN\nDRAW", false, 0, 15, 15, renderer->a(0xFFFF));
 			
 			///GPU
 			renderer->drawString(Variables, false, 60, 15, 15, renderer->a(0xFFFF));
@@ -688,6 +730,8 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
+		float PowerConsumption = ((batCurrentAvg / 1000) * (batVoltageAvg / 1000));
+		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW", PowerConsumption);
 		if (hosversionAtLeast(14,0,0))
 			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
 		else
@@ -700,8 +744,8 @@ public:
 		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
 		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%u\n%2.2f", FPS, FPSavg);
 
-		if (GameRunning) snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, FPS_var_compressed_c);
-		else snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c);
+		if (GameRunning) snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c, FPS_var_compressed_c);
+		else snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c);
 
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
@@ -728,20 +772,20 @@ public:
 			if (!GameRunning) {
 				uint32_t size = 18;
 				uint32_t offset1 = 0;
-				uint32_t offset2 = offset1 + 385;
-				uint32_t offset3 = offset2 + 230;
-				uint32_t offset4 = offset3 + 295;
-				uint32_t offset5 = offset4 + 260;
+				uint32_t offset2 = offset1 + 355;
+				uint32_t offset3 = offset2 + 210;
+				uint32_t offset4 = offset3 + 275;
+				uint32_t offset5 = offset4 + 320;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
 				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
 				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
 				renderer->drawString("RAM", false, offset3, size, size, renderer->a(0xFCCF));
-				renderer->drawString("TEMP", false, offset4, size, size, renderer->a(0xFCCF));
+				renderer->drawString("BRD", false, offset4, size, size, renderer->a(0xFCCF));
 				renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
 				renderer->drawString(CPU_compressed_c, false, offset1+42, size, size, renderer->a(0xFFFF));
 				renderer->drawString(GPU_Load_c, false, offset2+45, size, size, renderer->a(0xFFFF));
 				renderer->drawString(RAM_var_compressed_c, false, offset3+47, size, size, renderer->a(0xFFFF));
-				renderer->drawString(skin_temperature_c, false, offset4+53, size, size, renderer->a(0xFFFF));
+				renderer->drawString(skin_temperature_c, false, offset4+45, size, size, renderer->a(0xFFFF));
 				renderer->drawString(Rotation_SpeedLevel_c, false, offset5+43, size, size, renderer->a(0xFFFF));
 			}
 			else {
@@ -750,27 +794,19 @@ public:
 				uint32_t offset2 = offset1 + 355;
 				uint32_t offset3 = offset2 + 200;
 				uint32_t offset4 = offset3 + 265;
-				uint32_t offset5 = offset4 + 230;
-				uint32_t offset6 = offset5 + 140;
+				uint32_t offset5 = offset4 + 245;
+				uint32_t offset6 = offset5 + 130;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
-				/*
-				renderer->drawString(CPU_compressed_c, false, 0, size, size, renderer->a(0xFFFF));
-				renderer->drawString(GPU_Load_c, false, 120, size, size, renderer->a(0xFFFF));
-				renderer->drawString(RAM_var_compressed_c, false, 240, size, size, renderer->a(0xFFFF));
-				renderer->drawString(skin_temperature_c, false, 360, size, size, renderer->a(0xFFFF));
-				renderer->drawString(Rotation_SpeedLevel_c, false, 480, size, size, renderer->a(0xFFFF));
-				renderer->drawString(FPS_var_compressed_c, false, 720, size, size, renderer->a(0xFFFF));
-				*/
 				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
 				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
 				renderer->drawString("RAM", false, offset3, size, size, renderer->a(0xFCCF));
-				renderer->drawString("TEMP", false, offset4, size, size, renderer->a(0xFCCF));
+				renderer->drawString("BRD", false, offset4, size, size, renderer->a(0xFCCF));
 				renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
 				renderer->drawString("FPS", false, offset6, size, size, renderer->a(0xFCCF));
 				renderer->drawString(CPU_compressed_c, false, offset1+42, size, size, renderer->a(0xFFFF));
 				renderer->drawString(GPU_Load_c, false, offset2+45, size, size, renderer->a(0xFFFF));
 				renderer->drawString(RAM_var_compressed_c, false, offset3+47, size, size, renderer->a(0xFFFF));
-				renderer->drawString(skin_temperature_c, false, offset4+53, size, size, renderer->a(0xFFFF));
+				renderer->drawString(skin_temperature_c, false, offset4+45, size, size, renderer->a(0xFFFF));
 				renderer->drawString(Rotation_SpeedLevel_c, false, offset5+43, size, size, renderer->a(0xFFFF));
 				renderer->drawString(FPS_var_compressed_c, false, offset6+40, size, size, renderer->a(0xFFFF));
 			}
@@ -823,14 +859,38 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
-		if (hosversionAtLeast(14,0,0))
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
-		else
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
+		float PowerConsumption = ((batCurrentAvg / 1000) * (batVoltageAvg / 1000));
+		if (GameRunning) {
+			if (hosversionAtLeast(14,0,0)) {
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.0f\u00B0C@%+.2fW", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+			}
+			else
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.0f\u00B0C@%+.2fW", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+		}
+		else {
+			if (hosversionAtLeast(14,0,0)) {
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.1f\u00B0C@%+.2fW", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+			}
+			else
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.2fW", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+		}
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", FPSavg);
+
+		//Debug
+		/*
+		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[100%s,100%s,100%s,100%s]@1785.0", "%", "%", "%", "%");
+		snprintf(GPU_Load_c, sizeof GPU_Load_c, "100.0%s@2400.0", "%");
+		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "4444/4444MB@4444.4");
+		if (GameRunning) {
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "88/88/88\u00B0C@15.55W");
+		}
+		else snprintf(skin_temperature_c, sizeof skin_temperature_c, "88.8/88.8/88.8\u00B0C@15.55W");
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "100.00%s", "%");
+		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "60.0");
+		*/
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
@@ -844,22 +904,6 @@ public:
 		return false;
 	}
 };
-
-void BatteryChecker(void*) {
-	if (R_SUCCEEDED(psmCheck)){
-		_batteryChargeInfoFields = new BatteryChargeInfoFields;
-		while (!threadexit) {
-			psmGetBatteryChargeInfoFields(psmService, _batteryChargeInfoFields);
-			svcSleepThread(1'000'000'000);
-		}
-		delete _batteryChargeInfoFields;
-	}
-}
-
-void StartBatteryThread() {
-	threadCreate(&t7, BatteryChecker, NULL, NULL, 0x4000, 0x3F, 3);
-	threadStart(&t7);
-}
 
 //Battery
 class BatteryOverlay : public tsl::Gui {
@@ -887,34 +931,42 @@ public:
 	virtual void update() override {
 
 		///Battery
-		if (_batteryChargeInfoFields->ChargerType)
+
+		if (_batteryChargeInfoFields.ChargerType)
 			snprintf(Battery_c, sizeof Battery_c,
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
-				"Battery Voltage (45s Avg): %u mV\n"
+				"Battery Voltage (AVG of 5): %.0f mV\n"
+				"Battery Current Flow (AVG of 5): %+.0f mA\n"
+				"Battery Power Flow (AVG of 5): %+.3f W\n"
 				"Charger Type: %u\n"
 				"Charger Max Voltage: %u mV\n"
-				"Charger Max Current: %u mA\n",
-				(float)_batteryChargeInfoFields->BatteryTemperature / 1000,
-				(float)_batteryChargeInfoFields->RawBatteryCharge / 1000, "%",
-				(float)_batteryChargeInfoFields->BatteryAge / 1000, "%",
-				_batteryChargeInfoFields->VoltageAvg,
-				_batteryChargeInfoFields->ChargerType,
-				_batteryChargeInfoFields->ChargerVoltageLimit,
-				_batteryChargeInfoFields->ChargerCurrentLimit
+				"Charger Max Current: %u mA",
+				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
+				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000, "%",
+				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
+				batVoltageAvg,
+				batCurrentAvg,
+				((batVoltageAvg * batCurrentAvg) / 1'000'000),
+				_batteryChargeInfoFields.ChargerType,
+				_batteryChargeInfoFields.ChargerVoltageLimit,
+				_batteryChargeInfoFields.ChargerCurrentLimit
 			);
 		else
 			snprintf(Battery_c, sizeof Battery_c,
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
-				"Battery Voltage (45s Avg): %u mV\n"
-				"Charger Type: Not connected\n",
-				(float)_batteryChargeInfoFields->BatteryTemperature / 1000,
-				(float)_batteryChargeInfoFields->RawBatteryCharge / 1000, "%",
-				(float)_batteryChargeInfoFields->BatteryAge / 1000, "%",
-				_batteryChargeInfoFields->VoltageAvg
+				"Battery Voltage (AVG of 5): %.0f mV\n"
+				"Battery Current Flow (AVG of 5): %.0f mA\n"
+				"Battery Power Flow (AVG of 5): %+.3f W",
+				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
+				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000, "%",
+				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
+				batVoltageAvg,
+				batCurrentAvg,
+				((batVoltageAvg * batCurrentAvg) / 1'000'000)
 			);
 		
 	}
@@ -993,17 +1045,17 @@ public:
 		char pass_temp1[25] = "";
 		char pass_temp2[25] = "";
 		char pass_temp3[17] = "";
-		if (Nifm_profile->wireless_setting_data.passphrase_len > 48) {
-			memcpy(&pass_temp1, &(Nifm_profile->wireless_setting_data.passphrase[0]), 24);
-			memcpy(&pass_temp2, &(Nifm_profile->wireless_setting_data.passphrase[24]), 24);
-			memcpy(&pass_temp3, &(Nifm_profile->wireless_setting_data.passphrase[48]), 16);
+		if (Nifm_profile.wireless_setting_data.passphrase_len > 48) {
+			memcpy(&pass_temp1, &(Nifm_profile.wireless_setting_data.passphrase[0]), 24);
+			memcpy(&pass_temp2, &(Nifm_profile.wireless_setting_data.passphrase[24]), 24);
+			memcpy(&pass_temp3, &(Nifm_profile.wireless_setting_data.passphrase[48]), 16);
 		}
-		else if (Nifm_profile->wireless_setting_data.passphrase_len > 24) {
-			memcpy(&pass_temp1, &(Nifm_profile->wireless_setting_data.passphrase[0]), 24);
-			memcpy(&pass_temp2, &(Nifm_profile->wireless_setting_data.passphrase[24]), 24);
+		else if (Nifm_profile.wireless_setting_data.passphrase_len > 24) {
+			memcpy(&pass_temp1, &(Nifm_profile.wireless_setting_data.passphrase[0]), 24);
+			memcpy(&pass_temp2, &(Nifm_profile.wireless_setting_data.passphrase[24]), 24);
 		}
 		else {
-			memcpy(&pass_temp1, &(Nifm_profile->wireless_setting_data.passphrase[0]), 24);
+			memcpy(&pass_temp1, &(Nifm_profile.wireless_setting_data.passphrase[0]), 24);
 		}
 		snprintf(Nifm_pass, sizeof Nifm_pass, "%s\n%s\n%s", pass_temp1, pass_temp2, pass_temp3);	
 	}
@@ -1165,10 +1217,11 @@ public:
 			
 			if (R_SUCCEEDED(audsnoopInitialize())) audsnoopCheck = audsnoopEnableDspUsageMeasurement();
 
-			Nifm_profile = (NifmNetworkProfileData_new*)malloc(sizeof(NifmNetworkProfileData_new));
-
 			psmCheck = psmInitialize();
-			if (R_SUCCEEDED(psmCheck)) psmService = psmGetServiceSession();
+			if (R_SUCCEEDED(psmCheck)) {
+				psmService = psmGetServiceSession();
+				i2cInitialize();
+			}
 			
 			SaltySD = CheckPort();
 			
@@ -1198,12 +1251,12 @@ public:
 		nvMapExit();
 		nvClose(fd);
 		nvExit();
+		i2cExit();
 		psmExit();
 		if (R_SUCCEEDED(audsnoopCheck)) {
 			audsnoopDisableDspUsageMeasurement();
 		}
 		audsnoopExit();
-		free(Nifm_profile);
 	}
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
@@ -1233,6 +1286,12 @@ public:
 				if (hosversionAtLeast(7,0,0)) fanCheck = fanOpenController(&g_ICon, 0x3D000001);
 				else fanCheck = fanOpenController(&g_ICon, 1);
 			}
+
+			psmCheck = psmInitialize();
+			if (R_SUCCEEDED(psmCheck)) {
+				psmService = psmGetServiceSession();
+				i2cInitialize();
+			}
 			
 			SaltySD = CheckPort();
 			
@@ -1258,6 +1317,8 @@ public:
 		tcExit();
 		fanControllerClose(&g_ICon);
 		fanExit();
+		i2cExit();
+		psmExit();
 		nvClose(fd);
 		nvExit();
 	}
