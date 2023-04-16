@@ -494,16 +494,18 @@ class com_FPS : public tsl::Gui {
 public:
     com_FPS() { }
 
+	s16 base_y = 0;
+
     virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("", "");
 
-		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 				static uint8_t avg = 0;
 				if (FPSavg >= 100) avg = 46;
 				else if (FPSavg >= 10) avg = 23;
 				else avg = 0;
-				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 370 + avg, 50, a(0x7111));
-				renderer->drawString(FPSavg_c, false, 5, 40, 40, renderer->a(0xFFFF));
+				renderer->drawRect(0, base_y, tsl::cfg::FramebufferWidth - 370 + avg, 50, a(0x7111));
+				renderer->drawString(FPSavg_c, false, 5, base_y+40, 40, renderer->a(0xFFFF));
 		});
 
 		rootFrame->setContent(Status);
@@ -521,6 +523,158 @@ public:
 			EndFPSCounterThread();
 			tsl::goBack();
 			return true;
+		}
+		else if ((keysHeld & KEY_ZR) && (keysHeld & KEY_R)) {
+			if ((keysHeld & KEY_DUP) && base_y != 0) {
+				base_y = 0;
+			}
+			else if ((keysHeld & KEY_DDOWN) && base_y != 670) {
+				base_y = 670;
+			}
+		}
+		return false;
+	}
+};
+
+//FPS Counter mode
+class com_FPSGraph : public tsl::Gui {
+public:
+    com_FPSGraph() { }
+
+	std::vector<s16> readings;
+
+	s16 base_y = 0;
+	s16 rectangle_width = 180;
+	s16 rectangle_height = 60;
+	s16 rectangle_x = 15;
+	s16 rectangle_y = 5;
+	s16 rectangle_range_max = 60;
+	s16 rectangle_range_min = 0;
+	char legend_max[3] = "60";
+	char legend_min[2] = "0";
+	s32 range = std::abs(rectangle_range_max) + std::abs(rectangle_range_min) + 1;
+	s16 x_end = rectangle_x + rectangle_width;
+	s16 y_old = 0;
+	s16 y_30FPS = rectangle_y+(rectangle_height / 2);
+	s16 y_60FPS = rectangle_y;
+	bool isAbove = false;
+
+    virtual tsl::elm::Element* createUI() override {
+		auto rootFrame = new tsl::elm::OverlayFrame("", "");
+
+		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+			renderer->drawRect(0, base_y, 201, 72, a(0x7111));
+			if (FPSavg < 10) {
+				renderer->drawString(FPSavg_c, false, 55, base_y+60, 63, renderer->a(0x4444));
+			}
+			else if (FPSavg < 100) {
+				renderer->drawString(FPSavg_c, false, 35, base_y+60, 63, renderer->a(0x4444));
+			} 
+			else 
+				renderer->drawString(FPSavg_c, false, 15, base_y+60, 63, renderer->a(0x4444));
+			renderer->drawEmptyRect(rectangle_x - 1, base_y+rectangle_y - 1, rectangle_width + 2, rectangle_height + 4, renderer->a(0xF77F));
+			renderer->drawDashedLine(rectangle_x, base_y+y_30FPS, rectangle_x+rectangle_width, base_y+y_30FPS, 6, renderer->a(0x8888));
+			renderer->drawString(&legend_max[0], false, rectangle_x-15, base_y+rectangle_y+7, 10, renderer->a(0xFFFF));
+			renderer->drawString(&legend_min[0], false, rectangle_x-10, base_y+rectangle_y+rectangle_height+3, 10, renderer->a(0xFFFF));
+
+			size_t last_element = readings.size() - 1;
+
+			for (s16 x = x_end; x > static_cast<s16>(x_end-readings.size()); x--) {
+				s32 y_on_range = readings[last_element] + std::abs(rectangle_range_min) + 1;
+				if (y_on_range < 0) {
+					y_on_range = 0;
+				}
+				else if (y_on_range > range) {
+					isAbove = true;
+					y_on_range = range; 
+				}
+				s16 y = rectangle_y + static_cast<s16>(std::lround((float)rectangle_height * ((float)(range - y_on_range) / (float)range))); // 320 + (80 * ((61 - 61)/61)) = 320
+				if ((y == y_30FPS || y == y_60FPS) && !isAbove) {
+					renderer->setPixelBlendDst(x, base_y+y, renderer->a(0xF0C0));
+				}
+				else if (y == y_old && !isAbove) {
+					renderer->setPixelBlendDst(x, base_y+y, renderer->a(0xFF00));
+				}
+				else renderer->setPixelBlendDst(x, base_y+y, renderer->a(0xFFFF));
+				isAbove = false;
+				y_old = y;
+				last_element--;
+			}
+
+		});
+
+		rootFrame->setContent(Status);
+
+		return rootFrame;
+	}
+
+	virtual void update() override {
+		///FPS
+		static float FPSavg_old = 0;
+
+		if (FPSavg_old == FPSavg)
+			return;
+		FPSavg_old = FPSavg;
+		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f",  FPSavg);
+		if (FPSavg < 254) {
+			if ((s16)(readings.size()) < rectangle_width) {
+				s16 temp = static_cast<s16>(std::lround(FPSavg));
+				if (temp == 30) {
+					if (FPSavg > 30.1) {
+						temp++;
+					}
+					else if (FPSavg < 29.9) {
+						temp--;
+					}
+				}
+				else if (temp == 60) {
+					if (FPSavg > 60.1) {
+						temp++;
+					}
+					else if (FPSavg < 59.9) {
+						temp--;
+					}
+				}
+				readings.push_back(temp);
+			}
+			else {
+				readings.erase(readings.begin());
+				s16 temp = static_cast<s16>(std::lround(FPSavg));
+				if (temp == 30) {
+					if (FPSavg > 30.1) {
+						temp++;
+					}
+					else if (FPSavg < 29.9) {
+						temp--;
+					}
+				}
+				else if (temp == 60) {
+					if (FPSavg > 60.1) {
+						temp++;
+					}
+					else if (FPSavg < 59.9) {
+						temp--;
+					}
+				}
+				readings.push_back(temp);
+			}
+		}
+		else readings.clear();
+		
+	}
+	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
+			EndFPSCounterThread();
+			tsl::goBack();
+			return true;
+		}
+		else if ((keysHeld & KEY_ZR) && (keysHeld & KEY_R)) {
+			if ((keysHeld & KEY_DUP) && base_y != 0) {
+				base_y = 0;
+			}
+			else if ((keysHeld & KEY_DDOWN) && base_y != 648) {
+				base_y = 648;
+			}
 		}
 		return false;
 	}
@@ -1144,6 +1298,21 @@ public:
 				return false;
 			});
 			list->addItem(comFPS);
+			auto comFPSGraph = new tsl::elm::ListItem("FPS Graph");
+			comFPSGraph->setClickListener([](uint64_t keys) {
+				if (keys & KEY_A) {
+					StartFPSCounterThread();
+					TeslaFPS = 31;
+					refreshrate = 31;
+					alphabackground = 0x0;
+					tsl::hlp::requestForeground(false);
+					FullMode = false;
+					tsl::changeTo<com_FPSGraph>();
+					return true;
+				}
+				return false;
+			});
+			list->addItem(comFPSGraph);
 		}
 		auto Battery = new tsl::elm::ListItem("Battery/Charger");
 		Battery->setClickListener([](uint64_t keys) {
