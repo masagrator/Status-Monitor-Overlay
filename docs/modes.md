@@ -13,7 +13,7 @@ This mode you can know from older releases of Status Monitor. It contains all in
 | RAM Usage | Frequency: %.1f<br>%s: %.2f/%.2f                                                    | Clockrate of EMC in MHz<br>%s memory used/%s memory available in MB (not working with FW <5.0.0)                                                                                                                                                                                                                          |
 | Board | Battery Power Flow: %+.2f<br>Temperatures:<br>- SoC: %.2f (FW 14.0.0+: %2d)<br>- PCB: %.2f (FW 14.0.0+: %2d)<br>- Skin: %.2f<br>Fan Rotation Level: %.2f                                   | How much power in watts is discharged from or charged to the battery<br>SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees'<br>Fan rotation level in percent                                                                                                                                                                         |
 
-' Explenation provided at the end of file
+' Explanation provided at the end of file
 
 ```Optional (shows only when NX-FPS plugin is installed)```
 
@@ -37,7 +37,7 @@ Contains most of supported informations with lower precision.
 | FAN      | %2.2f                                            | Fan rotation level                                                        |
 | DRAW     | %+.2f                                            | How much power in watts is discharged from or charged to the battery      |
 
-' Explenation provided at the end of file
+' Explanation provided at the end of file
 
 ```Optional (shows only when NX-FPS plugin is installed)```
 
@@ -64,7 +64,7 @@ and Tesla Menu (and libtesla with it) doesn't provide info about filename of ove
 | BRD      | %2.1f/%2.1f/%2.1f@+.2f<br>(FW 14.0.0+: %2d/%2d/%2.1f@+.2f) | SoC temperature/PCB temperature/Skin temperature'/Battery Power Flow      |
 | FAN      | %2.2f                                                      | Fan rotation level                                                        |
 
-' Explenation provided at the end of file
+' Explanation provided at the end of file
 
 ```Optional (shows only when NX-FPS plugin is installed and game is running)```
 
