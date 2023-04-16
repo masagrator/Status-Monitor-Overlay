@@ -41,6 +41,8 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 - RetroNX channel for helping with coding stuff
 - SunTheCourier for sys-clk-Overlay from which I learned how to make my own Tesla homebrew
 - Herbaciarz for providing screenshots from HDMI Grabber
+- KazushiMe for writing code to read registers from max17050 chip
+- CTCaer for Hekate from which I took max17050.h and calculation formulas for reading battery stats from max17050 chip
 
 # FAQ:
 Q: This homebrew has any impact on games?
