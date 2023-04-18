@@ -552,9 +552,9 @@ public:
 	s16 rectangle_range_min = 0;
 	char legend_max[3] = "60";
 	char legend_min[2] = "0";
-	s32 range = std::abs(rectangle_range_max) + std::abs(rectangle_range_min) + 1;
+	s32 range = std::abs(rectangle_range_max - rectangle_range_min) + 1;
 	s16 x_end = rectangle_x + rectangle_width;
-	s16 y_old = 0;
+	s16 y_old = rectangle_y+rectangle_height;
 	s16 y_30FPS = rectangle_y+(rectangle_height / 2);
 	s16 y_60FPS = rectangle_y;
 	bool isAbove = false;
@@ -575,7 +575,7 @@ public:
 			renderer->drawEmptyRect(rectangle_x - 1, base_y+rectangle_y - 1, rectangle_width + 2, rectangle_height + 4, renderer->a(0xF77F));
 			renderer->drawDashedLine(rectangle_x, base_y+y_30FPS, rectangle_x+rectangle_width, base_y+y_30FPS, 6, renderer->a(0x8888));
 			renderer->drawString(&legend_max[0], false, rectangle_x-15, base_y+rectangle_y+7, 10, renderer->a(0xFFFF));
-			renderer->drawString(&legend_min[0], false, rectangle_x-10, base_y+rectangle_y+rectangle_height+3, 10, renderer->a(0xFFFF));
+			renderer->drawDigit(0, rectangle_x-13, base_y+rectangle_y+rectangle_height-2, renderer->a(0xFFFF));
 
 			size_t last_element = readings.size() - 1;
 
@@ -588,14 +588,37 @@ public:
 					isAbove = true;
 					y_on_range = range; 
 				}
+				
 				s16 y = rectangle_y + static_cast<s16>(std::lround((float)rectangle_height * ((float)(range - y_on_range) / (float)range))); // 320 + (80 * ((61 - 61)/61)) = 320
-				if ((y == y_30FPS || y == y_60FPS) && !isAbove) {
-					renderer->setPixelBlendDst(x, base_y+y, renderer->a(0xF0C0));
+				auto colour = renderer->a(0xFFFF);
+				if (y == y_old && !isAbove) {
+					if ((y == y_30FPS || y == y_60FPS))
+						colour = renderer->a(0xF0C0);
+					else
+						colour = renderer->a(0xFF00);
 				}
-				else if (y == y_old && !isAbove) {
-					renderer->setPixelBlendDst(x, base_y+y, renderer->a(0xFF00));
+
+				if (x == x_end) {
+					y_old = y;
 				}
-				else renderer->setPixelBlendDst(x, base_y+y, renderer->a(0xFFFF));
+				else if (y - y_old > 0) {
+					if (y_old + 1 <= rectangle_y+rectangle_height) 
+						y_old += 1;
+				}
+				else if (y - y_old < 0) {
+					if (y_old - 1 >= rectangle_y) 
+						y_old -= 1;
+				}
+
+				/*
+				[30, 31], [29, 33], [28, 36]
+
+				30, 31, 31, 31
+				29, 33, 30, 31
+				28, 36, 29, 33
+
+				*/
+				renderer->drawLine(x, base_y+y, x, base_y+y_old, colour);
 				isAbove = false;
 				y_old = y;
 				last_element--;
