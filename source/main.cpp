@@ -575,7 +575,7 @@ public:
 			renderer->drawEmptyRect(rectangle_x - 1, base_y+rectangle_y - 1, rectangle_width + 2, rectangle_height + 4, renderer->a(0xF77F));
 			renderer->drawDashedLine(rectangle_x, base_y+y_30FPS, rectangle_x+rectangle_width, base_y+y_30FPS, 6, renderer->a(0x8888));
 			renderer->drawString(&legend_max[0], false, rectangle_x-15, base_y+rectangle_y+7, 10, renderer->a(0xFFFF));
-			renderer->drawDigit(0, rectangle_x-13, base_y+rectangle_y+rectangle_height-2, renderer->a(0xFFFF));
+			renderer->drawString(&legend_min[0], false, rectangle_x-10, base_y+rectangle_y+rectangle_height+3, 10, renderer->a(0xFFFF));
 
 			size_t last_element = readings.size() - 1;
 
