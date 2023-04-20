@@ -1,493 +1,6 @@
 #define TESLA_INIT_IMPL
 #include <tesla.hpp>
-#include "SaltyNX.h"
-
-#include "Battery.hpp"
-#include "audsnoop.h"
-#include "Misc.hpp"
-#include "i2c.h"
-#include "max17050.h"
-
-#define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
-#define FieldDescriptor uint32_t
-
-//Common
-Thread t0;
-Thread t1;
-Thread t2;
-Thread t3;
-Thread t4;
-Thread t5;
-Thread t6;
-Thread t7;
-uint64_t systemtickfrequency = 19200000;
-bool threadexit = false;
-bool threadexit2 = false;
-uint64_t refreshrate = 1;
-FanController g_ICon;
-std::string filepath = "sdmc:/switch/.overlays/Status-Monitor-Overlay.ovl";
-
-//Misc2
-NvChannel nvdecChannel;
-
-//Mini mode
-char Variables[768];
-
-//Checks
-Result clkrstCheck = 1;
-Result nvCheck = 1;
-Result pcvCheck = 1;
-Result tsCheck = 1;
-Result fanCheck = 1;
-Result tcCheck = 1;
-Result Hinted = 1;
-Result pmdmntCheck = 1;
-Result psmCheck = 1;
-Result audsnoopCheck = 1;
-Result nvdecCheck = 1;
-Result nifmCheck = 1;
-
-//Wi-Fi
-NifmInternetConnectionType NifmConnectionType = (NifmInternetConnectionType)-1;
-NifmInternetConnectionStatus NifmConnectionStatus = (NifmInternetConnectionStatus)-1;
-bool Nifm_showpass = false;
-Result Nifm_internet_rc = -1;
-Result Nifm_profile_rc = -1;
-NifmNetworkProfileData_new Nifm_profile = {0};
-char Nifm_pass[96];
-
-//NVDEC
-uint32_t NVDEC_Hz = 0;
-char NVDEC_Hz_c[32];
-
-//DSP
-uint32_t DSP_Load_u = -1;
-char DSP_Load_c[16];
-
-//Battery
-Service* psmService = 0;
-BatteryChargeInfoFields _batteryChargeInfoFields = {0};
-char Battery_c[320];
-char BatteryDraw_c[64];
-float batCurrentAvg = 0;
-float batVoltageAvg = 0;
-
-//Temperatures
-int32_t SOC_temperatureC = 0;
-int32_t PCB_temperatureC = 0;
-int32_t skin_temperaturemiliC = 0;
-char SoCPCB_temperature_c[64];
-char skin_temperature_c[32];
-
-//CPU Usage
-uint64_t idletick0 = systemtickfrequency;
-uint64_t idletick1 = systemtickfrequency;
-uint64_t idletick2 = systemtickfrequency;
-uint64_t idletick3 = systemtickfrequency;
-char CPU_Usage0[32];
-char CPU_Usage1[32];
-char CPU_Usage2[32];
-char CPU_Usage3[32];
-char CPU_compressed_c[160];
-
-//Frequency
-///CPU
-uint32_t CPU_Hz = 0;
-char CPU_Hz_c[32];
-///GPU
-uint32_t GPU_Hz = 0;
-char GPU_Hz_c[32];
-///RAM
-uint32_t RAM_Hz = 0;
-char RAM_Hz_c[32];
-
-//RAM Size
-char RAM_all_c[64];
-char RAM_application_c[64];
-char RAM_applet_c[64];
-char RAM_system_c[64];
-char RAM_systemunsafe_c[64];
-char RAM_compressed_c[320];
-char RAM_var_compressed_c[320];
-uint64_t RAM_Total_all_u = 0;
-uint64_t RAM_Total_application_u = 0;
-uint64_t RAM_Total_applet_u = 0;
-uint64_t RAM_Total_system_u = 0;
-uint64_t RAM_Total_systemunsafe_u = 0;
-uint64_t RAM_Used_all_u = 0;
-uint64_t RAM_Used_application_u = 0;
-uint64_t RAM_Used_applet_u = 0;
-uint64_t RAM_Used_system_u = 0;
-uint64_t RAM_Used_systemunsafe_u = 0;
-
-//Fan
-float Rotation_SpeedLevel_f = 0;
-char Rotation_SpeedLevel_c[64];
-
-//GPU Usage
-FieldDescriptor fd = 0;
-uint32_t GPU_Load_u = 0;
-char GPU_Load_c[32];
-
-//NX-FPS
-bool GameRunning = false;
-bool check = true;
-bool SaltySD = false;
-uintptr_t FPSaddress = 0;
-uintptr_t FPSavgaddress = 0;
-uint64_t PID = 0;
-uint32_t FPS = 0xFE;
-float FPSavg = 254;
-char FPS_c[32];
-char FPSavg_c[32];
-char FPS_compressed_c[64];
-char FPS_var_compressed_c[64];
-SharedMemory _sharedmemory = {};
-bool SharedMemoryUsed = false;
-uint32_t* MAGIC_shared = 0;
-uint8_t* FPS_shared = 0;
-float* FPSavg_shared = 0;
-bool* pluginActive = 0;
-Handle remoteSharedMemory = 1;
-
-void LoadSharedMemory() {
-	if (SaltySD_Connect())
-		return;
-
-	SaltySD_GetSharedMemoryHandle(&remoteSharedMemory);
-	SaltySD_Term();
-
-	shmemLoadRemote(&_sharedmemory, remoteSharedMemory, 0x1000, Perm_Rw);
-	if (!shmemMap(&_sharedmemory))
-		SharedMemoryUsed = true;
-	else FPS = 1234;
-}
-
-ptrdiff_t searchSharedMemoryBlock(uintptr_t base) {
-	ptrdiff_t search_offset = 0;
-	while(search_offset < 0x1000) {
-		MAGIC_shared = (uint32_t*)(base + search_offset);
-		if (*MAGIC_shared == 0x465053) {
-			return search_offset;
-		}
-		else search_offset += 4;
-	}
-	return -1;
-}
-
-//Check if SaltyNX is working
-bool CheckPort () {
-	Handle saltysd;
-	for (int i = 0; i < 67; i++) {
-		if (R_SUCCEEDED(svcConnectToNamedPort(&saltysd, "InjectServ"))) {
-			svcCloseHandle(saltysd);
-			break;
-		}
-		else {
-			if (i == 66) return false;
-			svcSleepThread(1'000'000);
-		}
-	}
-	for (int i = 0; i < 67; i++) {
-		if (R_SUCCEEDED(svcConnectToNamedPort(&saltysd, "InjectServ"))) {
-			svcCloseHandle(saltysd);
-			return true;
-		}
-		else svcSleepThread(1'000'000);
-	}
-	return false;
-}
-
-void CheckIfGameRunning(void*) {
-	while (!threadexit2) {
-		if (!check && R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
-			GameRunning = false;
-			if (SharedMemoryUsed) {
-				*MAGIC_shared = 0;
-				*pluginActive = false;
-				*FPS_shared = 0;
-				*FPSavg_shared = 0.0;
-				FPS = 254;
-				FPSavg = 254.0;
-			}
-			check = true;
-		}
-		else if (!GameRunning && SharedMemoryUsed) {
-				uintptr_t base = (uintptr_t)shmemGetAddr(&_sharedmemory);
-				ptrdiff_t rel_offset = searchSharedMemoryBlock(base);
-				if (rel_offset > -1) {
-					FPS_shared = (uint8_t*)(base + rel_offset + 4);
-					FPSavg_shared = (float*)(base + rel_offset + 5);
-					pluginActive = (bool*)(base + rel_offset + 9);
-					*pluginActive = false;
-					svcSleepThread(100'000'000);
-					if (*pluginActive) {
-						GameRunning = true;
-						check = false;
-					}
-				}
-		}
-		svcSleepThread(1'000'000'000);
-	}
-}
-
-//Check for input outside of FPS limitations
-void CheckButtons(void*) {
-	static uint64_t kHeld = padGetButtons(&pad);
-	while (!threadexit) {
-		padUpdate(&pad);
-		kHeld = padGetButtons(&pad);
-		if ((kHeld & KEY_ZR) && (kHeld & KEY_R)) {
-			if (kHeld & KEY_DDOWN) {
-				TeslaFPS = 1;
-				refreshrate = 1;
-				systemtickfrequency = 19200000;
-			}
-			else if (kHeld & KEY_DUP) {
-				TeslaFPS = 5;
-				refreshrate = 5;
-				systemtickfrequency = 3840000;
-			}
-		}
-		svcSleepThread(100'000'000);
-	}
-}
-
-void BatteryChecker(void*) {
-	if (R_SUCCEEDED(psmCheck)){
-		u16 data = 0;
-		float temp = 0;
-		if (Max17050ReadReg(MAX17050_Current, &data)) {
-			batCurrentAvg = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
-		}
-		if (Max17050ReadReg(MAX17050_VCELL, &data)) {
-			batVoltageAvg = 0.625 * (data >> 3);
-		}
-		while (!threadexit) {
-			psmGetBatteryChargeInfoFields(psmService, &_batteryChargeInfoFields);
-			// Calculation is based on Hekate's max17050.c
-			// Source: https://github.com/CTCaer/hekate/blob/master/bdk/power/max17050.c
-			if (Max17050ReadReg(MAX17050_Current, &data)) {
-				temp = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
-				batCurrentAvg = ((4 * batCurrentAvg) + temp) / 5;
-			}
-			if (Max17050ReadReg(MAX17050_VCELL, &data)) {
-				temp = 0.625 * (data >> 3);
-				batVoltageAvg = ((4 * batVoltageAvg) + temp) / 5;
-			}
-			svcSleepThread(1'000'000'000);
-		}
-		_batteryChargeInfoFields = {0};
-	}
-}
-
-void StartBatteryThread() {
-	threadCreate(&t7, BatteryChecker, NULL, NULL, 0x4000, 0x3F, 3);
-	threadStart(&t7);
-}
-
-//Stuff that doesn't need multithreading
-void Misc(void*) {
-	while (!threadexit) {
-		
-		// CPU, GPU and RAM Frequency
-		if (R_SUCCEEDED(clkrstCheck)) {
-			ClkrstSession clkSession;
-			if (R_SUCCEEDED(clkrstOpenSession(&clkSession, PcvModuleId_CpuBus, 3))) {
-				clkrstGetClockRate(&clkSession, &CPU_Hz);
-				clkrstCloseSession(&clkSession);
-			}
-			if (R_SUCCEEDED(clkrstOpenSession(&clkSession, PcvModuleId_GPU, 3))) {
-				clkrstGetClockRate(&clkSession, &GPU_Hz);
-				clkrstCloseSession(&clkSession);
-			}
-			if (R_SUCCEEDED(clkrstOpenSession(&clkSession, PcvModuleId_EMC, 3))) {
-				clkrstGetClockRate(&clkSession, &RAM_Hz);
-				clkrstCloseSession(&clkSession);
-			}
-		}
-		else if (R_SUCCEEDED(pcvCheck)) {
-			pcvGetClockRate(PcvModule_CpuBus, &CPU_Hz);
-			pcvGetClockRate(PcvModule_GPU, &GPU_Hz);
-			pcvGetClockRate(PcvModule_EMC, &RAM_Hz);
-		}
-		
-		//Temperatures
-		if (R_SUCCEEDED(tsCheck)) {
-			if (hosversionAtLeast(14,0,0)) {
-				tsGetTemperature(TsLocation_External, &SOC_temperatureC);
-				tsGetTemperature(TsLocation_Internal, &PCB_temperatureC);
-			}
-			else {
-				tsGetTemperatureMilliC(TsLocation_External, &SOC_temperatureC);
-				tsGetTemperatureMilliC(TsLocation_Internal, &PCB_temperatureC);
-			}
-		}
-		if (R_SUCCEEDED(tcCheck)) tcGetSkinTemperatureMilliC(&skin_temperaturemiliC);
-		
-		//RAM Memory Used
-		if (R_SUCCEEDED(Hinted)) {
-			svcGetSystemInfo(&RAM_Total_application_u, 0, INVALID_HANDLE, 0);
-			svcGetSystemInfo(&RAM_Total_applet_u, 0, INVALID_HANDLE, 1);
-			svcGetSystemInfo(&RAM_Total_system_u, 0, INVALID_HANDLE, 2);
-			svcGetSystemInfo(&RAM_Total_systemunsafe_u, 0, INVALID_HANDLE, 3);
-			svcGetSystemInfo(&RAM_Used_application_u, 1, INVALID_HANDLE, 0);
-			svcGetSystemInfo(&RAM_Used_applet_u, 1, INVALID_HANDLE, 1);
-			svcGetSystemInfo(&RAM_Used_system_u, 1, INVALID_HANDLE, 2);
-			svcGetSystemInfo(&RAM_Used_systemunsafe_u, 1, INVALID_HANDLE, 3);
-		}
-		
-		//Fan
-		if (R_SUCCEEDED(fanCheck)) fanControllerGetRotationSpeedLevel(&g_ICon, &Rotation_SpeedLevel_f);
-		
-		//GPU Load
-		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
-		
-		//FPS
-		if (GameRunning) {
-			if (SharedMemoryUsed) {
-				FPS = *FPS_shared;
-				FPSavg = *FPSavg_shared;
-			}
-		}
-		else FPSavg = 254;
-		
-		// Interval
-		svcSleepThread(100'000'000);
-	}
-}
-
-void Misc2(void*) {
-	while (!threadexit) {
-		//DSP
-		if (R_SUCCEEDED(audsnoopCheck)) audsnoopGetDspUsage(&DSP_Load_u);
-
-		//NVDEC clock rate
-		if (R_SUCCEEDED(nvdecCheck)) getNvChannelClockRate(&nvdecChannel, 0x75, &NVDEC_Hz);
-
-		if (R_SUCCEEDED(nifmCheck)) {
-			u32 dummy = 0;
-			Nifm_internet_rc = nifmGetInternetConnectionStatus(&NifmConnectionType, &dummy, &NifmConnectionStatus);
-			if (!Nifm_internet_rc && (NifmConnectionType == NifmInternetConnectionType_WiFi))
-				Nifm_profile_rc = nifmGetCurrentNetworkProfile((NifmNetworkProfileData*)&Nifm_profile);
-		}
-		// Interval
-		svcSleepThread(100'000'000);
-	}
-}
-
-//Check each core for idled ticks in intervals, they cannot read info about other core than they are assigned
-void CheckCore0(void*) {
-	while (!threadexit) {
-		static uint64_t idletick_a0 = 0;
-		static uint64_t idletick_b0 = 0;
-		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
-		svcSleepThread(1'000'000'000 / refreshrate);
-		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
-		idletick0 = idletick_a0 - idletick_b0;
-	}
-}
-
-void CheckCore1(void*) {
-	while (!threadexit) {
-		static uint64_t idletick_a1 = 0;
-		static uint64_t idletick_b1 = 0;
-		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-		svcSleepThread(1'000'000'000 / refreshrate);
-		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-		idletick1 = idletick_a1 - idletick_b1;
-	}
-}
-
-void CheckCore2(void*) {
-	while (!threadexit) {
-		static uint64_t idletick_a2 = 0;
-		static uint64_t idletick_b2 = 0;
-		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-		svcSleepThread(1'000'000'000 / refreshrate);
-		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-		idletick2 = idletick_a2 - idletick_b2;
-	}
-}
-
-void CheckCore3(void*) {
-	while (!threadexit) {
-		static uint64_t idletick_a3 = 0;
-		static uint64_t idletick_b3 = 0;
-		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		svcSleepThread(1'000'000'000 / refreshrate);
-		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		idletick3 = idletick_a3 - idletick_b3;
-		
-	}
-}
-
-//Start reading all stats
-void StartThreads() {
-	threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x10, 0);
-	threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x10, 1);
-	threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x10, 2);
-	threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x10, 3);
-	threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3F, -2);
-	threadCreate(&t5, CheckButtons, NULL, NULL, 0x400, 0x3F, -2);
-	threadStart(&t0);
-	threadStart(&t1);
-	threadStart(&t2);
-	threadStart(&t3);
-	threadStart(&t4);
-	threadStart(&t5);
-	StartBatteryThread();
-}
-
-//End reading all stats
-void CloseThreads() {
-	threadexit = true;
-	threadexit2 = true;
-	threadWaitForExit(&t0);
-	threadWaitForExit(&t1);
-	threadWaitForExit(&t2);
-	threadWaitForExit(&t3);
-	threadWaitForExit(&t4);
-	threadWaitForExit(&t5);
-	threadWaitForExit(&t6);
-	threadWaitForExit(&t7);
-	threadClose(&t0);
-	threadClose(&t1);
-	threadClose(&t2);
-	threadClose(&t3);
-	threadClose(&t4);
-	threadClose(&t5);
-	threadClose(&t6);
-	threadClose(&t7);
-	threadexit = false;
-	threadexit2 = false;
-}
-
-//Separate functions dedicated to "FPS Counter" mode
-void FPSCounter(void*) {
-	while (!threadexit) {
-		if (GameRunning) {
-			if (SharedMemoryUsed) {
-				FPS = *FPS_shared;
-				FPSavg = *FPSavg_shared;
-			}
-		}
-		else FPSavg = 254;
-		svcSleepThread(1'000'000'000 / refreshrate);
-	}
-}
-
-void StartFPSCounterThread() {
-	threadCreate(&t0, FPSCounter, NULL, NULL, 0x1000, 0x3F, 3);
-	threadStart(&t0);
-}
-
-void EndFPSCounterThread() {
-	threadexit = true;
-	threadWaitForExit(&t0);
-	threadClose(&t0);
-	threadexit = false;
-}
+#include "Utils.hpp"
 
 //FPS Counter mode
 class com_FPS : public tsl::Gui {
@@ -541,7 +54,12 @@ class com_FPSGraph : public tsl::Gui {
 public:
     com_FPSGraph() { }
 
-	std::vector<s16> readings;
+	struct stats {
+		s16 value;
+		bool zero_rounded;
+	};
+
+	std::vector<stats> readings;
 
 	s16 base_y = 0;
 	s16 rectangle_width = 180;
@@ -580,7 +98,7 @@ public:
 			size_t last_element = readings.size() - 1;
 
 			for (s16 x = x_end; x > static_cast<s16>(x_end-readings.size()); x--) {
-				s32 y_on_range = readings[last_element] + std::abs(rectangle_range_min) + 1;
+				s32 y_on_range = readings[last_element].value + std::abs(rectangle_range_min) + 1;
 				if (y_on_range < 0) {
 					y_on_range = 0;
 				}
@@ -591,16 +109,17 @@ public:
 				
 				s16 y = rectangle_y + static_cast<s16>(std::lround((float)rectangle_height * ((float)(range - y_on_range) / (float)range))); // 320 + (80 * ((61 - 61)/61)) = 320
 				auto colour = renderer->a(0xFFFF);
-				if (y == y_old && !isAbove) {
+				if (y == y_old && !isAbove && readings[last_element].zero_rounded) {
 					if ((y == y_30FPS || y == y_60FPS))
 						colour = renderer->a(0xF0C0);
 					else
-						colour = renderer->a(0xFF00);
+						colour = renderer->a(0xFF0F);
 				}
 
 				if (x == x_end) {
 					y_old = y;
 				}
+				/*
 				else if (y - y_old > 0) {
 					if (y_old + 1 <= rectangle_y+rectangle_height) 
 						y_old += 1;
@@ -609,15 +128,8 @@ public:
 					if (y_old - 1 >= rectangle_y) 
 						y_old -= 1;
 				}
-
-				/*
-				[30, 31], [29, 33], [28, 36]
-
-				30, 31, 31, 31
-				29, 33, 30, 31
-				28, 36, 29, 33
-
 				*/
+
 				renderer->drawLine(x, base_y+y, x, base_y+y_old, colour);
 				isAbove = false;
 				y_old = y;
@@ -634,53 +146,22 @@ public:
 	virtual void update() override {
 		///FPS
 		static float FPSavg_old = 0;
+		stats temp = {0, false};
 
 		if (FPSavg_old == FPSavg)
 			return;
 		FPSavg_old = FPSavg;
 		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f",  FPSavg);
 		if (FPSavg < 254) {
-			if ((s16)(readings.size()) < rectangle_width) {
-				s16 temp = static_cast<s16>(std::lround(FPSavg));
-				if (temp == 30) {
-					if (FPSavg > 30.1) {
-						temp++;
-					}
-					else if (FPSavg < 29.9) {
-						temp--;
-					}
-				}
-				else if (temp == 60) {
-					if (FPSavg > 60.1) {
-						temp++;
-					}
-					else if (FPSavg < 59.9) {
-						temp--;
-					}
-				}
-				readings.push_back(temp);
-			}
-			else {
+			if ((s16)(readings.size()) >= rectangle_width) {
 				readings.erase(readings.begin());
-				s16 temp = static_cast<s16>(std::lround(FPSavg));
-				if (temp == 30) {
-					if (FPSavg > 30.1) {
-						temp++;
-					}
-					else if (FPSavg < 29.9) {
-						temp--;
-					}
-				}
-				else if (temp == 60) {
-					if (FPSavg > 60.1) {
-						temp++;
-					}
-					else if (FPSavg < 59.9) {
-						temp--;
-					}
-				}
-				readings.push_back(temp);
 			}
+			float whole = std::round(FPSavg);
+			temp.value = static_cast<s16>(std::lround(FPSavg));
+			if (FPSavg < whole+0.04 && FPSavg > whole-0.05) {
+				temp.zero_rounded = true;
+			}
+			readings.push_back(temp);
 		}
 		else readings.clear();
 		
@@ -814,7 +295,6 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
 		
 		///Thermal
-		float PowerConsumption = ((batCurrentAvg / 1000) * (batVoltageAvg / 1000));
 		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW", PowerConsumption);
 		if (hosversionAtLeast(14,0,0)) {
 			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2d \u00B0C\n%2d \u00B0C\n%2.2f \u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
@@ -907,7 +387,6 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
-		float PowerConsumption = ((batCurrentAvg / 1000) * (batVoltageAvg / 1000));
 		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW", PowerConsumption);
 		if (hosversionAtLeast(14,0,0))
 			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
@@ -1036,7 +515,6 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
-		float PowerConsumption = ((batCurrentAvg / 1000) * (batVoltageAvg / 1000));
 		if (GameRunning) {
 			if (hosversionAtLeast(14,0,0)) {
 				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.0f\u00B0C@%+.2fW", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption);
@@ -1125,7 +603,7 @@ public:
 				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
 				batVoltageAvg,
 				batCurrentAvg,
-				((batVoltageAvg * batCurrentAvg) / 1'000'000),
+				PowerConsumption,
 				_batteryChargeInfoFields.ChargerType,
 				_batteryChargeInfoFields.ChargerVoltageLimit,
 				_batteryChargeInfoFields.ChargerCurrentLimit
@@ -1143,7 +621,7 @@ public:
 				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
 				batVoltageAvg,
 				batCurrentAvg,
-				((batVoltageAvg * batCurrentAvg) / 1'000'000)
+				PowerConsumption
 			);
 		
 	}
