@@ -466,12 +466,21 @@ void StartThreads() {
 	threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x10, 3);
 	threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3F, -2);
 	threadCreate(&t5, CheckButtons, NULL, NULL, 0x400, 0x3F, -2);
+	if (SaltySD) {
+		//Assign NX-FPS to default core
+		threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
+	}
+				
 	threadStart(&t0);
 	threadStart(&t1);
 	threadStart(&t2);
 	threadStart(&t3);
 	threadStart(&t4);
 	threadStart(&t5);
+	if (SaltySD) {
+		//Start NX-FPS detection
+		threadStart(&t6);
+	}
 	StartBatteryThread();
 }
 
@@ -514,13 +523,20 @@ void FPSCounter(void*) {
 }
 
 void StartFPSCounterThread() {
+	//Assign NX-FPS to default core
+	threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
 	threadCreate(&t0, FPSCounter, NULL, NULL, 0x1000, 0x3F, 3);
 	threadStart(&t0);
+	threadStart(&t6);
 }
 
 void EndFPSCounterThread() {
 	threadexit = true;
+	threadexit2 = true;
 	threadWaitForExit(&t0);
 	threadClose(&t0);
+	threadWaitForExit(&t6);
+	threadClose(&t6);
 	threadexit = false;
+	threadexit2 = false;
 }
