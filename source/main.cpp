@@ -775,6 +775,7 @@ public:
 
     virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if (keysHeld & KEY_B) {
+			svcSleepThread(100'000'000);
 			tsl::goBack();
 			return true;
 		}
@@ -825,6 +826,7 @@ public:
 
     virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if (keysHeld & KEY_B) {
+			svcSleepThread(300'000'000);
 			tsl::goBack();
 			return true;
 		}
