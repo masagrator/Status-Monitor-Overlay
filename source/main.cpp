@@ -732,6 +732,106 @@ public:
 	}
 };
 
+//Graphs
+class GraphsMenu : public tsl::Gui {
+public:
+    GraphsMenu() { }
+
+    virtual tsl::elm::Element* createUI() override {
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Graphs");
+		auto list = new tsl::elm::List();
+
+		auto comFPSGraph = new tsl::elm::ListItem("FPS");
+		comFPSGraph->setClickListener([](uint64_t keys) {
+			if (keys & KEY_A) {
+				StartFPSCounterThread();
+				TeslaFPS = 31;
+				refreshrate = 31;
+				alphabackground = 0x0;
+				tsl::hlp::requestForeground(false);
+				FullMode = false;
+				tsl::changeTo<com_FPSGraph>();
+				return true;
+			}
+			return false;
+		});
+		list->addItem(comFPSGraph);
+
+		rootFrame->setContent(list);
+
+		return rootFrame;
+	}
+
+	virtual void update() override {
+		if (TeslaFPS != 60) {
+			FullMode = true;
+			tsl::hlp::requestForeground(true);
+			TeslaFPS = 60;
+			alphabackground = 0xD;
+			refreshrate = 60;
+			systemtickfrequency = 19200000;
+		}
+	}
+
+    virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if (keysHeld & KEY_B) {
+			tsl::goBack();
+			return true;
+		}
+		return false;
+    }
+};
+
+//Other
+class OtherMenu : public tsl::Gui {
+public:
+    OtherMenu() { }
+
+    virtual tsl::elm::Element* createUI() override {
+		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Other");
+		auto list = new tsl::elm::List();
+
+		auto Battery = new tsl::elm::ListItem("Battery/Charger");
+		Battery->setClickListener([](uint64_t keys) {
+			if (keys & KEY_A) {
+				StartBatteryThread();
+				tsl::changeTo<BatteryOverlay>();
+				return true;
+			}
+			return false;
+		});
+		list->addItem(Battery);
+
+		auto Misc = new tsl::elm::ListItem("Miscellaneous");
+		Misc->setClickListener([](uint64_t keys) {
+			if (keys & KEY_A) {
+				smInitialize();
+				nifmCheck = nifmInitialize(NifmServiceType_Admin);
+				smExit();
+				StartMiscThread();
+				tsl::changeTo<MiscOverlay>();
+				return true;
+			}
+			return false;
+		});
+		list->addItem(Misc);
+
+		rootFrame->setContent(list);
+
+		return rootFrame;
+	}
+
+	virtual void update() override {}
+
+    virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if (keysHeld & KEY_B) {
+			tsl::goBack();
+			return true;
+		}
+		return false;
+    }
+};
+
 //Main Menu
 class MainMenu : public tsl::Gui {
 public:
@@ -799,46 +899,25 @@ public:
 				return false;
 			});
 			list->addItem(comFPS);
-			auto comFPSGraph = new tsl::elm::ListItem("FPS Graph");
-			comFPSGraph->setClickListener([](uint64_t keys) {
+			auto Graphs = new tsl::elm::ListItem("Graphs");
+			Graphs->setClickListener([](uint64_t keys) {
 				if (keys & KEY_A) {
-					StartFPSCounterThread();
-					TeslaFPS = 31;
-					refreshrate = 31;
-					alphabackground = 0x0;
-					tsl::hlp::requestForeground(false);
-					FullMode = false;
-					tsl::changeTo<com_FPSGraph>();
+					tsl::changeTo<GraphsMenu>();
 					return true;
 				}
 				return false;
 			});
-			list->addItem(comFPSGraph);
+			list->addItem(Graphs);
 		}
-		auto Battery = new tsl::elm::ListItem("Battery/Charger");
-		Battery->setClickListener([](uint64_t keys) {
+		auto Other = new tsl::elm::ListItem("Other");
+		Other->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
-				StartBatteryThread();
-				tsl::changeTo<BatteryOverlay>();
+				tsl::changeTo<OtherMenu>();
 				return true;
 			}
 			return false;
 		});
-		list->addItem(Battery);
-
-		auto Misc = new tsl::elm::ListItem("Miscellaneous");
-		Misc->setClickListener([](uint64_t keys) {
-			if (keys & KEY_A) {
-				smInitialize();
-				nifmCheck = nifmInitialize(NifmServiceType_Admin);
-				smExit();
-				StartMiscThread();
-				tsl::changeTo<MiscOverlay>();
-				return true;
-			}
-			return false;
-		});
-		list->addItem(Misc);
+		list->addItem(Other);
 
 		rootFrame->setContent(list);
 
@@ -851,7 +930,7 @@ public:
 			tsl::hlp::requestForeground(true);
 			TeslaFPS = 60;
 			alphabackground = 0xD;
-			refreshrate = 1;
+			refreshrate = 60;
 			systemtickfrequency = 19200000;
 		}
 	}
