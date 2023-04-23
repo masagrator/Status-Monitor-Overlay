@@ -87,11 +87,12 @@ Mode available only with SaltyNX installed.
 
 > FPS
 
-It shows avergae FPS graph in 31Hz + vsync signal. In background of graph you can see rendered actual average FPS.
-
-If game is not launched, it will show always 254.0 value and graph will be empty.
-
+It shows avergae FPS graph in 31Hz + vsync signal. In background of graph you can see rendered actual average FPS.<br>
+If game is not launched, it will show always 254.0 value and graph will be empty.<br>
 If game is not rendering any new frame, graph is not updated.
+
+If line is within rounding error of graph line, it's colored. Average FPS must be between -0.05 and +0.04 of graph line target FPS. So for 30 FPS it's between 29.95 - 30.04 FPS. For 43 FPS it's 42.95 - 43.04 FPS.
+If it's in 30 or 60 FPS rounding error range, it's green. Any other FPS graph target is purple.
 
 Mode available only with SaltyNX installed.
 
