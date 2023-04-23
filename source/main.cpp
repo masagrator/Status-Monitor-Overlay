@@ -551,7 +551,6 @@ public:
 		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
 			TeslaFPS = 60;
 			refreshrate = 60;
-			CloseThreads();
 			tsl::setNextOverlay(filepath);
 			tsl::Overlay::get()->close();
 			return true;
@@ -1043,11 +1042,6 @@ public:
 			
 			if (SaltySD) {
 				LoadSharedMemory();
-				//Assign NX-FPS to default core
-				threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
-				
-				//Start NX-FPS detection
-				threadStart(&t6);
 			}
 		});
 		Hinted = envIsSyscallHinted(0x6F);
