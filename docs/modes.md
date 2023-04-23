@@ -87,7 +87,7 @@ Mode available only with SaltyNX installed.
 
 > FPS
 
-It shows avergae FPS graph in 31Hz + vsync signal. In background of graph you can see rendered actual average FPS.<br>
+It shows average FPS graph in 31Hz + vsync signal. In background of graph you can see rendered actual average FPS.<br>
 If game is not launched, it will show always 254.0 value and graph will be empty.<br>
 If game is not rendering any new frame, graph is not updated.
 
