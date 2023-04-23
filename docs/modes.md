@@ -94,7 +94,7 @@ If game is not rendering any new frame, graph is not updated.
 If line is within rounding error of graph line, it's colored. Average FPS must be between -0.05 and +0.04 of graph line target FPS. So for 30 FPS it's between 29.95 - 30.04 FPS. For 43 FPS it's 42.95 - 43.04 FPS.
 If it's in 30 or 60 FPS rounding error range, it's green. Any other FPS graph target is purple.
 
-You can move counter to the bottom or top of the screen by pressing ZR + R + D-Pad Up/Down.
+You can move graph to the bottom or top of the screen by pressing ZR + R + D-Pad Up/Down.
 
 Mode available only with SaltyNX installed.
 
