@@ -83,7 +83,21 @@ If game is not launched, it will show always 254.0 value.
 
 Mode available only with SaltyNX installed.
 
-# Battery
+# Graphs
+
+> FPS
+
+It shows avergae FPS graph in 31Hz + vsync signal. In background of graph you can see rendered actual average FPS.
+
+If game is not launched, it will show always 254.0 value and graph will be empty.
+
+If game is not rendering any new frame, graph is not updated.
+
+Mode available only with SaltyNX installed.
+
+# Other
+
+> Battery
 
 | Category                        | Format    | Explanation                                                                               |
 |---------------------------------|-----------|-------------------------------------------------------------------------------------------|
@@ -100,7 +114,7 @@ Shows only if charger is connected:
 | Charger Max Voltage       | %u           | Charger and external device voltage limit in mV                                  |
 | Charger Max Current       | %u           | Charger and external device current limit in mA                                  |
 
-#  Miscellaneous
+> Miscellaneous
 
 | Category | Format            | Explanation                                                              |
 |----------|-------------------|--------------------------------------------------------------------------|
