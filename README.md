@@ -29,9 +29,6 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 - NVDEC clock rate
 - Network type + Wi-fi password
 
-# Planned:
-- Add Graph mode
-
 # Requirements:
 - From 0.4.1 you need Tesla Menu >=1.0.2
 
