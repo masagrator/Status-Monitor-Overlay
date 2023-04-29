@@ -32,6 +32,8 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 # Requirements:
 - From 0.4.1 you need Tesla Menu >=1.0.2
 
+How to setup everything: [HERE](https://gist.github.com/masagrator/65fcbd5ad09243399268d145aaab899b)
+
 ---
 
 # Thanks to:
