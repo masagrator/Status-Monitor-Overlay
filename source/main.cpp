@@ -840,7 +840,7 @@ public:
 
     virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
-		auto list = new tsl::elm::List();
+		auto list = new tsl::elm::List(6);
 		
 		auto Full = new tsl::elm::ListItem("Full");
 		Full->setClickListener([](uint64_t keys) {
