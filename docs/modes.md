@@ -129,37 +129,37 @@ If Network Type is "Wi-Fi", you can press Y to show password. Since max password
 
 # Additional info
 
-> What is Skin temperature (tskin)?
+> What is Skin temperature ($\mathbf{T}skin$)?
 
 This is temperature calculated from SoC and PCB temperatures that is mainly used to prevent Switch from overheating. Reading it is not supported on FWs <5.0.0.
 
 Explanation provided by CTCaer
->Temperature (tskin) calculation.
+>Temperature ($\mathbf{T}skin$) calculation.
 >
 >
 >Console and Handheld:
 >
->tsoc >= 84°C - Immediate sleep. No questions asked.
+>$\mathbf{T}soc >= 84°C$ - Immediate sleep. No questions asked.
 >
->tpcb >= 84°C - Immediate sleep. No questions asked.
+>$\mathbf{T}pcb >= 84°C$ - Immediate sleep. No questions asked.
 >
 >
 >Console only:
 >
->tskin < 63°C - Clears both timers.
+>$\mathbf{T}skin < 63°C$ - Clears both timers.
 >
->tskin >= 63°C - Immediate sleep. No questions asked.
+>$\mathbf{T}skin >= 63°C$ - Immediate sleep. No questions asked.
 >
 >
 >Handheld only:
 >
->tskin < 58°C - Clears both timers.
+>$\mathbf{T}skin < 58°C$ - Clears both timers.
 >
->58°C <= tskin < 61°C - Starts 60s timer and clears 10s timer.
+>$58°C <= \mathbf{T}skin < 61°C$ - Starts 60s timer and clears 10s timer.
 >
->61°C <= tskin < 63°C - Starts 10s timer.
+>$61°C <= \mathbf{T}skin < 63°C$ - Starts 10s timer.
 >
->tskin >= 63°C - Immediate sleep. No questions asked.
+>$\mathbf{T}skin >= 63°C$ - Immediate sleep. No questions asked.
 >
 >
 >The two timers are separate. If 61°C is reached, the 10s timer is immediatly started.
