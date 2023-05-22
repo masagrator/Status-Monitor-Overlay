@@ -7,6 +7,9 @@
 #include "i2c.h"
 #include "max17050.h"
 #include <numeric>
+#include <tesla.hpp> // added
+#include <sys/stat.h> // added
+
 
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
@@ -25,7 +28,11 @@ bool threadexit = false;
 bool threadexit2 = false;
 uint64_t refreshrate = 1;
 FanController g_ICon;
-std::string filepath = "sdmc:/switch/.overlays/Status-Monitor-Overlay.ovl";
+
+// Custom Declarations
+std::string filepath;
+std::string keyCombo;
+
 
 //Misc2
 NvChannel nvdecChannel;
@@ -539,4 +546,68 @@ void EndFPSCounterThread() {
 	threadClose(&t6);
 	threadexit = false;
 	threadexit2 = false;
+}
+
+std::list<HidNpadButton> mappedButtons;
+
+
+
+// Custom utility function for parsing an ini file
+void ParseIniFile() {
+    std::string overlayName;
+    std::string keyName;
+    std::string directoryPath = "sdmc:/config/status-monitor/";
+    std::string defaultName = "Status-Monitor-Overlay";
+    
+    struct stat st;
+    if (stat(directoryPath.c_str(), &st) != 0) {
+        mkdir(directoryPath.c_str(), 0777);
+    }
+    
+    
+    std::string configIniPath = directoryPath + "config.ini";
+
+    // Open the INI file
+    FILE* configFileIn = fopen(configIniPath.c_str(), "r");
+    if (!configFileIn) {
+        // Write the default INI file
+        FILE* configFileOut = fopen(configIniPath.c_str(), "w");
+        fprintf(configFileOut, "[status-monitor]\noverlay_name=%s\nkey_combo=ZL+ZR+DDOWN\n", defaultName.c_str());
+        fclose(configFileOut);
+
+        overlayName = defaultName;
+        filepath = "sdmc:/switch/.overlays/" + overlayName + ".ovl";
+        keyCombo = "ZL+ZR+DDOWN"; // load keyCombo variable
+        return;
+    }
+
+    // Determine the size of the INI file
+    fseek(configFileIn, 0, SEEK_END);
+    long fileSize = ftell(configFileIn);
+    rewind(configFileIn);
+
+    // Read the contents of the INI file
+    char* fileData = new char[fileSize + 1];
+    fread(fileData, sizeof(char), fileSize, configFileIn);
+    fileData[fileSize] = '\0';  // Add null-terminator to create a C-string
+    fclose(configFileIn);
+
+    // Parse the INI data
+    tsl::hlp::ini::IniData parsedData = tsl::hlp::ini::parseIni(std::string(fileData));
+
+    // Access and use the parsed data as needed
+    // For example, print the value of a specific section and key
+    std::string sectionName = "status-monitor";
+    keyName = "overlay_name";
+    overlayName = parsedData[sectionName][keyName];
+    filepath = "sdmc:/switch/.overlays/" + overlayName + ".ovl"; // load filepath variable
+    keyName = "key_combo";
+    keyCombo = parsedData[sectionName][keyName]; // load keyCombo variable
+    //mappedButtonsX = getMappedButtonsX(keyComboX);
+    
+    
+    
+    //buttonCombo = mapKeyComboToButton(keyCombo);
+    // Clean up
+    delete[] fileData;
 }
