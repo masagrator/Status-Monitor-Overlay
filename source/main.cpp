@@ -3,13 +3,13 @@
 #include "Utils.hpp"
 
 
-// Button mapper class
+// Base class with virtual function
 class ButtonMapper {
 public:
 	virtual std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) = 0;
 };
 
-// Button mapper implementation
+// Derived class implementing the virtual function
 class ButtonMapperImpl : public ButtonMapper {
 public:
 	std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) override {
@@ -670,8 +670,11 @@ public:
 		if (allButtonsHeld) {
 			TeslaFPS = 60;
 			refreshrate = 60;
-			tsl::setNextOverlay(filepath);
+			tsl::setNextOverlay(filepath.c_str());
 			ParseIniFile();
+			// Create an instance of the ButtonMapperImpl class
+			ButtonMapperImpl buttonMapper;
+			mappedButtons = buttonMapper.MapButtons(keyCombo);
 			tsl::Overlay::get()->close();
 			return true;
 		}
