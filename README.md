@@ -1,4 +1,4 @@
-# Status Monitor Overlay (Beta)
+# Status Monitor Overlay
 Monitor Your hardware in real time!
 
 This is an overlay homebrew dedicated to Nintendo Switch.
