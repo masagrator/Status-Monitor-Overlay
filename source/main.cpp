@@ -9,7 +9,7 @@ public:
 	virtual std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) = 0;
 };
 
-// Derived class implementing the virtual function
+// Button mapper implementation
 class ButtonMapperImpl : public ButtonMapper {
 public:
 	std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) override {
