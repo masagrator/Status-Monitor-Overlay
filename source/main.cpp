@@ -3,7 +3,7 @@
 #include "Utils.hpp"
 
 
-// Base class with virtual function
+// Button mapper class
 class ButtonMapper {
 public:
 	virtual std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) = 0;
