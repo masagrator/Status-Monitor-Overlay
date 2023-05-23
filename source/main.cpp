@@ -5,10 +5,11 @@
 
 //FPS Counter mode
 class com_FPS : public tsl::Gui {
+private:
+	ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
 public:
-	com_FPS() {
-		ParseIniFile(); // parse INI from file
-	}
+	com_FPS() { }
 
 	s16 base_y = 0;
 
@@ -35,6 +36,10 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		///std::list<HidNpadButton> mappedButtons;
+		///ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+		///mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+        
 		bool allButtonsHeld = true;
 		for (const HidNpadButton& button : mappedButtons) {
 			if (!(keysHeld & static_cast<uint64_t>(button))) {
@@ -45,7 +50,6 @@ public:
 
 		if (allButtonsHeld) {
 			EndFPSCounterThread();
-			ParseIniFile(); // parse INI from file
 			tsl::goBack();
 			return true;
 		}
@@ -63,10 +67,11 @@ public:
 
 //FPS Counter mode
 class com_FPSGraph : public tsl::Gui {
+private:
+	ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
 public:
-	com_FPSGraph() {
-		ParseIniFile(); // parse INI from file
-	}
+	com_FPSGraph() { }
 
 	struct stats {
 		s16 value;
@@ -181,6 +186,10 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		///std::list<HidNpadButton> mappedButtons;
+		///ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+		///mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+        
 		bool allButtonsHeld = true;
 		for (const HidNpadButton& button : mappedButtons) {
 			if (!(keysHeld & static_cast<uint64_t>(button))) {
@@ -191,7 +200,6 @@ public:
 
 		if (allButtonsHeld) {
 			EndFPSCounterThread();
-			ParseIniFile(); // parse INI from file
 			tsl::goBack();
 			return true;
 		}
@@ -209,10 +217,11 @@ public:
 
 //Full mode
 class FullOverlay : public tsl::Gui {
+private:
+	ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
 public:
-	FullOverlay() {
-		ParseIniFile(); // parse INI from file
-	}
+	FullOverlay() { }
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 
@@ -341,7 +350,11 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		
+		///std::list<HidNpadButton> mappedButtons;
+		///ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+    	///mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+        
+        
 		bool allButtonsHeld = true;
 		for (const HidNpadButton& button : mappedButtons) {
 			if (!(keysHeld & static_cast<uint64_t>(button))) {
@@ -352,7 +365,6 @@ public:
 
 		if (allButtonsHeld) {
 			CloseThreads();
-			ParseIniFile(); // parse INI from file
 			tsl::goBack();
 			return true;
 		}
@@ -362,10 +374,11 @@ public:
 
 //Mini mode
 class MiniOverlay : public tsl::Gui {
+private:
+	ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
 public:
-	MiniOverlay() {
-		ParseIniFile(); // parse INI from file
-	}
+	MiniOverlay() { }
 
 	virtual tsl::elm::Element* createUI() override {
 
@@ -447,6 +460,10 @@ public:
 
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		///std::list<HidNpadButton> mappedButtons;
+		///ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+		///mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+		
 		bool allButtonsHeld = true;
 		for (const HidNpadButton& button : mappedButtons) {
 			if (!(keysHeld & static_cast<uint64_t>(button))) {
@@ -457,7 +474,6 @@ public:
 
 		if (allButtonsHeld) {
 			CloseThreads();
-			ParseIniFile(); // parse INI from file
 			tsl::goBack();
 			return true;
 		}
@@ -467,10 +483,11 @@ public:
 
 //Micro mode
 class MicroOverlay : public tsl::Gui {
+private:
+	ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
 public:
-	MicroOverlay() {
-        ParseIniFile(); // parse INI from file
-	}
+	MicroOverlay() {}
 	
 	char batteryCharge[10]; // Declare the batteryCharge variable
 	
@@ -617,8 +634,11 @@ public:
 		*/
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+        //std::list<HidNpadButton> mappedButtons;
+    	//ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+    	//mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+        
 		bool allButtonsHeld = true;
-		
 		for (const HidNpadButton& button : mappedButtons) {
 			if (!(keysHeld & static_cast<uint64_t>(button))) {
 				allButtonsHeld = false;
@@ -630,7 +650,6 @@ public:
 			TeslaFPS = 60;
 			refreshrate = 60;
 			tsl::setNextOverlay(filepath.c_str());
-			//ParseIniFile(); // parse INI from file
 			tsl::Overlay::get()->close();
 			return true;
 		}
@@ -641,9 +660,7 @@ public:
 //Battery
 class BatteryOverlay : public tsl::Gui {
 public:
-	BatteryOverlay() {
-		ParseIniFile(); // parse INI from file
-	}
+	BatteryOverlay() { }
 
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
@@ -730,9 +747,7 @@ void EndMiscThread() {
 
 class MiscOverlay : public tsl::Gui {
 public:
-	MiscOverlay() {
-		ParseIniFile(); // parse INI from file
-	}
+	MiscOverlay() { }
 
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
@@ -817,9 +832,7 @@ public:
 //Graphs
 class GraphsMenu : public tsl::Gui {
 public:
-	GraphsMenu() {
-		ParseIniFile(); // parse INI from file
-	}
+	GraphsMenu() { }
 
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Graphs");
@@ -870,9 +883,7 @@ public:
 //Other
 class OtherMenu : public tsl::Gui {
 public:
-	OtherMenu() {
-		ParseIniFile(); // parse INI from file
-	}
+	OtherMenu() { }
 
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Other");
@@ -924,7 +935,8 @@ public:
 class MainMenu : public tsl::Gui {
 public:
 	MainMenu() {
-	    ParseIniFile(); // parse INI from file
+    	ParseIniFile(); // parse INI from file
+    	//tsl::MapButtons();
 	}
 
 	virtual tsl::elm::Element* createUI() override {
@@ -1072,7 +1084,6 @@ public:
 	}
 
 	virtual void exitServices() override {
-		ParseIniFile(); // parse INI from file
 		CloseThreads();
 		shmemClose(&_sharedmemory);
 		//Exit services
@@ -1138,7 +1149,6 @@ public:
 	}
 
 	virtual void exitServices() override {
-        ParseIniFile(); // parse INI from file
 		CloseThreads();
 		shmemClose(&_sharedmemory);
 		//Exit services
@@ -1170,7 +1180,8 @@ public:
 int main(int argc, char **argv) {
 	
 	ParseIniFile(); // parse INI from file
-	
+	//tsl::MapButtons();
+
 	//mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
 	for (u8 arg = 0; arg < argc; arg++) {
 		if (strcasecmp(argv[arg], "--microOverlay") == 0) {
