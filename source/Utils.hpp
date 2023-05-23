@@ -32,8 +32,8 @@ FanController g_ICon;
 // Custom Declarations
 //std::string filepath;
 std::string filepath = "sdmc:/switch/.overlays/Status-Monitor-Overlay.ovl";
-std::string keyCombo = "ZL+ZR+DDOWN";
-std::list<HidNpadButton> mappedButtons;
+std::string keyCombo = "L+ZR+DDOWN";
+//std::list<HidNpadButton> mappedButtons;
 
 //Misc2
 NvChannel nvdecChannel;
@@ -550,6 +550,9 @@ void EndFPSCounterThread() {
 }
 
 
+//  NEW CODE BELOW
+
+
 // String formatting functions
 void removeSpaces(std::string& str) {
     str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
@@ -575,9 +578,6 @@ void formatButtonCombination(std::string& line) {
         ++pos;
     }
 }
-
-
-
 
 
 
@@ -636,10 +636,6 @@ public:
 	}
 };
 
-void MapButtons() {
-	ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
-	mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
-}
 
 // Custom utility function for parsing an ini file
 void ParseIniFile() {
@@ -647,15 +643,14 @@ void ParseIniFile() {
     std::string keyName;
     std::string directoryPath = "sdmc:/config/status-monitor/";
     std::string defaultOverlayName = "Status-Monitor-Overlay";
-    
-	ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
-    
+
+
     struct stat st;
     if (stat(directoryPath.c_str(), &st) != 0) {
         mkdir(directoryPath.c_str(), 0777);
     }
-    
-    
+
+
     std::string configIniPath = directoryPath + "config.ini";
 
     // Open the INI file
@@ -664,13 +659,13 @@ void ParseIniFile() {
         // Write the default INI file
         FILE* configFileOut = fopen(configIniPath.c_str(), "w");
         fprintf(configFileOut, "[status-monitor]\noverlay_name=%s\nkey_combo=ZL+ZR+DDOWN\n", defaultOverlayName.c_str());
+        //fprintf(configFileOut, "[status-monitor]\nkey_combo=ZL+ZR+DDOWN\n");
         fclose(configFileOut);
 
         overlayName = defaultOverlayName;
         //filepath = "sdmc:/switch/.overlays/0-Status-Monitor-Overlay.ovl";
         filepath = "sdmc:/switch/.overlays/" + overlayName + ".ovl";
         keyCombo = "ZL+ZR+DDOWN"; // load keyCombo variable
-	    mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
         return;
     }
 
@@ -701,14 +696,13 @@ void ParseIniFile() {
     removeSpaces(keyCombo); // format combo
     convertToUpper(keyCombo);
     //mappedButtonsX = getMappedButtonsX(keyComboX);
-    
 
-	mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
-    
-    
+
+
     //buttonCombo = mapKeyComboToButton(keyCombo);
     // Clean up
     delete[] fileData;
 }
+
 
 
