@@ -616,6 +616,7 @@ public:
 			TeslaFPS = 60;
 			refreshrate = 60;
 			tsl::setNextOverlay(filepath.c_str());
+			ParseIniFile(); // parse INI from file
 			tsl::Overlay::get()->close();
 			return true;
 		}
