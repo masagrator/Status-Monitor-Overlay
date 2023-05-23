@@ -43,6 +43,7 @@ public:
 
 		if (allButtonsHeld) {
 			EndFPSCounterThread();
+			ParseIniFile(); // parse INI from file
 			tsl::goBack();
 			return true;
 		}
@@ -186,6 +187,7 @@ public:
 
 		if (allButtonsHeld) {
 			EndFPSCounterThread();
+			ParseIniFile(); // parse INI from file
 			tsl::goBack();
 			return true;
 		}
@@ -344,6 +346,7 @@ public:
 
 		if (allButtonsHeld) {
 			CloseThreads();
+			ParseIniFile(); // parse INI from file
 			tsl::goBack();
 			return true;
 		}
@@ -446,6 +449,7 @@ public:
 
 		if (allButtonsHeld) {
 			CloseThreads();
+			ParseIniFile(); // parse INI from file
 			tsl::goBack();
 			return true;
 		}
@@ -456,7 +460,9 @@ public:
 //Micro mode
 class MicroOverlay : public tsl::Gui {
 public:
-	MicroOverlay() {}
+	MicroOverlay() {
+        ParseIniFile(); // parse INI from file
+	}
 	
 	char batteryCharge[10]; // Declare the batteryCharge variable
 	
@@ -616,7 +622,7 @@ public:
 			TeslaFPS = 60;
 			refreshrate = 60;
 			tsl::setNextOverlay(filepath.c_str());
-			ParseIniFile(); // parse INI from file
+			//ParseIniFile(); // parse INI from file
 			tsl::Overlay::get()->close();
 			return true;
 		}
@@ -901,7 +907,9 @@ public:
 //Main Menu
 class MainMenu : public tsl::Gui {
 public:
-	MainMenu() {}
+	MainMenu() {
+	    ParseIniFile(); // parse INI from file
+	}
 
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
@@ -1048,6 +1056,7 @@ public:
 	}
 
 	virtual void exitServices() override {
+		ParseIniFile(); // parse INI from file
 		CloseThreads();
 		shmemClose(&_sharedmemory);
 		//Exit services
@@ -1113,6 +1122,7 @@ public:
 	}
 
 	virtual void exitServices() override {
+        ParseIniFile(); // parse INI from file
 		CloseThreads();
 		shmemClose(&_sharedmemory);
 		//Exit services
