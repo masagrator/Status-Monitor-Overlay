@@ -667,7 +667,7 @@ void ParseIniFile() {
         fclose(configFileOut);
 
         overlayName = defaultOverlayName;
-        filepath = "sdmc:/switch/.overlays/" + overlayName + ".ovl";
+        //filepath = "sdmc:/switch/.overlays/" + overlayName + ".ovl";
         keyCombo = "ZL+ZR+DDOWN"; // load keyCombo variable
 	    mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
         return;
@@ -693,12 +693,11 @@ void ParseIniFile() {
     keyName = "overlay_name";
     overlayName = parsedData[sectionName][keyName];
     removeSpaces(overlayName);
-    filepath = "sdmc:/switch/.overlays/" + overlayName + ".ovl"; // load filepath variable
+    //filepath = "sdmc:/switch/.overlays/" + overlayName + ".ovl"; // load filepath variable
     keyName = "key_combo";
     keyCombo = parsedData[sectionName][keyName]; // load keyCombo variable
     removeSpaces(keyCombo); // format combo
     convertToUpper(keyCombo);
-    
 	mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
     
     delete[] fileData;
