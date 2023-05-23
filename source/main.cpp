@@ -3,62 +3,6 @@
 #include "Utils.hpp"
 
 
-// Base class with virtual function
-class ButtonMapper {
-public:
-	virtual std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) = 0;
-};
-
-// Derived class implementing the virtual function
-class ButtonMapperImpl : public ButtonMapper {
-public:
-	std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) override {
-		std::map<std::string, HidNpadButton> buttonMap = {
-			{"A", static_cast<HidNpadButton>(HidNpadButton_A)},
-			{"B", static_cast<HidNpadButton>(HidNpadButton_B)},
-			{"X", static_cast<HidNpadButton>(HidNpadButton_X)},
-			{"Y", static_cast<HidNpadButton>(HidNpadButton_Y)},
-			{"L", static_cast<HidNpadButton>(HidNpadButton_L)},
-			{"R", static_cast<HidNpadButton>(HidNpadButton_R)},
-			{"ZL", static_cast<HidNpadButton>(HidNpadButton_ZL)},
-			{"ZR", static_cast<HidNpadButton>(HidNpadButton_ZR)},
-			{"PLUS", static_cast<HidNpadButton>(HidNpadButton_Plus)},
-			{"MINUS", static_cast<HidNpadButton>(HidNpadButton_Minus)},
-			{"DUP", static_cast<HidNpadButton>(HidNpadButton_Up)},
-			{"DDOWN", static_cast<HidNpadButton>(HidNpadButton_Down)},
-			{"DLEFT", static_cast<HidNpadButton>(HidNpadButton_Left)},
-			{"DRIGHT", static_cast<HidNpadButton>(HidNpadButton_Right)},
-			{"SL", static_cast<HidNpadButton>(HidNpadButton_AnySL)},
-			{"SR", static_cast<HidNpadButton>(HidNpadButton_AnySR)},
-			{"LSTICK", static_cast<HidNpadButton>(HidNpadButton_StickL)},
-			{"RSTICK", static_cast<HidNpadButton>(HidNpadButton_StickR)},
-			{"UP", static_cast<HidNpadButton>(HidNpadButton_Up | HidNpadButton_StickLUp | HidNpadButton_StickRUp)},
-			{"DOWN", static_cast<HidNpadButton>(HidNpadButton_Down | HidNpadButton_StickLDown | HidNpadButton_StickRDown)},
-			{"LEFT", static_cast<HidNpadButton>(HidNpadButton_Left | HidNpadButton_StickLLeft | HidNpadButton_StickRLeft)},
-			{"RIGHT", static_cast<HidNpadButton>(HidNpadButton_Right | HidNpadButton_StickLRight | HidNpadButton_StickRRight)}
-		};
-
-		std::list<HidNpadButton> mappedButtons;
-		std::string comboCopy = buttonCombo;  // Make a copy of buttonCombo
-
-		std::string delimiter = "+";
-		size_t pos = 0;
-		std::string button;
-		while ((pos = comboCopy.find(delimiter)) != std::string::npos) {
-			button = comboCopy.substr(0, pos);
-			if (buttonMap.find(button) != buttonMap.end()) {
-				mappedButtons.push_back(buttonMap[button]);
-			}
-			comboCopy.erase(0, pos + delimiter.length());
-		}
-		if (buttonMap.find(comboCopy) != buttonMap.end()) {
-			mappedButtons.push_back(buttonMap[comboCopy]);
-		}
-		return mappedButtons;
-	}
-};
-
-
 //FPS Counter mode
 class com_FPS : public tsl::Gui {
 public:
@@ -242,7 +186,6 @@ public:
 
 		if (allButtonsHeld) {
 			EndFPSCounterThread();
-			ParseIniFile();
 			tsl::goBack();
 			return true;
 		}
@@ -262,7 +205,6 @@ public:
 class FullOverlay : public tsl::Gui {
 public:
 	FullOverlay() { }
-
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 
@@ -311,8 +253,11 @@ public:
 				renderer->drawString(FPS_var_compressed_c, false, 295, 120, 20, renderer->a(0xFFFF));
 			}
 			
-			std::string messageOne = "Hold " + keyCombo + " to Exit\nHold ZR + R + DDown to slow down refresh";
-			std::string messageTwo = "Hold " + keyCombo + " to Exit\nHold ZR + R + DDown to slow down refresh";
+			std::string formattedKeyCombo = keyCombo;
+			formatButtonCombination(formattedKeyCombo);
+			
+			std::string messageOne = "Hold " + formattedKeyCombo + " to Exit\nHold ZR + R + DDOWN to slow down refresh";
+			std::string messageTwo = "Hold " + formattedKeyCombo + " to Exit\nHold ZR + R + DDOWN to slow down refresh";
 			
 			if (refreshrate == 5) renderer->drawString(messageOne.c_str(), false, 20, 675, 15, renderer->a(0xFFFF));
 			else if (refreshrate == 1) renderer->drawString(messageTwo.c_str(), false, 20, 675, 15, renderer->a(0xFFFF));
@@ -388,6 +333,7 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		
 		bool allButtonsHeld = true;
 		for (const HidNpadButton& button : mappedButtons) {
 			if (!(keysHeld & static_cast<uint64_t>(button))) {
@@ -398,7 +344,6 @@ public:
 
 		if (allButtonsHeld) {
 			CloseThreads();
-			ParseIniFile();
 			tsl::goBack();
 			return true;
 		}
@@ -501,7 +446,6 @@ public:
 
 		if (allButtonsHeld) {
 			CloseThreads();
-			ParseIniFile();
 			tsl::goBack();
 			return true;
 		}
@@ -509,7 +453,7 @@ public:
 	}
 };
 
-//Mini mode
+//Micro mode
 class MicroOverlay : public tsl::Gui {
 public:
 	MicroOverlay() {}
@@ -660,6 +604,7 @@ public:
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		bool allButtonsHeld = true;
+		
 		for (const HidNpadButton& button : mappedButtons) {
 			if (!(keysHeld & static_cast<uint64_t>(button))) {
 				allButtonsHeld = false;
@@ -671,10 +616,6 @@ public:
 			TeslaFPS = 60;
 			refreshrate = 60;
 			tsl::setNextOverlay(filepath.c_str());
-			ParseIniFile();
-			// Create an instance of the ButtonMapperImpl class
-			ButtonMapperImpl buttonMapper;
-			mappedButtons = buttonMapper.MapButtons(keyCombo);
 			tsl::Overlay::get()->close();
 			return true;
 		}
@@ -959,7 +900,7 @@ public:
 //Main Menu
 class MainMenu : public tsl::Gui {
 public:
-	MainMenu() { }
+	MainMenu() {}
 
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
@@ -1196,14 +1137,14 @@ public:
 	}
 };
 
+
+
 // This function gets called on startup to create a new Overlay object
 int main(int argc, char **argv) {
-	ParseIniFile();
 	
-	// Create an instance of the ButtonMapperImpl class
-	ButtonMapperImpl buttonMapper;
-	mappedButtons = buttonMapper.MapButtons(keyCombo);
+	ParseIniFile(); // parse INI from file
 	
+	//mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
 	for (u8 arg = 0; arg < argc; arg++) {
 		if (strcasecmp(argv[arg], "--microOverlay") == 0) {
 			framebufferWidth = 1280;
