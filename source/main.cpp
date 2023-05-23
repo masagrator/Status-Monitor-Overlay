@@ -6,7 +6,9 @@
 //FPS Counter mode
 class com_FPS : public tsl::Gui {
 public:
-	com_FPS() { }
+	com_FPS() {
+		ParseIniFile(); // parse INI from file
+	}
 
 	s16 base_y = 0;
 
@@ -62,7 +64,9 @@ public:
 //FPS Counter mode
 class com_FPSGraph : public tsl::Gui {
 public:
-	com_FPSGraph() { }
+	com_FPSGraph() {
+		ParseIniFile(); // parse INI from file
+	}
 
 	struct stats {
 		s16 value;
@@ -206,7 +210,9 @@ public:
 //Full mode
 class FullOverlay : public tsl::Gui {
 public:
-	FullOverlay() { }
+	FullOverlay() {
+		ParseIniFile(); // parse INI from file
+	}
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 
@@ -357,7 +363,9 @@ public:
 //Mini mode
 class MiniOverlay : public tsl::Gui {
 public:
-	MiniOverlay() { }
+	MiniOverlay() {
+		ParseIniFile(); // parse INI from file
+	}
 
 	virtual tsl::elm::Element* createUI() override {
 
@@ -633,7 +641,9 @@ public:
 //Battery
 class BatteryOverlay : public tsl::Gui {
 public:
-	BatteryOverlay() { }
+	BatteryOverlay() {
+		ParseIniFile(); // parse INI from file
+	}
 
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
@@ -720,7 +730,9 @@ void EndMiscThread() {
 
 class MiscOverlay : public tsl::Gui {
 public:
-	MiscOverlay() { }
+	MiscOverlay() {
+		ParseIniFile(); // parse INI from file
+	}
 
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
@@ -805,7 +817,9 @@ public:
 //Graphs
 class GraphsMenu : public tsl::Gui {
 public:
-	GraphsMenu() { }
+	GraphsMenu() {
+		ParseIniFile(); // parse INI from file
+	}
 
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Graphs");
@@ -856,7 +870,9 @@ public:
 //Other
 class OtherMenu : public tsl::Gui {
 public:
-	OtherMenu() { }
+	OtherMenu() {
+		ParseIniFile(); // parse INI from file
+	}
 
 	virtual tsl::elm::Element* createUI() override {
 		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Other");
