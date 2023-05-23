@@ -30,9 +30,10 @@ uint64_t refreshrate = 1;
 FanController g_ICon;
 
 // Custom Declarations
-std::string filepath;
-std::string keyCombo;
-
+//std::string filepath;
+std::string filepath = "sdmc:/switch/.overlays/Status-Monitor-Overlay.ovl";
+std::string keyCombo = "ZL+ZR+DDOWN";
+std::list<HidNpadButton> mappedButtons;
 
 //Misc2
 NvChannel nvdecChannel;
@@ -548,16 +549,106 @@ void EndFPSCounterThread() {
 	threadexit2 = false;
 }
 
-std::list<HidNpadButton> mappedButtons;
+
+// String formatting functions
+void removeSpaces(std::string& str) {
+    str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+}
+
+void convertToUpper(std::string& str) {
+    std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+}
+
+void formatButtonCombination(std::string& line) {
+    // Remove all spaces from the line
+    line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
+
+    // Replace '+' with ' + '
+    size_t pos = 0;
+    while ((pos = line.find('+', pos)) != std::string::npos) {
+        if (pos > 0 && pos < line.size() - 1) {
+            if (std::isalnum(line[pos - 1]) && std::isalnum(line[pos + 1])) {
+                line.replace(pos, 1, " + ");
+                pos += 3;
+            }
+        }
+        ++pos;
+    }
+}
 
 
+
+
+
+
+// Base class with virtual function
+class ButtonMapper {
+public:
+	virtual std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) = 0;
+};
+
+// Derived class implementing the virtual function
+class ButtonMapperImpl : public ButtonMapper {
+public:
+	std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) override {
+		std::map<std::string, HidNpadButton> buttonMap = {
+			{"A", static_cast<HidNpadButton>(HidNpadButton_A)},
+			{"B", static_cast<HidNpadButton>(HidNpadButton_B)},
+			{"X", static_cast<HidNpadButton>(HidNpadButton_X)},
+			{"Y", static_cast<HidNpadButton>(HidNpadButton_Y)},
+			{"L", static_cast<HidNpadButton>(HidNpadButton_L)},
+			{"R", static_cast<HidNpadButton>(HidNpadButton_R)},
+			{"ZL", static_cast<HidNpadButton>(HidNpadButton_ZL)},
+			{"ZR", static_cast<HidNpadButton>(HidNpadButton_ZR)},
+			{"PLUS", static_cast<HidNpadButton>(HidNpadButton_Plus)},
+			{"MINUS", static_cast<HidNpadButton>(HidNpadButton_Minus)},
+			{"DUP", static_cast<HidNpadButton>(HidNpadButton_Up)},
+			{"DDOWN", static_cast<HidNpadButton>(HidNpadButton_Down)},
+			{"DLEFT", static_cast<HidNpadButton>(HidNpadButton_Left)},
+			{"DRIGHT", static_cast<HidNpadButton>(HidNpadButton_Right)},
+			{"SL", static_cast<HidNpadButton>(HidNpadButton_AnySL)},
+			{"SR", static_cast<HidNpadButton>(HidNpadButton_AnySR)},
+			{"LSTICK", static_cast<HidNpadButton>(HidNpadButton_StickL)},
+			{"RSTICK", static_cast<HidNpadButton>(HidNpadButton_StickR)},
+			{"UP", static_cast<HidNpadButton>(HidNpadButton_Up | HidNpadButton_StickLUp | HidNpadButton_StickRUp)},
+			{"DOWN", static_cast<HidNpadButton>(HidNpadButton_Down | HidNpadButton_StickLDown | HidNpadButton_StickRDown)},
+			{"LEFT", static_cast<HidNpadButton>(HidNpadButton_Left | HidNpadButton_StickLLeft | HidNpadButton_StickRLeft)},
+			{"RIGHT", static_cast<HidNpadButton>(HidNpadButton_Right | HidNpadButton_StickLRight | HidNpadButton_StickRRight)}
+		};
+
+		std::list<HidNpadButton> mappedButtons;
+		std::string comboCopy = buttonCombo;  // Make a copy of buttonCombo
+
+		std::string delimiter = "+";
+		size_t pos = 0;
+		std::string button;
+		while ((pos = comboCopy.find(delimiter)) != std::string::npos) {
+			button = comboCopy.substr(0, pos);
+			if (buttonMap.find(button) != buttonMap.end()) {
+				mappedButtons.push_back(buttonMap[button]);
+			}
+			comboCopy.erase(0, pos + delimiter.length());
+		}
+		if (buttonMap.find(comboCopy) != buttonMap.end()) {
+			mappedButtons.push_back(buttonMap[comboCopy]);
+		}
+		return mappedButtons;
+	}
+};
+
+void MapButtons() {
+	ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+	mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+}
 
 // Custom utility function for parsing an ini file
 void ParseIniFile() {
     std::string overlayName;
     std::string keyName;
     std::string directoryPath = "sdmc:/config/status-monitor/";
-    std::string defaultName = "Status-Monitor-Overlay";
+    std::string defaultOverlayName = "Status-Monitor-Overlay";
+    
+	ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
     
     struct stat st;
     if (stat(directoryPath.c_str(), &st) != 0) {
@@ -572,12 +663,13 @@ void ParseIniFile() {
     if (!configFileIn) {
         // Write the default INI file
         FILE* configFileOut = fopen(configIniPath.c_str(), "w");
-        fprintf(configFileOut, "[status-monitor]\noverlay_name=%s\nkey_combo=ZL+ZR+DDOWN\n", defaultName.c_str());
+        fprintf(configFileOut, "[status-monitor]\noverlay_name=%s\nkey_combo=ZL+ZR+DDOWN\n", defaultOverlayName.c_str());
         fclose(configFileOut);
 
-        overlayName = defaultName;
+        overlayName = defaultOverlayName;
         filepath = "sdmc:/switch/.overlays/" + overlayName + ".ovl";
         keyCombo = "ZL+ZR+DDOWN"; // load keyCombo variable
+	    mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
         return;
     }
 
@@ -600,14 +692,16 @@ void ParseIniFile() {
     std::string sectionName = "status-monitor";
     keyName = "overlay_name";
     overlayName = parsedData[sectionName][keyName];
+    removeSpaces(overlayName);
     filepath = "sdmc:/switch/.overlays/" + overlayName + ".ovl"; // load filepath variable
     keyName = "key_combo";
     keyCombo = parsedData[sectionName][keyName]; // load keyCombo variable
-    //mappedButtonsX = getMappedButtonsX(keyComboX);
+    removeSpaces(keyCombo); // format combo
+    convertToUpper(keyCombo);
     
+	mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
     
-    
-    //buttonCombo = mapKeyComboToButton(keyCombo);
-    // Clean up
     delete[] fileData;
 }
+
+
