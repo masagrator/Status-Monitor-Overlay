@@ -52,10 +52,6 @@ Works only in 1 or 5 Hz + vsync signal. You can change that with ZR + R + D-Pad 
 
 Contains most of supported informations with lower precision in one line.
 
-It shows only if you didn't change filename of overlay file (So it should be "Status-Monitor-Overlay.ovl").
-This is because we need to reload overlay to change framebuffer dimensions without taking more RAM,
-and Tesla Menu (and libtesla with it) doesn't provide info about filename of overlay that was loaded.
-
 | Category | Format                                                     | Explanation                                                               |
 |----------|------------------------------------------------------------|---------------------------------------------------------------------------|
 | CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f                                 | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU frequency  |
