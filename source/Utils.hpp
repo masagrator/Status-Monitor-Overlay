@@ -25,7 +25,9 @@ bool threadexit = false;
 bool threadexit2 = false;
 uint64_t refreshrate = 1;
 FanController g_ICon;
-std::string filepath = "sdmc:/switch/.overlays/Status-Monitor-Overlay.ovl";
+std::string folderpath = "sdmc:/switch/.overlays/";
+std::string filename = "";
+std::string filepath = "";
 
 //Misc2
 NvChannel nvdecChannel;

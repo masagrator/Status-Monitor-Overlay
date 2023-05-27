@@ -870,9 +870,23 @@ public:
 			return false;
 		});
 		list->addItem(Mini);
-		FILE* test = fopen(filepath.c_str(), "rb");
+
+		bool fileExist = false;
+		FILE* test = fopen(std::string(folderpath + filename).c_str(), "rb");
 		if (test) {
 			fclose(test);
+			fileExist = true;
+			filepath = folderpath + filename;
+		}
+		else {
+			test = fopen(std::string(folderpath + "Status-Monitor-Overlay.ovl").c_str(), "rb");
+			if (test) {
+				fclose(test);
+				fileExist = true;
+				filepath = folderpath + "Status-Monitor-Overlay.ovl";
+			}
+		}
+		if (fileExist) {
 			auto Micro = new tsl::elm::ListItem("Micro");
 			Micro->setClickListener([](uint64_t keys) {
 				if (keys & KEY_A) {
@@ -1075,12 +1089,27 @@ public:
 
 // This function gets called on startup to create a new Overlay object
 int main(int argc, char **argv) {
+	if (argc > 0) {
+		filename = argv[0];
+	}
 	for (u8 arg = 0; arg < argc; arg++) {
 		if (strcasecmp(argv[arg], "--microOverlay") == 0) {
 			framebufferWidth = 1280;
 			framebufferHeight = 28;
 			FullMode = false;
 			alphabackground = 0x0;
+			FILE* test = fopen(std::string(folderpath + filename).c_str(), "rb");
+			if (test) {
+				fclose(test);
+				filepath = folderpath + filename;
+			}
+			else {
+				test = fopen(std::string(folderpath + "Status-Monitor-Overlay.ovl").c_str(), "rb");
+				if (test) {
+					fclose(test);
+					filepath = folderpath + "Status-Monitor-Overlay.ovl";
+				}
+			}
 			return tsl::loop<MicroMode>(argc, argv);
 		}
 	}
