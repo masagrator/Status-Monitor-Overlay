@@ -163,7 +163,10 @@ public:
 			}
 			readings.push_back(temp);
 		}
-		else readings.clear();
+		else {
+			readings.clear();
+			readings.shrink_to_fit();
+		}
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
