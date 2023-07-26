@@ -298,7 +298,9 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
 		
 		///Thermal
-		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW", PowerConsumption);
+		char remainingBatteryLife[5];
+		snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW [%s]", PowerConsumption, remainingBatteryLife);
 		if (hosversionAtLeast(14,0,0)) {
 			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2d \u00B0C\n%2d \u00B0C\n%2.2f \u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
 		}
@@ -390,7 +392,10 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
-		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW", PowerConsumption);
+		char remainingBatteryLife[5];
+		snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		
+		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW [%s]", PowerConsumption, remainingBatteryLife);
 		if (hosversionAtLeast(14,0,0))
 			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
 		else
@@ -450,10 +455,10 @@ public:
 			else {
 				uint32_t size = 18;
 				uint32_t offset1 = 0;
-				uint32_t offset2 = offset1 + 355;
-				uint32_t offset3 = offset2 + 200;
+				uint32_t offset2 = offset1 + 300;
+				uint32_t offset3 = offset2 + 195;
 				uint32_t offset4 = offset3 + 265;
-				uint32_t offset5 = offset4 + 245;
+				uint32_t offset5 = offset4 + 305;
 				uint32_t offset6 = offset5 + 130;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
 				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
@@ -517,20 +522,23 @@ public:
 		snprintf(RAM_all_c, sizeof RAM_all_c, "%.0f/%.0fMB", RAM_Used_all_f, RAM_Total_all_f);
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
+		char remainingBatteryLife[5];
+		snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+
 		///Thermal
 		if (GameRunning) {
 			if (hosversionAtLeast(14,0,0)) {
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.0f\u00B0C@%+.2fW", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.0f\u00B0C@%+.2fW [%s]", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 			}
 			else
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.0f\u00B0C@%+.2fW", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.0f\u00B0C@%+.2fW [%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 		}
 		else {
 			if (hosversionAtLeast(14,0,0)) {
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.1f\u00B0C@%+.2fW", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.1f\u00B0C@%+.2fW [%s]", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 			}
 			else
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.2fW", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption);
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.2fW [%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 		}
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
 		
