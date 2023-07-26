@@ -455,11 +455,11 @@ public:
 			else {
 				uint32_t size = 18;
 				uint32_t offset1 = 0;
-				uint32_t offset2 = offset1 + 300;
-				uint32_t offset3 = offset2 + 195;
-				uint32_t offset4 = offset3 + 265;
-				uint32_t offset5 = offset4 + 305;
-				uint32_t offset6 = offset5 + 130;
+				uint32_t offset2 = offset1 + 343;
+				uint32_t offset3 = offset2 + 177;
+				uint32_t offset4 = offset3 + 258;
+				uint32_t offset5 = offset4 + 299;
+				uint32_t offset6 = offset5 + 125;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
 				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
 				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
@@ -468,11 +468,11 @@ public:
 				renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
 				renderer->drawString("FPS", false, offset6, size, size, renderer->a(0xFCCF));
 				renderer->drawString(CPU_compressed_c, false, offset1+42, size, size, renderer->a(0xFFFF));
-				renderer->drawString(GPU_Load_c, false, offset2+45, size, size, renderer->a(0xFFFF));
+				renderer->drawString(GPU_Load_c, false, offset2+42, size, size, renderer->a(0xFFFF));
 				renderer->drawString(RAM_var_compressed_c, false, offset3+47, size, size, renderer->a(0xFFFF));
-				renderer->drawString(skin_temperature_c, false, offset4+45, size, size, renderer->a(0xFFFF));
+				renderer->drawString(skin_temperature_c, false, offset4+42, size, size, renderer->a(0xFFFF));
 				renderer->drawString(Rotation_SpeedLevel_c, false, offset5+43, size, size, renderer->a(0xFFFF));
-				renderer->drawString(FPS_var_compressed_c, false, offset6+40, size, size, renderer->a(0xFFFF));
+				renderer->drawString(FPS_var_compressed_c, false, offset6+38, size, size, renderer->a(0xFFFF));
 			}
 		});
 
