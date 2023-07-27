@@ -76,6 +76,8 @@ float batCurrentAvg = 0;
 float batVoltageAvg = 0;
 float PowerConsumption = 0;
 uint16_t batTimeEstimate = 0;
+float actualFullBatCapacity = 0;
+float designedFullBatCapacity = 0;
 
 //Temperatures
 int32_t SOC_temperatureC = 0;
@@ -263,7 +265,6 @@ void CheckButtons(void*) {
 void BatteryChecker(void*) {
 	if (R_SUCCEEDED(psmCheck)){
 		u16 data = 0;
-		float fullCap = 0;
 		float tempV = 0;
 		float tempA = 0;
 		size_t ArraySize = 10;
@@ -286,8 +287,11 @@ void BatteryChecker(void*) {
 				readingsVolt[i] = tempV;
 			}
 		}
-		if (Max17050ReadReg(MAX17050_FullCAP, &data)) {
-			fullCap = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
+		if (!actualFullBatCapacity && Max17050ReadReg(MAX17050_FullCAP, &data)) {
+			actualFullBatCapacity = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
+		}
+		if (!designedFullBatCapacity && Max17050ReadReg(MAX17050_DesignCap, &data)) {
+			designedFullBatCapacity = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
 		}
 
 		size_t i = 0;
@@ -318,7 +322,7 @@ void BatteryChecker(void*) {
 				batVoltage += readingsVolt[x];
 				batPowerAvg += (readingsAmp[x] * readingsVolt[x]) / 1'000;
 			}
-			float actual_capacity = fullCap / 100 * (float)_batteryChargeInfoFields.RawBatteryCharge / 1000;
+			float actualCapacity = actualFullBatCapacity / 100 * (float)_batteryChargeInfoFields.RawBatteryCharge / 1000;
 			batCurrent /= ArraySize;
 			batVoltage /= ArraySize;
 			batCurrentAvg = batCurrent;
@@ -331,13 +335,13 @@ void BatteryChecker(void*) {
 						powerHistoryIteration += 1;
 					} else {
 						float tmpPowerSum = std::accumulate(tmpPowerHistory, tmpPowerHistory+TmpPowerHistoryArraySize, 0);
-						if(commonAvgPowerHistory.size() == CommonPowerAvgHistorySize) {
+						if (commonAvgPowerHistory.size() == CommonPowerAvgHistorySize) {
 							commonAvgPowerHistory.erase(commonAvgPowerHistory.begin());
 						}
 						commonAvgPowerHistory.push_back(tmpPowerSum / TmpPowerHistoryArraySize); // add last 60 sec avg value to common history
 						float commonPowerSum = std::accumulate(commonAvgPowerHistory.begin(), commonAvgPowerHistory.end(), 0);
 						float commonAvg = -commonPowerSum / commonAvgPowerHistory.size();
-						batTimeEstimate = (int)(actual_capacity / (commonAvg / 60));
+						batTimeEstimate = (int)(actualCapacity / (commonAvg / 60));
 						powerHistoryIteration = 0;
 					}
 				} else if (powerHistoryIteration > 0 || batTimeEstimate > 0) {

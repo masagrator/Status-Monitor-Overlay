@@ -298,9 +298,9 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
 		
 		///Thermal
-		char remainingBatteryLife[5];
+		char remainingBatteryLife[6];
 		snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
-		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW [%s]", PowerConsumption, remainingBatteryLife);
+		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW[%s]", PowerConsumption, remainingBatteryLife);
 		if (hosversionAtLeast(14,0,0)) {
 			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2d \u00B0C\n%2d \u00B0C\n%2.2f \u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
 		}
@@ -392,10 +392,10 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
-		char remainingBatteryLife[5];
+		char remainingBatteryLife[6];
 		snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
 		
-		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW [%s]", PowerConsumption, remainingBatteryLife);
+		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW[%s]", PowerConsumption, remainingBatteryLife);
 		if (hosversionAtLeast(14,0,0))
 			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
 		else
@@ -522,23 +522,23 @@ public:
 		snprintf(RAM_all_c, sizeof RAM_all_c, "%.0f/%.0fMB", RAM_Used_all_f, RAM_Total_all_f);
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
-		char remainingBatteryLife[5];
+		char remainingBatteryLife[6];
 		snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
 
 		///Thermal
 		if (GameRunning) {
 			if (hosversionAtLeast(14,0,0)) {
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.0f\u00B0C@%+.2fW [%s]", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.0f\u00B0C@%+.2fW[%s]", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 			}
 			else
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.0f\u00B0C@%+.2fW [%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.0f\u00B0C@%+.2fW[%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 		}
 		else {
 			if (hosversionAtLeast(14,0,0)) {
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.1f\u00B0C@%+.2fW [%s]", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.1f\u00B0C@%+.2fW[%s]", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 			}
 			else
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.2fW [%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.2fW[%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 		}
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
 		
@@ -599,39 +599,52 @@ public:
 
 		if (_batteryChargeInfoFields.ChargerType)
 			snprintf(Battery_c, sizeof Battery_c,
+				"Battery Actual Capacity: %.0f mAh\n"
+				"Battery Designed Capacity: %.0f mAh\n"
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
 				"Battery Voltage (5s AVG): %.0f mV\n"
 				"Battery Current Flow (5s AVG): %+.0f mA\n"
-				"Battery Power Flow (5s AVG): %+.3f W\n"
+				"Battery Power Flow (5s AVG): %+.3f W[%d:%02d]\n"
 				"Charger Type: %u\n"
 				"Charger Max Voltage: %u mV\n"
 				"Charger Max Current: %u mA",
+				actualFullBatCapacity,
+				designedFullBatCapacity,
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000, "%",
 				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
 				batVoltageAvg,
 				batCurrentAvg,
-				PowerConsumption,
+				PowerConsumption, 
+				batTimeEstimate / 60, 
+				batTimeEstimate % 60,
 				_batteryChargeInfoFields.ChargerType,
 				_batteryChargeInfoFields.ChargerVoltageLimit,
 				_batteryChargeInfoFields.ChargerCurrentLimit
 			);
 		else
 			snprintf(Battery_c, sizeof Battery_c,
+				"Battery Actual Capacity: %.0f mAh\n"
+				"Battery Designed Capacity: %.0f mAh\n"
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%s\n"
 				"Battery Age: %.1f%s\n"
 				"Battery Voltage (5s AVG): %.0f mV\n"
 				"Battery Current Flow (5s AVG): %.0f mA\n"
-				"Battery Power Flow (5s AVG): %+.3f W",
+				"Battery Power Flow (5s AVG): %+.3f W\n"
+				"Battery Remaining Time: %d:%02d",
+				actualFullBatCapacity,
+				designedFullBatCapacity,
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000, "%",
 				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
 				batVoltageAvg,
 				batCurrentAvg,
-				PowerConsumption
+				PowerConsumption, 
+				batTimeEstimate / 60, 
+				batTimeEstimate % 60
 			);
 		
 	}
