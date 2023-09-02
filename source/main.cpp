@@ -987,6 +987,8 @@ public:
 				else fanCheck = fanOpenController(&g_ICon, 1);
 			}
 
+			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
+
 			if (R_SUCCEEDED(mmuInitialize())) {
 				nvdecCheck = mmuRequestInitialize(&nvdecRequest, MmuModuleId(5), 8, false);
 				nvencCheck = mmuRequestInitialize(&nvencRequest, MmuModuleId(6), 8, false);
