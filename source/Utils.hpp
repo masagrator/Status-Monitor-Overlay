@@ -10,6 +10,7 @@
 
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
+#define BASE_SNS_UOHM 5000
 
 //Common
 Thread t0;
@@ -82,6 +83,9 @@ char BatteryDraw_c[64];
 float batCurrentAvg = 0;
 float batVoltageAvg = 0;
 float PowerConsumption = 0;
+uint16_t batTimeEstimate = 0;
+float actualFullBatCapacity = 0;
+float designedFullBatCapacity = 0;
 
 //Temperatures
 int32_t SOC_temperatureC = 0;
@@ -272,8 +276,12 @@ void BatteryChecker(void*) {
 		float tempV = 0;
 		float tempA = 0;
 		size_t ArraySize = 10;
+		size_t CommonPowerAvgHistorySize = 3; // last 3 min history
+		size_t TmpPowerHistoryArraySize = 120; // last 60 sec history
 		float readingsAmp[ArraySize] = {0};
 		float readingsVolt[ArraySize] = {0};
+		std::vector<float> commonAvgPowerHistory; // common avg history
+		float tmpPowerHistory[TmpPowerHistoryArraySize] = {0};
 
 		if (Max17050ReadReg(MAX17050_Current, &data)) {
 			tempA = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
@@ -287,8 +295,15 @@ void BatteryChecker(void*) {
 				readingsVolt[i] = tempV;
 			}
 		}
+		if (!actualFullBatCapacity && Max17050ReadReg(MAX17050_FullCAP, &data)) {
+			actualFullBatCapacity = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
+		}
+		if (!designedFullBatCapacity && Max17050ReadReg(MAX17050_DesignCap, &data)) {
+			designedFullBatCapacity = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
+		}
 
 		size_t i = 0;
+		size_t powerHistoryIteration = 0;
 		while (!threadexit) {
 			psmGetBatteryChargeInfoFields(psmService, &_batteryChargeInfoFields);
 			// Calculation is based on Hekate's max17050.c
@@ -315,12 +330,35 @@ void BatteryChecker(void*) {
 				batVoltage += readingsVolt[x];
 				batPowerAvg += (readingsAmp[x] * readingsVolt[x]) / 1'000;
 			}
+			float actualCapacity = actualFullBatCapacity / 100 * (float)_batteryChargeInfoFields.RawBatteryCharge / 1000;
 			batCurrent /= ArraySize;
 			batVoltage /= ArraySize;
 			batCurrentAvg = batCurrent;
 			batVoltageAvg = batVoltage;
 			batPowerAvg /= ArraySize * 1000;
 			PowerConsumption = batPowerAvg;
+			if (batCurrentAvg < 0) {
+					tmpPowerHistory[powerHistoryIteration] = batCurrentAvg; // add currentAvg to tmp array
+					if (powerHistoryIteration < TmpPowerHistoryArraySize) {
+						powerHistoryIteration += 1;
+					} else {
+						float tmpPowerSum = std::accumulate(tmpPowerHistory, tmpPowerHistory+TmpPowerHistoryArraySize, 0);
+						if (commonAvgPowerHistory.size() == CommonPowerAvgHistorySize) {
+							commonAvgPowerHistory.erase(commonAvgPowerHistory.begin());
+						}
+						commonAvgPowerHistory.push_back(tmpPowerSum / TmpPowerHistoryArraySize); // add last 60 sec avg value to common history
+						float commonPowerSum = std::accumulate(commonAvgPowerHistory.begin(), commonAvgPowerHistory.end(), 0);
+						float commonAvg = -commonPowerSum / commonAvgPowerHistory.size();
+						batTimeEstimate = (int)(actualCapacity / (commonAvg / 60));
+						powerHistoryIteration = 0;
+					}
+				} else if (powerHistoryIteration > 0 || batTimeEstimate > 0) {
+					// battery charging case
+					powerHistoryIteration = 0;
+					batTimeEstimate = 0;
+				}
+
+				
 			svcSleepThread(500'000'000);
 		}
 		_batteryChargeInfoFields = {0};
