@@ -30,7 +30,9 @@ std::string filename = "";
 std::string filepath = "";
 
 //Misc2
-NvChannel nvdecChannel;
+MmuRequest nvdecRequest;
+MmuRequest nvencRequest;
+MmuRequest nvjpgRequest;
 
 //Mini mode
 char Variables[768];
@@ -47,6 +49,8 @@ Result pmdmntCheck = 1;
 Result psmCheck = 1;
 Result audsnoopCheck = 1;
 Result nvdecCheck = 1;
+Result nvencCheck = 1;
+Result nvjpgCheck = 1;
 Result nifmCheck = 1;
 
 //Wi-Fi
@@ -58,9 +62,13 @@ Result Nifm_profile_rc = -1;
 NifmNetworkProfileData_new Nifm_profile = {0};
 char Nifm_pass[96];
 
-//NVDEC
+//Multimedia engines
 uint32_t NVDEC_Hz = 0;
+uint32_t NVENC_Hz = 0;
+uint32_t NVJPG_Hz = 0;
 char NVDEC_Hz_c[32];
+char NVENC_Hz_c[32];
+char NVJPG_Hz_c[32];
 
 //DSP
 uint32_t DSP_Load_u = -1;
@@ -400,8 +408,10 @@ void Misc2(void*) {
 		//DSP
 		if (R_SUCCEEDED(audsnoopCheck)) audsnoopGetDspUsage(&DSP_Load_u);
 
-		//NVDEC clock rate
-		if (R_SUCCEEDED(nvdecCheck)) getNvChannelClockRate(&nvdecChannel, 0x75, &NVDEC_Hz);
+		//Multimedia clock rates
+		if (R_SUCCEEDED(nvdecCheck)) mmuRequestGet(&nvdecRequest, &NVDEC_Hz);
+		if (R_SUCCEEDED(nvencCheck)) mmuRequestGet(&nvencRequest, &NVENC_Hz);
+		if (R_SUCCEEDED(nvjpgCheck)) mmuRequestGet(&nvjpgRequest, &NVJPG_Hz);
 
 		if (R_SUCCEEDED(nifmCheck)) {
 			u32 dummy = 0;
