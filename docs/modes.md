@@ -15,7 +15,7 @@ This mode you can know from older releases of Status Monitor. It contains all in
 
 ' Explanation provided at the end of file
 
-```Optional (shows only when NX-FPS plugin is installed)```
+```Optional (shows only when SaltyNX is installed)```
 
 | Category | Format            | Explanation                                                              |
 |----------|-------------------|--------------------------------------------------------------------------|
@@ -39,7 +39,7 @@ Contains most of supported informations with lower precision.
 
 ' Explanation provided at the end of file
 
-```Optional (shows only when NX-FPS plugin is installed)```
+```Optional (shows only when SaltyNX is installed)```
 
 | Category | Format            | Explanation                                                              |
 |----------|-------------------|--------------------------------------------------------------------------|
@@ -62,7 +62,7 @@ Contains most of supported informations with lower precision in one line.
 
 ' Explanation provided at the end of file
 
-```Optional (shows only when NX-FPS plugin is installed and game is running)```
+```Optional (shows only when SaltyNX is installed and game is running)```
 
 | Category | Format             | Explanation                                                              |
 |----------|--------------------|--------------------------------------------------------------------------|
