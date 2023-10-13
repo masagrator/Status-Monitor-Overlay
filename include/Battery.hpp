@@ -52,6 +52,7 @@ typedef struct {
     int32_t ChargerVoltageLimit;                                //Charger and external device voltage limit in mV
     int32_t ChargerCurrentLimit;                                //Charger and external device current limit in mA
     BatteryChargeInfoFieldsFlags Flags;                         //Unknown flags
+    char reserved[0x14];                                        //17.0.0+ data
 } BatteryChargeInfoFields;
 
 Result psmGetBatteryChargeInfoFields(Service* psmService, BatteryChargeInfoFields *out) {
