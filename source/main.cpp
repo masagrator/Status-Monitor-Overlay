@@ -445,7 +445,7 @@ public:
 				uint32_t offset2 = offset1 + 355;
 				uint32_t offset3 = offset2 + 210;
 				uint32_t offset4 = offset3 + 245;
-				uint32_t offset5 = offset4 + 350;
+				uint32_t offset5 = offset4 + 360;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
 				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
 				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
@@ -464,8 +464,8 @@ public:
 				uint32_t offset2 = offset1 + 343;
 				uint32_t offset3 = offset2 + 197;
 				uint32_t offset4 = offset3 + 228;
-				uint32_t offset5 = offset4 + 309;
-				uint32_t offset6 = offset5 + 125;
+				uint32_t offset5 = offset4 + 329;
+				uint32_t offset6 = offset5 + 105;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
 				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
 				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
@@ -535,20 +535,11 @@ public:
 		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
 
 		///Thermal
-		if (GameRunning) {
-			if (hosversionAtLeast(10,0,0)) {
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.1f\u00B0C@%+.2fW[%s]", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
-			}
-			else
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.1f\u00B0C@%+.2fW[%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
+		if (hosversionAtLeast(10,0,0)) {
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.1fW[%s]", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 		}
-		else {
-			if (hosversionAtLeast(10,0,0)) {
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.2fW[%s]", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
-			}
-			else
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.2fW[%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
-		}
+		else
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.1fW[%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
@@ -559,10 +550,11 @@ public:
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[100%s,100%s,100%s,100%s]@1785.0", "%", "%", "%", "%");
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "100.0%s@2400.0", "%");
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "4.4/4.4GB@4444.4");
-		snprintf(skin_temperature_c, sizeof skin_temperature_c, "88/88/88.8\u00B0C@15.55W[99:99]");
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, "88/88/88.8\u00B0C@-15.5W[99:99]");
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "100.00%s", "%");
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "60.0");
 		*/
+		
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
