@@ -11,7 +11,7 @@ This mode you can know from older releases of Status Monitor. It contains all in
 | CPU Usage | Frequency: %.1f<br>Core #0: %.2f<br>Core #1: %.2f<br>Core #2: %.2f<br>Core #3: %.2f | Clockrate of all CPU cores in MHz<br>Load of CPU Core #0 calculated from IdleTickCount to percent value<br>Load of CPU Core #1 calculated from IdleTickCount to percent value<br>Load of CPU Core #2 calculated from IdleTickCount to percent value<br>Load of CPU Core #3 calculated from IdleTickCount to percent value |
 | GPU Usage | Frequency: %.1f<br>Load: %.1f                                                       | Clockrate of GPU in MHz<br>GPU Load provided by PMU in percent                                                                                                                                                                                                                                                            |
 | RAM Usage | Frequency: %.1f<br>%s: %.2f/%.2f                                                    | Clockrate of EMC in MHz<br>%s memory used/%s memory available in MB (not working with FW <5.0.0)                                                                                                                                                                                                                          |
-| Board | Battery Power Flow: %+.2f<br>Temperatures:<br>- SoC: %.2f (FW 14.0.0+: %2d)<br>- PCB: %.2f (FW 14.0.0+: %2d)<br>- Skin: %.2f<br>Fan Rotation Level: %.2f                                   | How much power in watts is discharged from or charged to the battery<br>SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees'<br>Fan rotation level in percent                                                                                                                                                                         |
+| Board | Battery Power Flow: %+.2f[h:mm]<br>Temperatures:<br>- SoC: %.1f <br>- PCB: %.1f <br>- Skin: %.1f<br>Fan Rotation Level: %.1f                                   | How much power in watts is discharged from or charged to the battery [time left before shutdown]<br>SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees'<br>Fan rotation level in percent                                                                                                                                                                         |
 
 ' Explanation provided at the end of file
 
@@ -32,10 +32,10 @@ Contains most of supported informations with lower precision.
 |----------|--------------------------------------------------|---------------------------------------------------------------------------|
 | CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f                       | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU frequency  |
 | GPU      | %.1f@%.1f                                        | Load@GPU Frequency                                                        |
-| RAM      | %.0f/%.0f@%.1f                                   | Total RAM used/Total RAM available@EMC frequency                          |
-| TEMP     | %2.1f/%2.1f/%2.1f<br>(FW 14.0.0+: %2d/%2d/%2.1f) | SoC temperature/PCB temperature/Skin temperature'                         |
-| FAN      | %2.2f                                            | Fan rotation level                                                        |
-| DRAW     | %+.2f                                            | How much power in watts is discharged from or charged to the battery      |
+| RAM      | %.0f/%.0f@%.1f                                   | Total RAM used/Total RAM available in MB@EMC frequency                    |
+| TEMP     | %2.1f/%2.1f/%2.1f                                | SoC temperature/PCB temperature/Skin temperature'                         |
+| FAN      | %2.1f                                            | Fan rotation level                                                        |
+| DRAW     | %+.2f[h:mm]                                      | How much power in watts is discharged from or charged to the battery [Time left before shutdown]      |
 
 ' Explanation provided at the end of file
 
@@ -56,8 +56,8 @@ Contains most of supported informations with lower precision in one line.
 |----------|------------------------------------------------------------|---------------------------------------------------------------------------|
 | CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f                                 | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU frequency  |
 | GPU      | %.1f@%.1f                                                  | Load@GPU Frequency                                                        |
-| RAM      | %.0f/%.0f@%.1f                                             | Total RAM used/Total RAM available@EMC frequency                          |
-| BRD      | %2.1f/%2.1f/%2.1f@+.2f<br>(FW 14.0.0+: %2d/%2d/%2.1f@+.2f) | SoC temperature/PCB temperature/Skin temperature'/Battery Power Flow      |
+| RAM      | %.1f/%.1f@%.1f                                             | Total RAM used/Total RAM available in GB@EMC frequency                    |
+| BRD      | %2.1f/%2.1f/%2.1f@+.2f[h:mm]                               | SoC temperature/PCB temperature/Skin temperature'/Battery Power Flow[Time left before shutdown]      |
 | FAN      | %2.2f                                                      | Fan rotation level                                                        |
 
 ' Explanation provided at the end of file
@@ -98,13 +98,14 @@ Mode available only with SaltyNX installed.
 
 > Battery
 
-| Category                        | Format    | Explanation                                                                               |
-|---------------------------------|-----------|-------------------------------------------------------------------------------------------|
-| Battery Temperature             | %.2f      | Battery temperature in Celsius                                                            |
-| Battery Raw Charge              | %.2f      | Raw battery charged capacity in percent                                                   |
-| Battery Voltage (AVG of 5)      | %.2f      | Battery average voltage in mV taken from 5 readings in period of 5 seconds                |
-| Battery Current Flow (AVG of 5) | %+.2f     | Battery average current flow in mA taken from 5 readings in period of 5 seconds           |
-| Battery Power Flow (AVG of 5)   | %+.3f     | Battery average power flow in W calciulated from Battery Voltage and Battery Current Flow |
+| Category                        | Format    | Explanation                                                                                   |
+|---------------------------------|-----------|-----------------------------------------------------------------------------------------------|
+| Battery Temperature             | %.2f      | Battery temperature in Celsius                                                                |
+| Battery Raw Charge              | %.2f      | Raw battery charged capacity in percent                                                       |
+| Battery Voltage (AVG of 5)      | %.2f      | Battery average voltage in mV taken from 5 readings in period of 5 seconds                    |
+| Battery Current Flow (AVG of 5) | %+.2f     | Battery average current flow in mA taken from 5 readings in period of 5 seconds               |
+| Battery Power Flow (AVG of 5)   | %+.3f     | Battery average power flow in W calciulated from Battery Voltage and Battery Current Flow     |
+| Battery Remaining Time          | h:mm      | How much time is left before shutdown, calculation based on last 3 minutes of overlay running |
 
 Shows only if charger is connected:
 | Category                  | Format       | Explanation                                                                      |
@@ -115,9 +116,9 @@ Shows only if charger is connected:
 
 > Miscellaneous
 
-| Category | Format            | Explanation                                                              |
-|----------|-------------------|--------------------------------------------------------------------------|
-| DSP Usage              | %u                | In percent                                                                       |
+| Category               | Format            | Explanation                                                                      |
+|------------------------|-------------------|----------------------------------------------------------------------------------|
+| DSP Usage              | %u                | In percent (not available on 17.0.0+)                                            |
 | NVDEC clock rate       | %.2f              | NVDEC frequency in MHz                                                           |
 | Network Type           | %s                | It shows if Switch is connected to internet, and if it's using Ethernet or Wi-Fi |
 
