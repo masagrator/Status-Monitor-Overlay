@@ -537,7 +537,7 @@ public:
 		///Thermal
 		if (GameRunning) {
 			if (hosversionAtLeast(10,0,0)) {
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.2fW[%s]", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
+				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.1f\u00B0C@%+.2fW[%s]", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 			}
 			else
 				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.1f\u00B0C@%+.2fW[%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
@@ -1093,6 +1093,9 @@ public:
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 
 			tsCheck = tsInitialize();
+			if (R_SUCCEEDED(tsCheck)) {
+				g_ITs = tsGetServiceSession();
+			}
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
 			if (R_SUCCEEDED(fanInitialize())) {
