@@ -463,9 +463,9 @@ public:
 				uint32_t offset1 = 0;
 				uint32_t offset2 = offset1 + 343;
 				uint32_t offset3 = offset2 + 197;
-				uint32_t offset4 = offset3 + 228;
-				uint32_t offset5 = offset4 + 329;
-				uint32_t offset6 = offset5 + 105;
+				uint32_t offset4 = offset3 + 218;
+				uint32_t offset5 = offset4 + 328;
+				uint32_t offset6 = offset5 + 116;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
 				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
 				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
@@ -550,10 +550,11 @@ public:
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[100%s,100%s,100%s,100%s]@1785.0", "%", "%", "%", "%");
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "100.0%s@2400.0", "%");
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "4.4/4.4GB@4444.4");
-		snprintf(skin_temperature_c, sizeof skin_temperature_c, "88/88/88.8\u00B0C@-15.5W[99:99]");
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "100.00%s", "%");
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, "88.8/88.8/88.8\u00B0C@-15.5W[99:99]");
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "100.0%s", "%");
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "60.0");
 		*/
+		
 		
 		
 	}
