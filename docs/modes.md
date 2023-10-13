@@ -57,7 +57,7 @@ Contains most of supported informations with lower precision in one line.
 | CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f                                 | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU frequency  |
 | GPU      | %.1f@%.1f                                                  | Load@GPU Frequency                                                        |
 | RAM      | %.1f/%.1f@%.1f                                             | Total RAM used/Total RAM available in GB@EMC frequency                    |
-| BRD      | %2.1f/%2.1f/%2.1f@+.2f[h:mm]                               | SoC temperature/PCB temperature/Skin temperature'/Battery Power Flow[Time left before shutdown]      |
+| BRD      | %2.1f/%2.1f/%2.1f@+.1f[h:mm]                               | SoC temperature/PCB temperature/Skin temperature'/Battery Power Flow[Time left before shutdown]      |
 | FAN      | %2.2f                                                      | Fan rotation level                                                        |
 
 ' Explanation provided at the end of file
