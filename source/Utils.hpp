@@ -7,6 +7,7 @@
 #include "i2c.h"
 #include "max17050.h"
 #include <numeric>
+#include "ts.h"
 
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
@@ -26,6 +27,7 @@ bool threadexit = false;
 bool threadexit2 = false;
 uint64_t refreshrate = 1;
 FanController g_ICon;
+Service* g_ITs;
 std::string folderpath = "sdmc:/switch/.overlays/";
 std::string filename = "";
 std::string filepath = "";
@@ -78,16 +80,18 @@ char DSP_Load_c[16];
 //Battery
 Service* psmService = 0;
 BatteryChargeInfoFields _batteryChargeInfoFields = {0};
-char Battery_c[320];
+char Battery_c[512];
 char BatteryDraw_c[64];
 float batCurrentAvg = 0;
 float batVoltageAvg = 0;
 float PowerConsumption = 0;
-uint16_t batTimeEstimate = 0;
+int16_t batTimeEstimate = -1;
 float actualFullBatCapacity = 0;
 float designedFullBatCapacity = 0;
 
 //Temperatures
+float SOC_temperatureF = 0;
+float PCB_temperatureF = 0;
 int32_t SOC_temperatureC = 0;
 int32_t PCB_temperatureC = 0;
 int32_t skin_temperaturemiliC = 0;
@@ -289,36 +293,49 @@ void BatteryChecker(void*) {
 				readingsAmp[i] = tempA;
 			}
 		}
+		svcSleepThread(1000000);
 		if (Max17050ReadReg(MAX17050_VCELL, &data)) {
 			tempV = 0.625 * (data >> 3);
 			for (size_t i = 0; i < ArraySize; i++) {
 				readingsVolt[i] = tempV;
 			}
 		}
+		svcSleepThread(1000000);
 		if (!actualFullBatCapacity && Max17050ReadReg(MAX17050_FullCAP, &data)) {
 			actualFullBatCapacity = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
 		}
+		svcSleepThread(1000000);
 		if (!designedFullBatCapacity && Max17050ReadReg(MAX17050_DesignCap, &data)) {
 			designedFullBatCapacity = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
 		}
-
+		svcSleepThread(1000000);
 		size_t i = 0;
 		size_t powerHistoryIteration = 0;
+		int tempChargerType = 0;
+		if (!Max17050ReadReg(MAX17050_AvgCurrent, &data) && (s16)data > 0) {
+			float tmpCurrentAvg = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
+			while (powerHistoryIteration < 20)
+				tmpPowerHistory[powerHistoryIteration++] = tmpCurrentAvg;
+		}
+
 		while (!threadexit) {
+			svcSleepThread(1000000);
 			psmGetBatteryChargeInfoFields(psmService, &_batteryChargeInfoFields);
 			// Calculation is based on Hekate's max17050.c
 			// Source: https://github.com/CTCaer/hekate/blob/master/bdk/power/max17050.c
 			if (!Max17050ReadReg(MAX17050_Current, &data))
 				continue;
+			svcSleepThread(1000000);
 			tempA = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
 			if (!Max17050ReadReg(MAX17050_VCELL, &data))
 				continue;
+			svcSleepThread(1000000);
 			tempV = 0.625 * (data >> 3);
 
 			readingsAmp[i] = tempA;
 			readingsVolt[i] = tempV;
 			if (i+1 < ArraySize) {
-				i += 1;
+				i++;
 			}
 			else i = 0;
 			
@@ -337,31 +354,45 @@ void BatteryChecker(void*) {
 			batVoltageAvg = batVoltage;
 			batPowerAvg /= ArraySize * 1000;
 			PowerConsumption = batPowerAvg;
-			if (batCurrentAvg < 0) {
-					tmpPowerHistory[powerHistoryIteration] = batCurrentAvg; // add currentAvg to tmp array
-					if (powerHistoryIteration < TmpPowerHistoryArraySize) {
-						powerHistoryIteration += 1;
-					} else {
-						float tmpPowerSum = std::accumulate(tmpPowerHistory, tmpPowerHistory+TmpPowerHistoryArraySize, 0);
-						if (commonAvgPowerHistory.size() == CommonPowerAvgHistorySize) {
-							commonAvgPowerHistory.erase(commonAvgPowerHistory.begin());
-						}
-						commonAvgPowerHistory.push_back(tmpPowerSum / TmpPowerHistoryArraySize); // add last 60 sec avg value to common history
-						float commonPowerSum = std::accumulate(commonAvgPowerHistory.begin(), commonAvgPowerHistory.end(), 0);
-						float commonAvg = -commonPowerSum / commonAvgPowerHistory.size();
-						batTimeEstimate = (int)(actualCapacity / (commonAvg / 60));
-						powerHistoryIteration = 0;
+			if (tempChargerType != _batteryChargeInfoFields.ChargerType) {
+				powerHistoryIteration = 0;
+				batTimeEstimate = -1;
+				tempChargerType = _batteryChargeInfoFields.ChargerType;
+				commonAvgPowerHistory.clear();
+				commonAvgPowerHistory.shrink_to_fit();
+			}
+			else if (batCurrentAvg < 0) {
+				tmpPowerHistory[powerHistoryIteration++] = batCurrentAvg; // add currentAvg to tmp array
+				if (powerHistoryIteration == TmpPowerHistoryArraySize) {
+					if (commonAvgPowerHistory.size() == CommonPowerAvgHistorySize) {
+						commonAvgPowerHistory.erase(commonAvgPowerHistory.begin());
 					}
-				} else if (powerHistoryIteration > 0 || batTimeEstimate > 0) {
-					// battery charging case
+					float tmpPowerSum = std::accumulate(tmpPowerHistory, tmpPowerHistory+TmpPowerHistoryArraySize, 0);
+					commonAvgPowerHistory.push_back(tmpPowerSum / TmpPowerHistoryArraySize);
+					float commonPowerSum = std::accumulate(commonAvgPowerHistory.begin(), commonAvgPowerHistory.end(), 0);
+					float commonAvg = -commonPowerSum / commonAvgPowerHistory.size();
+					batTimeEstimate = (int)(actualCapacity / (commonAvg / 60));
+					if (batTimeEstimate > (99*60)+59)
+						batTimeEstimate = (99*60)+59;
 					powerHistoryIteration = 0;
-					batTimeEstimate = 0;
 				}
-
-				
-			svcSleepThread(500'000'000);
+				else if (commonAvgPowerHistory.size() == 0 && powerHistoryIteration < TmpPowerHistoryArraySize) {
+					float PowerSum = std::accumulate(tmpPowerHistory, tmpPowerHistory+powerHistoryIteration, 0);
+					float commonAvg = -PowerSum / powerHistoryIteration;
+					batTimeEstimate = (int)(actualCapacity / (commonAvg / 60));
+					if (batTimeEstimate > (99*60)+59)
+						batTimeEstimate = (99*60)+59;
+				}
+			}
+			else {
+				powerHistoryIteration = 0;
+				batTimeEstimate = -1;
+			}
+			svcSleepThread(499'000'000);
 		}
 		_batteryChargeInfoFields = {0};
+		commonAvgPowerHistory.clear();
+		commonAvgPowerHistory.shrink_to_fit();
 	}
 }
 
@@ -398,9 +429,18 @@ void Misc(void*) {
 		
 		//Temperatures
 		if (R_SUCCEEDED(tsCheck)) {
-			if (hosversionAtLeast(14,0,0)) {
-				tsGetTemperature(TsLocation_External, &SOC_temperatureC);
-				tsGetTemperature(TsLocation_Internal, &PCB_temperatureC);
+			if (hosversionAtLeast(10,0,0)) {
+				tsSession ts_session;
+				Result rc = tsOpenTsSession(g_ITs, &ts_session, TsDeviceCode_Internal);
+				if (R_SUCCEEDED(rc)) {
+					tsGetTemperatureWithTsSession(&ts_session, &SOC_temperatureF);
+					tsCloseTsSession(&ts_session);
+				}
+				rc = tsOpenTsSession(g_ITs, &ts_session, TsDeviceCode_External);
+				if (R_SUCCEEDED(rc)) {
+					tsGetTemperatureWithTsSession(&ts_session, &PCB_temperatureF);
+					tsCloseTsSession(&ts_session);
+				}
 			}
 			else {
 				tsGetTemperatureMilliC(TsLocation_External, &SOC_temperatureC);
