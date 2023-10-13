@@ -105,7 +105,7 @@ Mode available only with SaltyNX installed.
 | Battery Voltage (AVG of 5)      | %.2f      | Battery average voltage in mV taken from 5 readings in period of 5 seconds                    |
 | Battery Current Flow (AVG of 5) | %+.2f     | Battery average current flow in mA taken from 5 readings in period of 5 seconds               |
 | Battery Power Flow (AVG of 5)   | %+.3f     | Battery average power flow in W calciulated from Battery Voltage and Battery Current Flow     |
-| Battery Remaining Time          | h:mm      | How much time is left before shutdown, calculation based on last 3 minutes of overlay running |
+| Battery Remaining Time          | h:mm      | How much time is left before shutdown                                                         |
 
 Shows only if charger is connected:
 | Category                  | Format       | Explanation                                                                      |
@@ -125,6 +125,10 @@ Shows only if charger is connected:
 If Network Type is "Wi-Fi", you can press Y to show password. Since max password length is 64 characters, it may show in up to 3 lines.
 
 # Additional info
+
+> How Battery Remaining Time is calculated
+
+It is calculated from the last 3 minutes of power draw readings. In the first minute of running any mode, it is updated every 0.5s, after one minute it's updated every minute. When exiting the currently used mode, calculations are reset. When connecting or disconnecting the charger, calculations are reset. When Battery Power Draw is positive instead of negative, time is shown as [-:--] and calculations are reset.
 
 > What is Skin temperature ($\mathbf{T}skin$)?
 
