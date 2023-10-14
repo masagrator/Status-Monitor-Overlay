@@ -52,7 +52,29 @@ typedef struct {
     int32_t ChargerVoltageLimit;                                //Charger and external device voltage limit in mV
     int32_t ChargerCurrentLimit;                                //Charger and external device current limit in mA
     BatteryChargeInfoFieldsFlags Flags;                         //Unknown flags
+    char reserved[0x14];                                        //17.0.0+ data
 } BatteryChargeInfoFields;
+
+typedef struct {
+    int32_t InputCurrentLimit;                                  //Input (Sink) current limit in mA
+    int32_t VBUSCurrentLimit;                                   //Output (Source/VBUS/OTG) current limit in mA
+    int32_t ChargeCurrentLimit;                                 //Battery charging current limit in mA (512mA when Docked, 768mA when BatteryTemperature < 17.0 C)
+    int32_t ChargeVoltageLimit;                                 //Battery charging voltage limit in mV (3952mV when BatteryTemperature >= 51.0 C)
+    int32_t unk_x10;                                            //Possibly an emum, getting the same value as PowerRole in all tested cases
+    int32_t unk_x14;                                            //Possibly flags
+    BatteryChargeInfoFieldsPDControllerState PDControllerState; //Power Delivery Controller State
+    int32_t BatteryTemperature;                                 //Battery temperature in milli C
+    int32_t RawBatteryCharge;                                   //Raw battery charged capacity per cent-mille (i.e. 100% = 100000 pcm)
+    int32_t VoltageAvg;                                         //Voltage avg in mV (more in Notes)
+    int32_t BatteryAge;                                         //Battery age (capacity full / capacity design) per cent-mille (i.e. 100% = 100000 pcm)
+    char reserved[4];                                           //17.0.0+ data
+    BatteryChargeInfoFieldsPowerRole PowerRole;
+    BatteryChargeInfoFieldsChargerType ChargerType;
+    int32_t ChargerVoltageLimit;                                //Charger and external device voltage limit in mV
+    int32_t ChargerCurrentLimit;                                //Charger and external device current limit in mA
+    BatteryChargeInfoFieldsFlags Flags;                         //Unknown flags
+    char reserved2[0x10];                                        //17.0.0+ data
+} BatteryChargeInfoFields17;
 
 Result psmGetBatteryChargeInfoFields(Service* psmService, BatteryChargeInfoFields *out) {
     return serviceDispatchOut(psmService, 17, *out);

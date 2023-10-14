@@ -298,21 +298,24 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
 		
 		///Thermal
-		char remainingBatteryLife[6];
-		snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		char remainingBatteryLife[8];
+		if (batTimeEstimate >= 0) {
+			snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		}
+		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
 		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW[%s]", PowerConsumption, remainingBatteryLife);
-		if (hosversionAtLeast(14,0,0)) {
-			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2d \u00B0C\n%2d \u00B0C\n%2.2f \u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
+		if (hosversionAtLeast(10,0,0)) {
+			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2.1f \u00B0C\n%2.1f \u00B0C\n%2.1f \u00B0C", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000);
 		}
 		else 
-			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2.2f \u00B0C\n%2.2f\u00B0C\n%2.2f \u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level:\t%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
+			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2.1f \u00B0C\n%2.1f\u00B0C\n%2.1f \u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level:\t%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
 		snprintf(FPS_c, sizeof FPS_c, "PFPS:"); //Pushed Frames Per Second
 		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
 		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
-		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.2f", FPS, FPSavg);
+		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.1f", FPS, FPSavg);
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
@@ -392,21 +395,24 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
 		///Thermal
-		char remainingBatteryLife[6];
-		snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		char remainingBatteryLife[8];
+		if (batTimeEstimate >= 0) {
+			snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		}
+		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
 		
 		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW[%s]", PowerConsumption, remainingBatteryLife);
-		if (hosversionAtLeast(14,0,0))
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d\u00B0C/%2d\u00B0C/%2.1f\u00B0C", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000);
+		if (hosversionAtLeast(10,0,0))
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000);
 		else
 			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
 		snprintf(FPS_c, sizeof FPS_c, "PFPS:"); //Pushed Frames Per Second
 		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
 		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
-		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%u\n%2.2f", FPS, FPSavg);
+		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%u\n%2.1f", FPS, FPSavg);
 
 		if (GameRunning) snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c, FPS_var_compressed_c);
 		else snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c);
@@ -438,8 +444,8 @@ public:
 				uint32_t offset1 = 0;
 				uint32_t offset2 = offset1 + 355;
 				uint32_t offset3 = offset2 + 210;
-				uint32_t offset4 = offset3 + 275;
-				uint32_t offset5 = offset4 + 320;
+				uint32_t offset4 = offset3 + 245;
+				uint32_t offset5 = offset4 + 360;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
 				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
 				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
@@ -456,10 +462,10 @@ public:
 				uint32_t size = 18;
 				uint32_t offset1 = 0;
 				uint32_t offset2 = offset1 + 343;
-				uint32_t offset3 = offset2 + 177;
-				uint32_t offset4 = offset3 + 258;
-				uint32_t offset5 = offset4 + 299;
-				uint32_t offset6 = offset5 + 125;
+				uint32_t offset3 = offset2 + 197;
+				uint32_t offset4 = offset3 + 218;
+				uint32_t offset5 = offset4 + 328;
+				uint32_t offset6 = offset5 + 116;
 				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
 				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
 				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
@@ -519,28 +525,22 @@ public:
 		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
-		snprintf(RAM_all_c, sizeof RAM_all_c, "%.0f/%.0fMB", RAM_Used_all_f, RAM_Total_all_f);
+		snprintf(RAM_all_c, sizeof RAM_all_c, "%.1f/%.1fGB", RAM_Used_all_f/1024, RAM_Total_all_f/1024);
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
 		
-		char remainingBatteryLife[6];
-		snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		char remainingBatteryLife[8];
+		if (batTimeEstimate >= 0) {
+			snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		}
+		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
 
 		///Thermal
-		if (GameRunning) {
-			if (hosversionAtLeast(14,0,0)) {
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.0f\u00B0C@%+.2fW[%s]", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
-			}
-			else
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.0f/%2.0f/%2.0f\u00B0C@%+.2fW[%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
+		if (hosversionAtLeast(10,0,0)) {
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.1fW[%s]", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
 		}
-		else {
-			if (hosversionAtLeast(14,0,0)) {
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2d/%2d/%2.1f\u00B0C@%+.2fW[%s]", SOC_temperatureC, PCB_temperatureC, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
-			}
-			else
-				snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.2fW[%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
-		}
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.2f%s", Rotation_SpeedLevel_f * 100, "%");
+		else
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.1fW[%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", FPSavg);
@@ -549,14 +549,14 @@ public:
 		/*
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[100%s,100%s,100%s,100%s]@1785.0", "%", "%", "%", "%");
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "100.0%s@2400.0", "%");
-		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "4444/4444MB@4444.4");
-		if (GameRunning) {
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "88/88/88\u00B0C@15.55W");
-		}
-		else snprintf(skin_temperature_c, sizeof skin_temperature_c, "88.8/88.8/88.8\u00B0C@15.55W");
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "100.00%s", "%");
+		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "4.4/4.4GB@4444.4");
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, "88.8/88.8/88.8\u00B0C@-15.5W[99:99]");
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "100.0%s", "%");
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "60.0");
 		*/
+		
+		
+		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
@@ -597,7 +597,20 @@ public:
 
 		///Battery
 
-		if (_batteryChargeInfoFields.ChargerType)
+		char tempBatTimeEstimate[8] = "-:--";
+		if (batTimeEstimate >= 0) {
+			snprintf(&tempBatTimeEstimate[0], sizeof(tempBatTimeEstimate), "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		}
+
+		BatteryChargeInfoFieldsChargerType ChargerConnected = _batteryChargeInfoFields.ChargerType;
+		int32_t ChargerVoltageLimit = _batteryChargeInfoFields.ChargerVoltageLimit;
+		int32_t ChargerCurrentLimit = _batteryChargeInfoFields.ChargerCurrentLimit;
+		if (hosversionAtLeast(17,0,0)) {
+			ChargerConnected = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerType;
+			ChargerVoltageLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerVoltageLimit;
+			ChargerCurrentLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerCurrentLimit;
+		}
+		if (ChargerConnected)
 			snprintf(Battery_c, sizeof Battery_c,
 				"Battery Actual Capacity: %.0f mAh\n"
 				"Battery Designed Capacity: %.0f mAh\n"
@@ -606,7 +619,8 @@ public:
 				"Battery Age: %.1f%s\n"
 				"Battery Voltage (5s AVG): %.0f mV\n"
 				"Battery Current Flow (5s AVG): %+.0f mA\n"
-				"Battery Power Flow (5s AVG): %+.3f W[%d:%02d]\n"
+				"Battery Power Flow (5s AVG): %+.3f W\n"
+				"Battery Remaining Time: %s\n"
 				"Charger Type: %u\n"
 				"Charger Max Voltage: %u mV\n"
 				"Charger Max Current: %u mA",
@@ -618,11 +632,10 @@ public:
 				batVoltageAvg,
 				batCurrentAvg,
 				PowerConsumption, 
-				batTimeEstimate / 60, 
-				batTimeEstimate % 60,
-				_batteryChargeInfoFields.ChargerType,
-				_batteryChargeInfoFields.ChargerVoltageLimit,
-				_batteryChargeInfoFields.ChargerCurrentLimit
+				tempBatTimeEstimate,
+				ChargerConnected,
+				ChargerVoltageLimit,
+				ChargerCurrentLimit
 			);
 		else
 			snprintf(Battery_c, sizeof Battery_c,
@@ -634,7 +647,7 @@ public:
 				"Battery Voltage (5s AVG): %.0f mV\n"
 				"Battery Current Flow (5s AVG): %.0f mA\n"
 				"Battery Power Flow (5s AVG): %+.3f W\n"
-				"Battery Remaining Time: %d:%02d",
+				"Battery Remaining Time: %s",
 				actualFullBatCapacity,
 				designedFullBatCapacity,
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
@@ -643,8 +656,7 @@ public:
 				batVoltageAvg,
 				batCurrentAvg,
 				PowerConsumption, 
-				batTimeEstimate / 60, 
-				batTimeEstimate % 60
+				tempBatTimeEstimate
 			);
 		
 	}
@@ -1001,6 +1013,9 @@ public:
 			else pcvCheck = pcvInitialize();
 			
 			tsCheck = tsInitialize();
+			if (R_SUCCEEDED(tsCheck)) {
+				g_ITs = tsGetServiceSession();
+			}
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
 			if (R_SUCCEEDED(fanInitialize())) {
@@ -1079,6 +1094,9 @@ public:
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 
 			tsCheck = tsInitialize();
+			if (R_SUCCEEDED(tsCheck)) {
+				g_ITs = tsGetServiceSession();
+			}
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
 			if (R_SUCCEEDED(fanInitialize())) {
