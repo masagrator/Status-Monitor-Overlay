@@ -348,16 +348,26 @@ void BatteryChecker(void*) {
 				batPowerAvg += (readingsAmp[x] * readingsVolt[x]) / 1'000;
 			}
 			float actualCapacity = actualFullBatCapacity / 100 * (float)_batteryChargeInfoFields.RawBatteryCharge / 1000;
+			if (hosversionAtLeast(17,0,0)) {
+				actualCapacity = actualFullBatCapacity / 100 * (float)_batteryChargeInfoFields.RawBatteryCharge / 1000;
+			}
 			batCurrent /= ArraySize;
 			batVoltage /= ArraySize;
 			batCurrentAvg = batCurrent;
 			batVoltageAvg = batVoltage;
 			batPowerAvg /= ArraySize * 1000;
 			PowerConsumption = batPowerAvg;
-			if (tempChargerType != _batteryChargeInfoFields.ChargerType) {
+			bool chargerTypeDifferent = (tempChargerType != _batteryChargeInfoFields.ChargerType);
+			if (hosversionAtLeast(17,0,0)) {
+				chargerTypeDifferent = (tempChargerType != ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerType);
+			}
+			if (chargerTypeDifferent) {
 				powerHistoryIteration = 0;
 				batTimeEstimate = -1;
 				tempChargerType = _batteryChargeInfoFields.ChargerType;
+				if (hosversionAtLeast(17,0,0)) {
+					tempChargerType = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerType;
+				}
 				commonAvgPowerHistory.clear();
 				commonAvgPowerHistory.shrink_to_fit();
 			}
