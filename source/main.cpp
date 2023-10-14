@@ -603,15 +603,11 @@ public:
 		}
 
 		BatteryChargeInfoFieldsChargerType ChargerConnected = _batteryChargeInfoFields.ChargerType;
-		if (hosversionAtLeast(17,0,0)) {
-			ChargerConnected = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerType;
-		}
 		int32_t ChargerVoltageLimit = _batteryChargeInfoFields.ChargerVoltageLimit;
-		if (hosversionAtLeast(17,0,0)) {
-			ChargerVoltageLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerVoltageLimit;
-		}
 		int32_t ChargerCurrentLimit = _batteryChargeInfoFields.ChargerCurrentLimit;
 		if (hosversionAtLeast(17,0,0)) {
+			ChargerConnected = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerType;
+			ChargerVoltageLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerVoltageLimit;
 			ChargerCurrentLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerCurrentLimit;
 		}
 		if (ChargerConnected)
