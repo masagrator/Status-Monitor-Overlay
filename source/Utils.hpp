@@ -348,9 +348,6 @@ void BatteryChecker(void*) {
 				batPowerAvg += (readingsAmp[x] * readingsVolt[x]) / 1'000;
 			}
 			float actualCapacity = actualFullBatCapacity / 100 * (float)_batteryChargeInfoFields.RawBatteryCharge / 1000;
-			if (hosversionAtLeast(17,0,0)) {
-				actualCapacity = actualFullBatCapacity / 100 * (float)_batteryChargeInfoFields.RawBatteryCharge / 1000;
-			}
 			batCurrent /= ArraySize;
 			batVoltage /= ArraySize;
 			batCurrentAvg = batCurrent;

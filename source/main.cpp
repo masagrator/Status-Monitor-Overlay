@@ -602,9 +602,9 @@ public:
 			snprintf(&tempBatTimeEstimate[0], sizeof(tempBatTimeEstimate), "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
 		}
 
-		BatteryChargeInfoFieldsChargerType isChargerConnected = _batteryChargeInfoFields.ChargerType;
+		BatteryChargeInfoFieldsChargerType ChargerConnected = _batteryChargeInfoFields.ChargerType;
 		if (hosversionAtLeast(17,0,0)) {
-			isChargerConnected = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerType;
+			ChargerConnected = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerType;
 		}
 		int32_t ChargerVoltageLimit = _batteryChargeInfoFields.ChargerVoltageLimit;
 		if (hosversionAtLeast(17,0,0)) {
@@ -614,7 +614,7 @@ public:
 		if (hosversionAtLeast(17,0,0)) {
 			ChargerCurrentLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerCurrentLimit;
 		}
-		if (isChargerConnected)
+		if (ChargerConnected)
 			snprintf(Battery_c, sizeof Battery_c,
 				"Battery Actual Capacity: %.0f mAh\n"
 				"Battery Designed Capacity: %.0f mAh\n"
@@ -637,7 +637,7 @@ public:
 				batCurrentAvg,
 				PowerConsumption, 
 				tempBatTimeEstimate,
-				isChargerConnected,
+				ChargerConnected,
 				ChargerVoltageLimit,
 				ChargerCurrentLimit
 			);
