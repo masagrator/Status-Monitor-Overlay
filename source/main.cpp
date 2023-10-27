@@ -1013,9 +1013,6 @@ public:
 			else pcvCheck = pcvInitialize();
 			
 			tsCheck = tsInitialize();
-			if (R_SUCCEEDED(tsCheck)) {
-				g_ITs = tsGetServiceSession();
-			}
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
 			if (R_SUCCEEDED(fanInitialize())) {
@@ -1094,9 +1091,6 @@ public:
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 
 			tsCheck = tsInitialize();
-			if (R_SUCCEEDED(tsCheck)) {
-				g_ITs = tsGetServiceSession();
-			}
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
 			if (R_SUCCEEDED(fanInitialize())) {

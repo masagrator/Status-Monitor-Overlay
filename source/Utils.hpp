@@ -7,7 +7,6 @@
 #include "i2c.h"
 #include "max17050.h"
 #include <numeric>
-#include "ts.h"
 
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
@@ -27,7 +26,6 @@ bool threadexit = false;
 bool threadexit2 = false;
 uint64_t refreshrate = 1;
 FanController g_ICon;
-Service* g_ITs;
 std::string folderpath = "sdmc:/switch/.overlays/";
 std::string filename = "";
 std::string filepath = "";
@@ -437,16 +435,16 @@ void Misc(void*) {
 		//Temperatures
 		if (R_SUCCEEDED(tsCheck)) {
 			if (hosversionAtLeast(10,0,0)) {
-				tsSession ts_session;
-				Result rc = tsOpenTsSession(g_ITs, &ts_session, TsDeviceCode_Internal);
+				TsSession ts_session;
+				Result rc = tsOpenSession(&ts_session, TsDeviceCode_LocationExternal);
 				if (R_SUCCEEDED(rc)) {
-					tsGetTemperatureWithTsSession(&ts_session, &SOC_temperatureF);
-					tsCloseTsSession(&ts_session);
+					tsSessionGetTemperature(&ts_session, &SOC_temperatureF);
+					tsSessionClose(&ts_session);
 				}
-				rc = tsOpenTsSession(g_ITs, &ts_session, TsDeviceCode_External);
+				rc = tsOpenSession(&ts_session, TsDeviceCode_LocationInternal);
 				if (R_SUCCEEDED(rc)) {
-					tsGetTemperatureWithTsSession(&ts_session, &PCB_temperatureF);
-					tsCloseTsSession(&ts_session);
+					tsSessionGetTemperature(&ts_session, &PCB_temperatureF);
+					tsSessionClose(&ts_session);
 				}
 			}
 			else {
