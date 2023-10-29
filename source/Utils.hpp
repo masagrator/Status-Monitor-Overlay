@@ -555,12 +555,12 @@ void CheckCore3(void*) {
 
 //Start reading all stats
 void StartThreads() {
-	threadCreate(&t0, CheckCore0, NULL, NULL, 0x100, 0x10, 0);
-	threadCreate(&t1, CheckCore1, NULL, NULL, 0x100, 0x10, 1);
-	threadCreate(&t2, CheckCore2, NULL, NULL, 0x100, 0x10, 2);
-	threadCreate(&t3, CheckCore3, NULL, NULL, 0x100, 0x10, 3);
-	threadCreate(&t4, Misc, NULL, NULL, 0x100, 0x3F, -2);
-	threadCreate(&t5, CheckButtons, NULL, NULL, 0x400, 0x3F, -2);
+	threadCreate(&t0, CheckCore0, NULL, NULL, 0x1000, 0x10, 0);
+	threadCreate(&t1, CheckCore1, NULL, NULL, 0x1000, 0x10, 1);
+	threadCreate(&t2, CheckCore2, NULL, NULL, 0x1000, 0x10, 2);
+	threadCreate(&t3, CheckCore3, NULL, NULL, 0x1000, 0x10, 3);
+	threadCreate(&t4, Misc, NULL, NULL, 0x1000, 0x3F, -2);
+	threadCreate(&t5, CheckButtons, NULL, NULL, 0x1000, 0x3F, -2);
 	if (SaltySD) {
 		//Assign NX-FPS to default core
 		threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
