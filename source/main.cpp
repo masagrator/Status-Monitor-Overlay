@@ -1041,12 +1041,18 @@ public:
 			if (SaltySD) {
 				LoadSharedMemory();
 			}
+			if (sysclkIpcRunning()) {
+				sysclkCheck = sysclkIpcInitialize();
+			}
 		});
 		Hinted = envIsSyscallHinted(0x6F);
 	}
 
 	virtual void exitServices() override {
 		CloseThreads();
+		if (R_SUCCEEDED(sysclkCheck)) {
+			sysclkIpcExit();
+		}
 		shmemClose(&_sharedmemory);
 		//Exit services
 		clkrstExit();

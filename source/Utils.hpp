@@ -8,6 +8,17 @@
 #include "max17050.h"
 #include <numeric>
 
+#if defined(__cplusplus)
+extern "C"
+{
+#endif
+
+#include <sysclk/client/ipc.h>
+
+#if defined(__cplusplus)
+}
+#endif
+
 #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
 #define FieldDescriptor uint32_t
 #define BASE_SNS_UOHM 5000
@@ -53,6 +64,7 @@ Result nvdecCheck = 1;
 Result nvencCheck = 1;
 Result nvjpgCheck = 1;
 Result nifmCheck = 1;
+Result sysclkCheck = 1;
 
 //Wi-Fi
 NifmInternetConnectionType NifmConnectionType = (NifmInternetConnectionType)-1;
@@ -167,6 +179,11 @@ float* FPSavg_shared = 0;
 bool* pluginActive = 0;
 uint32_t* FPSticks_shared = 0;
 Handle remoteSharedMemory = 1;
+
+//Read real freqs from sys-clk sysmodule
+uint32_t realCPU_Hz = 0;
+uint32_t realGPU_Hz = 0;
+uint32_t realMEM_Hz = 0;
 
 void LoadSharedMemory() {
 	if (SaltySD_Connect())
@@ -430,6 +447,14 @@ void Misc(void*) {
 			pcvGetClockRate(PcvModule_CpuBus, &CPU_Hz);
 			pcvGetClockRate(PcvModule_GPU, &GPU_Hz);
 			pcvGetClockRate(PcvModule_EMC, &RAM_Hz);
+		}
+		if (R_SUCCEEDED(sysclkCheck)) {
+			SysClkContext sysclkCTX;
+			if (R_SUCCEEDED(sysclkIpcGetCurrentContext(&sysclkCTX))) {
+				realCPU_Hz = sysclkCTX.realFreqs[SysClkModule_CPU];
+				realGPU_Hz = sysclkCTX.realFreqs[SysClkModule_GPU];
+				realMEM_Hz = sysclkCTX.realFreqs[SysClkModule_MEM];
+			}
 		}
 		
 		//Temperatures
