@@ -122,13 +122,13 @@ char CPU_compressed_c[160];
 //Frequency
 ///CPU
 uint32_t CPU_Hz = 0;
-char CPU_Hz_c[32];
+char CPU_Hz_c[64];
 ///GPU
 uint32_t GPU_Hz = 0;
-char GPU_Hz_c[32];
+char GPU_Hz_c[64];
 ///RAM
 uint32_t RAM_Hz = 0;
-char RAM_Hz_c[32];
+char RAM_Hz_c[64];
 
 //RAM Size
 char RAM_all_c[64];
@@ -181,9 +181,9 @@ uint32_t* FPSticks_shared = 0;
 Handle remoteSharedMemory = 1;
 
 //Read real freqs from sys-clk sysmodule
-uint32_t realCPU_Hz = 0;
-uint32_t realGPU_Hz = 0;
-uint32_t realMEM_Hz = 0;
+int32_t realCPU_Hz = 0;
+int32_t realGPU_Hz = 0;
+int32_t realRAM_Hz = 0;
 
 void LoadSharedMemory() {
 	if (SaltySD_Connect())
@@ -453,7 +453,7 @@ void Misc(void*) {
 			if (R_SUCCEEDED(sysclkIpcGetCurrentContext(&sysclkCTX))) {
 				realCPU_Hz = sysclkCTX.realFreqs[SysClkModule_CPU];
 				realGPU_Hz = sysclkCTX.realFreqs[SysClkModule_GPU];
-				realMEM_Hz = sysclkCTX.realFreqs[SysClkModule_MEM];
+				realRAM_Hz = sysclkCTX.realFreqs[SysClkModule_MEM];
 			}
 		}
 		
