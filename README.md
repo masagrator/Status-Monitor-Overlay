@@ -25,8 +25,8 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 - PFPS and FPS (they don't work for 32-bit games, shows only if [my fork of SaltyNX](https://github.com/masagrator/SaltyNX/releases) is installed)
 - Battery temperature, raw charge, age, average voltage, average current flow and average power flow
 - Charger type, max voltage, and max current
-- DSP usage
-- NVDEC clock rate
+- DSP usage (only for FW older than 17.0.0)
+- NVDEC, NVENC and NVJPG clock rates
 - Network type + Wi-fi password
 
 # Requirements:
