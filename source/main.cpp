@@ -299,7 +299,17 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", (float)CPU_Hz / 1000000);
+		if (realCPU_Hz == 0) {
+			snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", (float)CPU_Hz / 1000000);
+		}
+		else {
+			int32_t deltaCPU = realCPU_Hz - CPU_Hz;
+			if ((deltaCPU < 100000 && deltaCPU > -100000)) {
+				snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz (Δ 0.0)", (float)CPU_Hz / 1000000);
+			}
+			else
+				snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz (Δ%+.1f)", (float)CPU_Hz / 1000000, (float)deltaCPU / 1000000);
+		}
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100, "%");
 		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100, "%");
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100, "%");
@@ -307,11 +317,31 @@ public:
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 		
 		///GPU
-		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", (float)GPU_Hz / 1000000);
+		if (realGPU_Hz == 0) {
+			snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", (float)GPU_Hz / 1000000);
+		}
+		else {
+			int32_t deltaGPU = realGPU_Hz - GPU_Hz;
+			if (deltaGPU < 100000 && deltaGPU > -100000) {
+				snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz (Δ 0.0)", (float)GPU_Hz / 1000000);
+			}
+			else
+				snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz (Δ%+.1f)", (float)GPU_Hz / 1000000, (float)deltaGPU / 1000000);
+		}
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", (float)GPU_Load_u / 10, "%");
 		
 		///RAM
-		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz", (float)RAM_Hz / 1000000);
+		int32_t deltaRAM = realRAM_Hz - RAM_Hz;
+		if (realRAM_Hz == 0) {
+			snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz", (float)RAM_Hz / 1000000);
+		}
+		else {
+			if (deltaRAM < 100000 && deltaRAM > -100000) {
+				snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz (Δ 0.0)", (float)RAM_Hz / 1000000);
+			}
+			else
+				snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz (Δ%+.1f)", (float)RAM_Hz / 1000000, (float)deltaRAM / 1000000);
+		}
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
 		float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
@@ -322,18 +352,18 @@ public:
 		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
-		snprintf(RAM_all_c, sizeof RAM_all_c, "Total:");
-		snprintf(RAM_application_c, sizeof RAM_application_c, "Application:");
-		snprintf(RAM_applet_c, sizeof RAM_applet_c, "Applet:");
-		snprintf(RAM_system_c, sizeof RAM_system_c, "System:");
-		snprintf(RAM_systemunsafe_c, sizeof RAM_systemunsafe_c, "System Unsafe:");
-		snprintf(RAM_compressed_c, sizeof RAM_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
-		snprintf(RAM_all_c, sizeof RAM_all_c, "%4.2f / %4.2f MB", RAM_Used_all_f, RAM_Total_all_f);
-		snprintf(RAM_application_c, sizeof RAM_application_c, "%4.2f / %4.2f MB", RAM_Used_application_f, RAM_Total_application_f);
-		snprintf(RAM_applet_c, sizeof RAM_applet_c, "%4.2f / %4.2f MB", RAM_Used_applet_f, RAM_Total_applet_f);
-		snprintf(RAM_system_c, sizeof RAM_system_c, "%4.2f / %4.2f MB", RAM_Used_system_f, RAM_Total_system_f);
-		snprintf(RAM_systemunsafe_c, sizeof RAM_systemunsafe_c, "%4.2f / %4.2f MB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
-		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s\n%s\n%s\n%s\n%s", RAM_all_c, RAM_application_c, RAM_applet_c, RAM_system_c, RAM_systemunsafe_c);
+		snprintf(RAM_compressed_c, sizeof RAM_compressed_c, "Total:\nApplication:\nApplet:\nSystem:\nSystem Unsafe:");
+		char FULL_RAM_all_c[21] = "";
+		char FULL_RAM_application_c[21] = "";
+		char FULL_RAM_applet_c[21] = "";
+		char FULL_RAM_system_c[21] = "";
+		char FULL_RAM_systemunsafe_c[21] = "";
+		snprintf(FULL_RAM_all_c, sizeof(FULL_RAM_all_c), "%4.2f / %4.2f MB", RAM_Used_all_f, RAM_Total_all_f);
+		snprintf(FULL_RAM_application_c, sizeof(FULL_RAM_application_c), "%4.2f / %4.2f MB", RAM_Used_application_f, RAM_Total_application_f);
+		snprintf(FULL_RAM_applet_c, sizeof(FULL_RAM_applet_c), "%4.2f / %4.2f MB", RAM_Used_applet_f, RAM_Total_applet_f);
+		snprintf(FULL_RAM_system_c, sizeof(FULL_RAM_system_c), "%4.2f / %4.2f MB", RAM_Used_system_f, RAM_Total_system_f);
+		snprintf(FULL_RAM_systemunsafe_c, sizeof(FULL_RAM_systemunsafe_c), "%4.2f / %4.2f MB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
+		snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%s\n%s\n%s\n%s\n%s", FULL_RAM_all_c, FULL_RAM_application_c, FULL_RAM_applet_c, FULL_RAM_system_c, FULL_RAM_systemunsafe_c);
 		
 		///Thermal
 		char remainingBatteryLife[8];
@@ -384,21 +414,40 @@ class MiniOverlay : public tsl::Gui {
 private:
 	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
 public:
-    MiniOverlay() { }
+    MiniOverlay() {}
+
+	char Variables[512] = "";
 
     virtual tsl::elm::Element* createUI() override {
 
 		rootFrame = new tsl::elm::OverlayFrame("", "");
 
-		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
-			if (!GameRunning) renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 95, a(0x7111));
-			else renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, 125, a(0x7111));
+			uint32_t height = 95;
+			if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
+				height += 15;
+			}
+			if (GameRunning) {
+				height += 15;
+			}
+			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, height, a(0x7111));
 			
 			//Print strings
 			///CPU
-			if (GameRunning) renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN\nDRAW\nPFPS\nFPS", false, 0, 15, 15, renderer->a(0xFFFF));
-			else renderer->drawString("CPU\nGPU\nRAM\nTEMP\nFAN\nDRAW", false, 0, 15, 15, renderer->a(0xFFFF));
+			std::string print_text = "CPU\nGPU\nRAM\n";
+			if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
+				print_text += "DIFF\n";
+			}
+			print_text += "TEMP\nFAN\nDRAW";
+			if (GameRunning) {
+				print_text += "\nFPS";
+			}
+			size_t str_size = print_text.size() + 1;
+			char* buffer = new char[str_size];
+			strncpy(buffer, print_text.c_str(), str_size);
+			renderer->drawString(buffer, false, 0, 15, 15, renderer->a(0xFFFF));
+			delete[] buffer;
 			
 			///GPU
 			renderer->drawString(Variables, false, 60, 15, 15, renderer->a(0xFFFF));
@@ -420,18 +469,24 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
+		char MINI_CPU_Usage0[7] = "";
+		char MINI_CPU_Usage1[7] = "";
+		char MINI_CPU_Usage2[7] = "";
+		char MINI_CPU_Usage3[7] = "";
+
 		double percent = ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%s", percent, "%");
+		snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0f%s", percent, "%");
 		percent = ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%s", percent, "%");
+		snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%s", percent, "%");
 		percent = ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%s", percent, "%");
+		snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%s", percent, "%");
 		percent = ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%s", percent, "%");
-		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]@%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, (float)CPU_Hz / 1000000);
+		snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%s", percent, "%");
 		
-		///GPU
-		snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)GPU_Hz / 1000000);
+		char MINI_CPU_compressed_c[42] = "";
+		snprintf(MINI_CPU_compressed_c, sizeof(MINI_CPU_compressed_c), "[%s,%s,%s,%s]@%.1f", MINI_CPU_Usage0, MINI_CPU_Usage1, MINI_CPU_Usage2, MINI_CPU_Usage3, (float)CPU_Hz / 1000000);
+		char MINI_GPU_Load_c[14];
+		snprintf(MINI_GPU_Load_c, sizeof(MINI_GPU_Load_c), "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)GPU_Hz / 1000000);
 		
 		///RAM
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
@@ -444,8 +499,16 @@ public:
 		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
-		snprintf(RAM_all_c, sizeof RAM_all_c, "%.0f/%.0fMB", RAM_Used_all_f, RAM_Total_all_f);
-		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
+		char MINI_RAM_var_compressed_c[19] = "";
+		snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)RAM_Hz / 1000000);
+
+		char DIFF_compressed_c[22] = "";
+		if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
+			int deltaCPU = realCPU_Hz - CPU_Hz;
+			int deltaGPU = realGPU_Hz - GPU_Hz;
+			int deltaRAM = realRAM_Hz - RAM_Hz;
+			snprintf(DIFF_compressed_c, sizeof(DIFF_compressed_c), "%+2.1f %2.1f %+2.1f", (float)deltaCPU / 1000000, (float)deltaGPU / 1000000, (float)deltaRAM / 1000000);
+		}
 		
 		///Thermal
 		char remainingBatteryLife[8];
@@ -462,13 +525,19 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
-		snprintf(FPS_c, sizeof FPS_c, "PFPS:"); //Pushed Frames Per Second
-		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
-		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
-		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%u\n%2.1f", FPS, FPSavg);
-
-		if (GameRunning) snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c, FPS_var_compressed_c);
-		else snprintf(Variables, sizeof Variables, "%s\n%s\n%s\n%s\n%s\n%s", CPU_compressed_c, GPU_Load_c, RAM_var_compressed_c, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c);
+		char Temp[71] = "";
+		snprintf(Temp, sizeof(Temp), "%s\n%s\n%s", MINI_CPU_compressed_c, MINI_GPU_Load_c, MINI_RAM_var_compressed_c);
+		char Temp2[93] = "";
+		if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
+			snprintf(Temp2, sizeof(Temp2), "%s\n%s", Temp, DIFF_compressed_c);
+		}
+		else strcpy(Temp2, Temp);
+		char Temp3[256] = "";
+		snprintf(Temp3, sizeof(Temp3), "%s\n%s\n%s\n%s", Temp2, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c);
+		if (GameRunning) {
+			snprintf(Variables, sizeof(Variables), "%s\n%2.1f", Temp3, FPSavg);
+		}
+		else strcpy(Variables, Temp3);
 
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
@@ -593,10 +662,54 @@ public:
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%s", percent, "%");
 		percent = ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100;
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%s", percent, "%");
-		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]@%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, (float)CPU_Hz / 1000000);
+
+		char difference[5] = "@";
+		if (realCPU_Hz) {
+			int32_t deltaCPU = realCPU_Hz - CPU_Hz;
+			if (deltaCPU > 20000000) {
+				strcpy(difference, "▲");
+			}
+			else if (deltaCPU > 100000) {
+				strcpy(difference, "△");
+			}
+			else if (deltaCPU < -100000) {
+				strcpy(difference, "▽");
+			}
+			else if (deltaCPU < -20000000) {
+				strcpy(difference, "▼");
+			}
+			else if (deltaCPU < -50000000) {
+				strcpy(difference, "◘");
+			}
+		}
+		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]%s%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, difference, (float)CPU_Hz / 1000000);
 		
 		///GPU
-		snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)GPU_Hz / 1000000);
+		if (realGPU_Hz) {
+			int32_t deltaGPU = realGPU_Hz - GPU_Hz;
+			if (deltaGPU >= 20000000) {
+				strcpy(difference, "▲");
+			}
+			else if (deltaGPU >= 100000) {
+				strcpy(difference, "△");
+			}
+			else if (deltaGPU > -100000) {
+				strcpy(difference, "@");
+			}
+			else if (deltaGPU <= -100000) {
+				strcpy(difference, "▽");
+			}
+			else if (deltaGPU <= -20000000) {
+				strcpy(difference, "▼");
+			}
+			else if (deltaGPU <= -50000000) {
+				strcpy(difference, "◘");
+			}
+		}
+		else {
+			strcpy(difference, "@");
+		}
+		snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s%s%.1f", (float)GPU_Load_u / 10, "%", difference, (float)GPU_Hz / 1000000);
 		
 		///RAM
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
@@ -609,8 +722,34 @@ public:
 		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
-		snprintf(RAM_all_c, sizeof RAM_all_c, "%.1f/%.1fGB", RAM_Used_all_f/1024, RAM_Total_all_f/1024);
-		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s@%.1f", RAM_all_c, (float)RAM_Hz / 1000000);
+		char MICRO_RAM_all_c[12] = "";
+		snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%.1f/%.1fGB", RAM_Used_all_f/1024, RAM_Total_all_f/1024);
+
+		if (realRAM_Hz) {
+			int32_t deltaRAM = realRAM_Hz - RAM_Hz;
+			if (deltaRAM >= 20000000) {
+				strcpy(difference, "▲");
+			}
+			else if (deltaRAM >= 100000) {
+				strcpy(difference, "△");
+			}
+			else if (deltaRAM > -100000) {
+				strcpy(difference, "@");
+			}
+			else if (deltaRAM <= -100000) {
+				strcpy(difference, "▽");
+			}
+			else if (deltaRAM <= -20000000) {
+				strcpy(difference, "▼");
+			}
+			else if (deltaRAM <= -50000000) {
+				strcpy(difference, "◘");
+			}
+		}
+		else {
+			strcpy(difference, "@");
+		}
+		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s%s%.1f", MICRO_RAM_all_c, difference, (float)RAM_Hz / 1000000);
 		
 		char remainingBatteryLife[8];
 		if (batTimeEstimate >= 0) {
@@ -1165,12 +1304,23 @@ public:
 			if (SaltySD) {
 				LoadSharedMemory();
 			}
+			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
+				uint32_t api_ver = 0;
+				sysclkIpcGetAPIVersion(&api_ver);
+				if (api_ver < 3) {
+					sysclkIpcExit();
+				}
+				else sysclkCheck = 0;
+			}
 		});
 		Hinted = envIsSyscallHinted(0x6F);
 	}
 
 	virtual void exitServices() override {
 		CloseThreads();
+		if (R_SUCCEEDED(sysclkCheck)) {
+			sysclkIpcExit();
+		}
 		shmemClose(&_sharedmemory);
 		//Exit services
 		clkrstExit();
@@ -1232,6 +1382,14 @@ public:
 			
 			if (SaltySD) {
 				LoadSharedMemory();
+			}
+			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
+				uint32_t api_ver = 0;
+				sysclkIpcGetAPIVersion(&api_ver);
+				if (api_ver < 3) {
+					sysclkIpcExit();
+				}
+				else sysclkCheck = 0;
 			}
 		});
 		Hinted = envIsSyscallHinted(0x6F);
