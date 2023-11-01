@@ -65,15 +65,15 @@ Contains most of supported informations with lower precision in one line.
 | CPU      | [%.0f,%.0f,%.0f,%.0f]%s%.1f                                 | [Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage] (^1) CPU Target Frequency  |
 | GPU      | %.1f%s%.1f                                                  | Load (^1) GPU Target Frequency                                                        |
 | RAM      | %.1f/%.1f%s%.1f                                             | Total RAM used/Total RAM available in GB (^1) EMC Target frequency                    |
-| BRD      | %2.1f/%2.1f/%2.1f@+.1f[h:mm]                               | SoC temperature/PCB temperature/Skin temperature(^2)/Battery Power Flow[Time left before shutdown]      |
-| FAN      | %2.2f                                                      | Fan rotation level                                                               |
+| BRD      | %2.1f/%2.1f/%2.1f@+.1f[h:mm]                                | SoC temperature/PCB temperature/Skin temperature(^2)/Battery Power Flow[Time left before shutdown]      |
+| FAN      | %2.2f                                                       | Fan rotation level                                                               |
 
 - ^1 - by default it's `@`, but if you have sys-clk 2.0.0+ installed, this changes depending on difference between real clocks and targeted clocks. <br>
   - `△` - real clocks are higher than expected
   - `▲` - real clocks are higher by at least 20 MHz than expected
   - `▽` - real clocks are lower than expected
   - `▼` - real clocks are lower by at least 20 MHz than expected
-  - `◘` - real clocks are lower by at least 50 MHz than expected (this is a sign of throttling, usually caused by bad overclocking configuration)
+  - `◘` - real clocks are lower by at least 50 MHz than expected (If this shows constantly for longer than few seconds, this is a sign of throttling, usually caused by bad overclocking configuration)
 - ^2 - Explanation provided at the end of file
 
 ```Optional```
