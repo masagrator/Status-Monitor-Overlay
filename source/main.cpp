@@ -262,7 +262,7 @@ public:
 		//Make stuff ready to print
 		///CPU
 		if (realCPU_Hz == 0) {
-			snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz (Δ 0.0)", (float)CPU_Hz / 1000000);
+			snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", (float)CPU_Hz / 1000000);
 		}
 		else {
 			int32_t deltaCPU = realCPU_Hz - CPU_Hz;
