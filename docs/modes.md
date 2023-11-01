@@ -1,6 +1,9 @@
 # Modes
 
-Status Monitor Overlay from 0.8 release contains six modes to choose from Main Menu
+Status Monitor Overlay from 0.8 release contains six modes to choose from Main Menu.
+For additional functions you need to install:
+- [SaltyNX](https://github.com/masagrator/SaltyNX/releases)
+- [sys-clk 2.0.0+](https://github.com/retronx-team/sys-clk/releases) (using closed source forks of sys-clk can result in retrieving wrong real clockrates)
 
 # Full
 
