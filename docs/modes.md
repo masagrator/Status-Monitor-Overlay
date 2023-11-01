@@ -73,7 +73,7 @@ Contains most of supported informations with lower precision in one line.
   - `▲` - real clocks are higher by at least 20 MHz than expected
   - `▽` - real clocks are lower than expected
   - `▼` - real clocks are lower by at least 20 MHz than expected
-  - `◘` - real clocks are lower by at least 50 MHz than expected (If this shows constantly for longer than few seconds, this is a sign of throttling, usually caused by bad overclocking configuration)
+  - `≠` - real clocks are lower by at least 50 MHz than expected (If this shows constantly for longer than few seconds, this is a sign of throttling, usually caused by bad overclocking configuration)
 - ^2 - Explanation provided at the end of file
 
 ```Optional```
