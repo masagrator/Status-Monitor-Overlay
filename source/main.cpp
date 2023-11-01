@@ -361,20 +361,22 @@ public:
 //Mini mode
 class MiniOverlay : public tsl::Gui {
 public:
-    MiniOverlay() { }
+    MiniOverlay() {}
+
+	char Variables[512] = "";
 
     virtual tsl::elm::Element* createUI() override {
 
 		auto rootFrame = new tsl::elm::OverlayFrame("", "");
 
-		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
 			uint32_t height = 95;
 			if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
 				height += 15;
 			}
 			if (GameRunning) {
-				height += 30;
+				height += 15;
 			}
 			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, height, a(0x7111));
 			
@@ -386,9 +388,13 @@ public:
 			}
 			print_text += "TEMP\nFAN\nDRAW";
 			if (GameRunning) {
-				print_text += "\nPFPS\nFPS";
+				print_text += "\nFPS";
 			}
-			else renderer->drawString(print_text.c_str(), false, 0, 15, 15, renderer->a(0xFFFF));
+			size_t str_size = print_text.size() + 1;
+			char* buffer = new char[str_size];
+			strncpy(buffer, print_text.c_str(), str_size);
+			renderer->drawString(buffer, false, 0, 15, 15, renderer->a(0xFFFF));
+			delete[] buffer;
 			
 			///GPU
 			renderer->drawString(Variables, false, 60, 15, 15, renderer->a(0xFFFF));
@@ -440,7 +446,7 @@ public:
 		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
-		char MINI_RAM_var_compressed_c[18] = "";
+		char MINI_RAM_var_compressed_c[19] = "";
 		snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)RAM_Hz / 1000000);
 
 		char DIFF_compressed_c[22] = "";
@@ -448,7 +454,7 @@ public:
 			int deltaCPU = realCPU_Hz - CPU_Hz;
 			int deltaGPU = realGPU_Hz - GPU_Hz;
 			int deltaRAM = realRAM_Hz - RAM_Hz;
-			snprintf(DIFF_compressed_c, sizeof(DIFF_compressed_c), "%+2.1f %+2.1f %+2.1f", (float)deltaCPU / 1000000, (float)deltaGPU / 1000000, (float)deltaRAM / 1000000);
+			snprintf(DIFF_compressed_c, sizeof(DIFF_compressed_c), "%+2.1f %2.1f %+2.1f", (float)deltaCPU / 1000000, (float)deltaGPU / 1000000, (float)deltaRAM / 1000000);
 		}
 		
 		///Thermal
@@ -466,10 +472,6 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
-		snprintf(FPS_c, sizeof FPS_c, "PFPS:"); //Pushed Frames Per Second
-		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
-		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
-		snprintf(FPS_var_compressed_c, sizeof FPS_compressed_c, "%u\n%2.1f", FPS, FPSavg);
 		char Temp[71] = "";
 		snprintf(Temp, sizeof(Temp), "%s\n%s\n%s", MINI_CPU_compressed_c, MINI_GPU_Load_c, MINI_RAM_var_compressed_c);
 		char Temp2[93] = "";
@@ -480,7 +482,7 @@ public:
 		char Temp3[256] = "";
 		snprintf(Temp3, sizeof(Temp3), "%s\n%s\n%s\n%s", Temp2, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c);
 		if (GameRunning) {
-			snprintf(Variables, sizeof(Variables), "%s\n%s", Temp3, FPS_var_compressed_c);
+			snprintf(Variables, sizeof(Variables), "%s\n%2.1f", Temp3, FPSavg);
 		}
 		else strcpy(Variables, Temp3);
 

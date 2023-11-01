@@ -46,9 +46,6 @@ MmuRequest nvdecRequest;
 MmuRequest nvencRequest;
 MmuRequest nvjpgRequest;
 
-//Mini mode
-char Variables[1024];
-
 //Checks
 Result clkrstCheck = 1;
 Result nvCheck = 1;
