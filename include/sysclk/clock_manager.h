@@ -25,6 +25,11 @@ typedef struct
     int32_t power[SysClkPowerSensor_EnumMax];
 } SysClkContext;
 
+#ifdef __cplusplus
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
+#endif
+
 typedef struct
 {
     union {
@@ -32,5 +37,9 @@ typedef struct
         uint32_t mhzMap[SysClkProfile_EnumMax][SysClkModule_EnumMax];
     };
 } SysClkTitleProfileList;
+
+#ifdef __cplusplus
+#pragma GCC diagnostic pop
+#endif
 
 #define SYSCLK_FREQ_LIST_MAX 32
