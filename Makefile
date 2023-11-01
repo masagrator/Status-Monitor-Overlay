@@ -41,7 +41,7 @@ APP_TITLE	:=	Status Monitor
 APP_VERSION	:=	0.9.3
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source lib/Atmosphere-libs/libstratosphere/source/dmnt
+SOURCES		:=	source
 INCLUDES	:=	include lib/Atmosphere-libs/libstratosphere/source/dmnt lib/Atmosphere-libs/libstratosphere/source lib/libtesla/include
 NO_ICON		:=  1
 
