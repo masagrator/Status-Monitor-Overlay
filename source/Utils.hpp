@@ -47,7 +47,7 @@ MmuRequest nvencRequest;
 MmuRequest nvjpgRequest;
 
 //Mini mode
-char Variables[768];
+char Variables[1024];
 
 //Checks
 Result clkrstCheck = 1;
@@ -118,7 +118,6 @@ char CPU_Usage1[32];
 char CPU_Usage2[32];
 char CPU_Usage3[32];
 char CPU_compressed_c[160];
-
 //Frequency
 ///CPU
 uint32_t CPU_Hz = 0;
@@ -131,13 +130,8 @@ uint32_t RAM_Hz = 0;
 char RAM_Hz_c[64];
 
 //RAM Size
-char RAM_all_c[64];
-char RAM_application_c[64];
-char RAM_applet_c[64];
-char RAM_system_c[64];
-char RAM_systemunsafe_c[64];
-char RAM_compressed_c[320];
-char RAM_var_compressed_c[320];
+char RAM_compressed_c[64];
+char RAM_var_compressed_c[128];
 uint64_t RAM_Total_all_u = 0;
 uint64_t RAM_Total_application_u = 0;
 uint64_t RAM_Total_applet_u = 0;
