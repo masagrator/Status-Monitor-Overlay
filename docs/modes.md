@@ -69,10 +69,8 @@ Contains most of supported informations with lower precision in one line.
 | FAN      | %2.2f                                                       | Fan rotation level                                                               |
 
 - ^1 - by default it's `@`, but if you have sys-clk 2.0.0+ installed, this changes depending on difference between real clocks and targeted clocks. <br>
-  - `△` - real clocks are higher than expected
-  - `▲` - real clocks are higher by at least 20 MHz than expected
-  - `▽` - real clocks are lower than expected
-  - `▼` - real clocks are lower by at least 20 MHz than expected
+  - `△` - real clocks are higher by at least 10 MHz than expected
+  - `▽` - real clocks are lower  by at least 10 MHz than expected
   - `≠` - real clocks are lower by at least 50 MHz than expected (If this shows constantly for longer than few seconds, this is a sign of throttling, usually caused by bad overclocking configuration)
 - ^2 - Explanation provided at the end of file
 
