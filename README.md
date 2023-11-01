@@ -13,7 +13,7 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 # What is currently supported:
 - CPU Usage for each core (Cores `#0`-`#2` are used by apps/games, Core `#3` is used by OS, background processes and also Tesla overlays)
 - GPU Load
-- CPU, GPU & RAM actual frequency
+- CPU, GPU & RAM target frequencies (also difference between target and real frequencies if [sys-clk 2.0.0+](https://github.com/retronx-team/sys-clk/releases) is installed, use only official retronx release or its open source forks for reliable results)
 - Used RAM categorized to: (not supported by FWs <5.0.0)
   - Total
   - Application
@@ -25,8 +25,8 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 - PFPS and FPS (they don't work for 32-bit games, shows only if [my fork of SaltyNX](https://github.com/masagrator/SaltyNX/releases) is installed)
 - Battery temperature, raw charge, age, average voltage, average current flow and average power flow
 - Charger type, max voltage, and max current
-- DSP usage
-- NVDEC clock rate
+- DSP usage (only for FW older than 17.0.0)
+- NVDEC, NVENC and NVJPG clock rates
 - Network type + Wi-fi password
 
 # Requirements:
