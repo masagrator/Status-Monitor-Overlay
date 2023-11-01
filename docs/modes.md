@@ -8,12 +8,13 @@ This mode you can know from older releases of Status Monitor. It contains all in
 
 | Category  | Format                                                                              | Explanation                                                                                                                                                                                                                                                                                                               |
 |-----------|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| CPU Usage | Frequency: %.1f<br>Core #0: %.2f<br>Core #1: %.2f<br>Core #2: %.2f<br>Core #3: %.2f | Clockrate of all CPU cores in MHz<br>Load of CPU Core #0 calculated from IdleTickCount to percent value<br>Load of CPU Core #1 calculated from IdleTickCount to percent value<br>Load of CPU Core #2 calculated from IdleTickCount to percent value<br>Load of CPU Core #3 calculated from IdleTickCount to percent value |
-| GPU Usage | Frequency: %.1f<br>Load: %.1f                                                       | Clockrate of GPU in MHz<br>GPU Load provided by PMU in percent                                                                                                                                                                                                                                                            |
-| RAM Usage | Frequency: %.1f<br>%s: %.2f/%.2f                                                    | Clockrate of EMC in MHz<br>%s memory used/%s memory available in MB (not working with FW <5.0.0)                                                                                                                                                                                                                          |
-| Board | Battery Power Flow: %+.2f[h:mm]<br>Temperatures:<br>- SoC: %.1f <br>- PCB: %.1f <br>- Skin: %.1f<br>Fan Rotation Level: %.1f                                   | How much power in watts is discharged from or charged to the battery [time left before shutdown]<br>SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees'<br>Fan rotation level in percent                                                                                                                                                                         |
+| CPU Usage | Frequency: %.1f (Δ%+.1f)<br>Core #0: %.2f<br>Core #1: %.2f<br>Core #2: %.2f<br>Core #3: %.2f | Targete clockrate of all CPU cores in MHz (^1)<br>Load of CPU Core #0 calculated from IdleTickCount to percent value<br>Load of CPU Core #1 calculated from IdleTickCount to percent value<br>Load of CPU Core #2 calculated from IdleTickCount to percent value<br>Load of CPU Core #3 calculated from IdleTickCount to percent value |
+| GPU Usage | Frequency: %.1f (Δ%+.1f)<br>Load: %.1f                                                       | Target clockrate of GPU in MHz (^1)<br>GPU Load provided by PMU in percent                                                                                                                                                                                                                                                            |
+| RAM Usage | Frequency: %.1f (Δ%+.1f)<br>%s: %.2f/%.2f                                                    | Target clockrate of EMC in MHz (^1)<br>%s memory used/%s memory available in MB (not working with FW <5.0.0)                                                                                                                                                                                                                          |
+| Board | Battery Power Flow: %+.2f[h:mm]<br>Temperatures:<br>- SoC: %.1f <br>- PCB: %.1f <br>- Skin: %.1f<br>Fan Rotation Level: %.1f                                   | How much power in watts is discharged from or charged to the battery [time left before shutdown]<br>SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees (^2)<br>Fan rotation level in percent                                                                                                                                                                         |
 
-' Explanation provided at the end of file
+- ^1 - Difference between real clocks and targeted clocks. This shows only when sys-clk 2.0.0+ is installed.
+- ^2 - Explanation provided at the end of file
 
 ```Optional (shows only when SaltyNX is installed)```
 
@@ -30,21 +31,28 @@ Contains most of supported informations with lower precision.
 
 | Category | Format                                           | Explanation                                                               |
 |----------|--------------------------------------------------|---------------------------------------------------------------------------|
-| CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f                       | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU frequency  |
-| GPU      | %.1f@%.1f                                        | Load@GPU Frequency                                                        |
-| RAM      | %.0f/%.0f@%.1f                                   | Total RAM used/Total RAM available in MB@EMC frequency                    |
-| TEMP     | %2.1f/%2.1f/%2.1f                                | SoC temperature/PCB temperature/Skin temperature'                         |
+| CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f                       | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU target frequency  |
+| GPU      | %.1f@%.1f                                        | Load@GPU Target Frequency                                                 |
+| RAM      | %.0f/%.0f@%.1f                                   | Total RAM used/Total RAM available in MB@EMC Target frequency             |
+| TEMP     | %2.1f/%2.1f/%2.1f                                | SoC temperature/PCB temperature/Skin temperature (^1)                     |
 | FAN      | %2.1f                                            | Fan rotation level                                                        |
 | DRAW     | %+.2f[h:mm]                                      | How much power in watts is discharged from or charged to the battery [Time left before shutdown]      |
 
-' Explanation provided at the end of file
+- ^1 - Explanation provided at the end of file
 
-```Optional (shows only when SaltyNX is installed)```
+```Optional```
 
+> shows only when SaltyNX is installed and game is running
+> 
 | Category | Format            | Explanation                                                              |
 |----------|-------------------|--------------------------------------------------------------------------|
-| PFPS     | %u                | Pushed Frames Per Second |
-| FPS      | %.2f              | Frames Per Second             |
+| FPS      | %.2f              | Frames Per Second                                                        |
+
+> shows only when sys-clk 2.0.0+ is installed
+> 
+| Category | Format              | Explanation                                                              |
+|----------|---------------------|--------------------------------------------------------------------------|
+| DIFF     | %+2.1f %2.1f %+2.1f | CPU / GPU / RAM difference between real clocks and targeted clocks       |
 
 Works only in 1 or 5 Hz + vsync signal. You can change that with ZR + R + D-Pad Up/Down
 
@@ -54,19 +62,26 @@ Contains most of supported informations with lower precision in one line.
 
 | Category | Format                                                     | Explanation                                                               |
 |----------|------------------------------------------------------------|---------------------------------------------------------------------------|
-| CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f                                 | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU frequency  |
-| GPU      | %.1f@%.1f                                                  | Load@GPU Frequency                                                        |
-| RAM      | %.1f/%.1f@%.1f                                             | Total RAM used/Total RAM available in GB@EMC frequency                    |
-| BRD      | %2.1f/%2.1f/%2.1f@+.1f[h:mm]                               | SoC temperature/PCB temperature/Skin temperature'/Battery Power Flow[Time left before shutdown]      |
-| FAN      | %2.2f                                                      | Fan rotation level                                                        |
+| CPU      | [%.0f,%.0f,%.0f,%.0f]%s%.1f                                 | [Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage] (^1) CPU Target Frequency  |
+| GPU      | %.1f%s%.1f                                                  | Load (^1) GPU Target Frequency                                                        |
+| RAM      | %.1f/%.1f%s%.1f                                             | Total RAM used/Total RAM available in GB (^1) EMC Target frequency                    |
+| BRD      | %2.1f/%2.1f/%2.1f@+.1f[h:mm]                               | SoC temperature/PCB temperature/Skin temperature(^2)/Battery Power Flow[Time left before shutdown]      |
+| FAN      | %2.2f                                                      | Fan rotation level                                                               |
 
-' Explanation provided at the end of file
+- ^1 - by default it's `@`, but if you have sys-clk 2.0.0+ installed, this changes depending on difference between real clocks and targeted clocks. <br>
+  - `△` - real clocks are higher than expected
+  - `▲` - real clocks are higher by at least 20 MHz than expected
+  - `▽` - real clocks are lower than expected
+  - `▼` - real clocks are lower by at least 20 MHz than expected
+  - `◘` - real clocks are lower by at least 50 MHz than expected (this is a sign of throttling, usually caused by bad overclocking configuration)
+- ^2 - Explanation provided at the end of file
 
-```Optional (shows only when SaltyNX is installed and game is running)```
+```Optional```
+
+> shows only when SaltyNX is installed and game is running
 
 | Category | Format             | Explanation                                                              |
 |----------|--------------------|--------------------------------------------------------------------------|
-| BRD      | %2d/%2d/%2.0f@+.2f | SoC temperature/PCB temperature/Skin temperature'/Battery Power Flow     |
 | FPS      | %.1f               | Frames Per Second                                                        |
 
 Works only in 1 or 5 Hz + vsync signal. You can change that with ZR + R + D-Pad Up/Down
@@ -119,7 +134,9 @@ Shows only if charger is connected:
 | Category               | Format            | Explanation                                                                      |
 |------------------------|-------------------|----------------------------------------------------------------------------------|
 | DSP Usage              | %u                | In percent (not available on 17.0.0+)                                            |
-| NVDEC clock rate       | %.2f              | NVDEC frequency in MHz                                                           |
+| NVDEC                  | %.2f              | Target frequency in MHz (shows 0 if chip is not active)                          |
+| NVENC                  | %.2f              | Target frequency in MHz (shows 0 if chip is not active)                          |
+| NVJPG                  | %.2f              | Target frequency in MHz (shows 0 if chip is not active)                          |
 | Network Type           | %s                | It shows if Switch is connected to internet, and if it's using Ethernet or Wi-Fi |
 
 If Network Type is "Wi-Fi", you can press Y to show password. Since max password length is 64 characters, it may show in up to 3 lines.
