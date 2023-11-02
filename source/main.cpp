@@ -223,7 +223,7 @@ public:
 					renderer->drawString(RAM_compressed_c, false, 20, 440, 15, renderer->a(0xFFFF));
 					renderer->drawString(RAM_var_compressed_c, false, 140, 440, 15, renderer->a(0xFFFF));
 				}
-				renderer->drawString(RAM_load_c, false, 20, 425, 20, renderer->a(0xFFFF));
+				renderer->drawString(RAM_load_c, false, 20, 425, 15, renderer->a(0xFFFF));
 			}
 			
 			///Thermal
@@ -329,7 +329,7 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%s\n%s\n%s\n%s\n%s", FULL_RAM_all_c, FULL_RAM_application_c, FULL_RAM_applet_c, FULL_RAM_system_c, FULL_RAM_systemunsafe_c);
 		if (R_SUCCEEDED(sysclkCheck) && sysClkApiVer > 3) {
 			float RAM_Load_GPU = (float)(_sysclkemcload.load[SysClkEmcLoad_All] - _sysclkemcload.load[SysClkEmcLoad_Cpu]) / 10;
-			snprintf(RAM_load_c, sizeof(RAM_load_c), "Load: %.1f (CPU: %2.1f | GPU: %2.1f)", (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, (float)(_sysclkemcload.load[SysClkEmcLoad_Cpu]) / 10, RAM_Load_GPU);
+			snprintf(RAM_load_c, sizeof(RAM_load_c), "Load: %.1f%s (CPU: %2.1f%s | GPU: %2.1f%s)", (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, "%", (float)(_sysclkemcload.load[SysClkEmcLoad_Cpu]) / 10, "%", RAM_Load_GPU, "%");
 		}
 		///Thermal
 		char remainingBatteryLife[8];
@@ -450,8 +450,8 @@ public:
 		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
-		char MINI_RAM_var_compressed_c[19] = "";
-		snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)RAM_Hz / 1000000);
+		char MINI_RAM_var_compressed_c[27] = "";
+		snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "[%.0f/%.0fMB]%.1f%s@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, "%", (float)RAM_Hz / 1000000);
 
 		char DIFF_compressed_c[22] = "";
 		if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
@@ -587,19 +587,13 @@ public:
 		if (realCPU_Hz) {
 			int32_t deltaCPU = realCPU_Hz - CPU_Hz;
 			if (deltaCPU > 20000000) {
-				strcpy(difference, "▲");
-			}
-			else if (deltaCPU > 100000) {
 				strcpy(difference, "△");
 			}
-			else if (deltaCPU < -100000) {
-				strcpy(difference, "▽");
+			else if (deltaCPU < -50000000) {
+				strcpy(difference, "≠");
 			}
 			else if (deltaCPU < -20000000) {
-				strcpy(difference, "▼");
-			}
-			else if (deltaCPU < -50000000) {
-				strcpy(difference, "◘");
+				strcpy(difference, "▽");
 			}
 		}
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]%s%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, difference, (float)CPU_Hz / 1000000);
@@ -608,22 +602,16 @@ public:
 		if (realGPU_Hz) {
 			int32_t deltaGPU = realGPU_Hz - GPU_Hz;
 			if (deltaGPU >= 20000000) {
-				strcpy(difference, "▲");
-			}
-			else if (deltaGPU >= 100000) {
 				strcpy(difference, "△");
 			}
-			else if (deltaGPU > -100000) {
+			else if (deltaGPU > -20000000) {
 				strcpy(difference, "@");
 			}
-			else if (deltaGPU <= -100000) {
+			else if (deltaGPU < -50000000) {
+				strcpy(difference, "≠");
+			}
+			else if (deltaGPU < -20000000) {
 				strcpy(difference, "▽");
-			}
-			else if (deltaGPU <= -20000000) {
-				strcpy(difference, "▼");
-			}
-			else if (deltaGPU <= -50000000) {
-				strcpy(difference, "◘");
 			}
 		}
 		else {
@@ -632,38 +620,22 @@ public:
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s%s%.1f", (float)GPU_Load_u / 10, "%", difference, (float)GPU_Hz / 1000000);
 		
 		///RAM
-		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
-		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
-		float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
-		float RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
-		float RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
-		float RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
-		float RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
-		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
-		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
-		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
 		char MICRO_RAM_all_c[12] = "";
-		snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%.1f/%.1fGB", RAM_Used_all_f/1024, RAM_Total_all_f/1024);
+		snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%.1f%s", (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, "%");
 
 		if (realRAM_Hz) {
 			int32_t deltaRAM = realRAM_Hz - RAM_Hz;
 			if (deltaRAM >= 20000000) {
-				strcpy(difference, "▲");
-			}
-			else if (deltaRAM >= 100000) {
 				strcpy(difference, "△");
 			}
-			else if (deltaRAM > -100000) {
+			else if (deltaRAM > -20000000) {
 				strcpy(difference, "@");
 			}
-			else if (deltaRAM <= -100000) {
+			else if (deltaRAM < -50000000) {
+				strcpy(difference, "≠");
+			}
+			else if (deltaRAM < -20000000) {
 				strcpy(difference, "▽");
-			}
-			else if (deltaRAM <= -20000000) {
-				strcpy(difference, "▼");
-			}
-			else if (deltaRAM <= -50000000) {
-				strcpy(difference, "◘");
 			}
 		}
 		else {
@@ -1263,9 +1235,8 @@ public:
 				LoadSharedMemory();
 			}
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
-				uint32_t api_ver = 0;
-				sysclkIpcGetAPIVersion(&api_ver);
-				if (api_ver < 3) {
+				sysclkIpcGetAPIVersion(&sysClkApiVer);
+				if (sysClkApiVer < 3) {
 					sysclkIpcExit();
 				}
 				else sysclkCheck = 0;
@@ -1277,6 +1248,9 @@ public:
 	virtual void exitServices() override {
 		CloseThreads();
 		shmemClose(&_sharedmemory);
+		if (R_SUCCEEDED(sysclkCheck)) {
+			sysclkIpcExit();
+		}
 		//Exit services
 		clkrstExit();
 		pcvExit();
