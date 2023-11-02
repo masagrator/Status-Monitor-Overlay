@@ -14,6 +14,7 @@
 #include "../config.h"
 #include "../board.h"
 #include "../ipc.h"
+#include "../emc.h"
 
 bool sysclkIpcRunning();
 Result sysclkIpcInitialize(void);
@@ -31,6 +32,7 @@ Result sysclkIpcSetProfiles(u64 tid, SysClkTitleProfileList* profiles);
 Result sysclkIpcGetConfigValues(SysClkConfigValueList* out_configValues);
 Result sysclkIpcSetConfigValues(SysClkConfigValueList* configValues);
 Result sysclkIpcGetFreqList(SysClkModule module, u32* list, u32 maxCount, u32* outCount);
+Result sysclkIpcGetEmcLoad(SysClkEmcLoad* out_emcLoad);
 
 static inline Result sysclkIpcRemoveOverride(SysClkModule module)
 {
