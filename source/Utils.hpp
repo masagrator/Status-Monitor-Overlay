@@ -7,6 +7,7 @@
 #include "i2c.h"
 #include "max17050.h"
 #include <numeric>
+#include "sysclk/emc.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -171,10 +172,13 @@ bool* pluginActive = 0;
 uint32_t* FPSticks_shared = 0;
 Handle remoteSharedMemory = 1;
 
-//Read real freqs from sys-clk sysmodule
+//Read real freqs and ram load from sys-clk sysmodule
+uint32_t sysClkApiVer = 0;
 int32_t realCPU_Hz = 0;
 int32_t realGPU_Hz = 0;
 int32_t realRAM_Hz = 0;
+SysClkEmcLoad _sysclkemcload = {};
+char RAM_load_c[64];
 
 void LoadSharedMemory() {
 	if (SaltySD_Connect())
@@ -445,6 +449,9 @@ void Misc(void*) {
 				realCPU_Hz = sysclkCTX.realFreqs[SysClkModule_CPU];
 				realGPU_Hz = sysclkCTX.realFreqs[SysClkModule_GPU];
 				realRAM_Hz = sysclkCTX.realFreqs[SysClkModule_MEM];
+				if (sysClkApiVer > 3) {
+					sysclkIpcGetEmcLoad(&_sysclkemcload);
+				}
 			}
 		}
 		

@@ -223,6 +223,7 @@ public:
 					renderer->drawString(RAM_compressed_c, false, 20, 440, 15, renderer->a(0xFFFF));
 					renderer->drawString(RAM_var_compressed_c, false, 140, 440, 15, renderer->a(0xFFFF));
 				}
+				renderer->drawString(RAM_load_c, false, 20, 425, 20, renderer->a(0xFFFF));
 			}
 			
 			///Thermal
@@ -326,7 +327,10 @@ public:
 		snprintf(FULL_RAM_system_c, sizeof(FULL_RAM_system_c), "%4.2f / %4.2f MB", RAM_Used_system_f, RAM_Total_system_f);
 		snprintf(FULL_RAM_systemunsafe_c, sizeof(FULL_RAM_systemunsafe_c), "%4.2f / %4.2f MB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
 		snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%s\n%s\n%s\n%s\n%s", FULL_RAM_all_c, FULL_RAM_application_c, FULL_RAM_applet_c, FULL_RAM_system_c, FULL_RAM_systemunsafe_c);
-		
+		if (R_SUCCEEDED(sysclkCheck) && sysClkApiVer > 3) {
+			float RAM_Load_GPU = (float)(_sysclkemcload.load[SysClkEmcLoad_All] - _sysclkemcload.load[SysClkEmcLoad_Cpu]) / 10;
+			snprintf(RAM_load_c, sizeof(RAM_load_c), "Load: %.1f (CPU: %2.1f | GPU: %2.1f)", (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, (float)(_sysclkemcload.load[SysClkEmcLoad_Cpu]) / 10, RAM_Load_GPU);
+		}
 		///Thermal
 		char remainingBatteryLife[8];
 		if (batTimeEstimate >= 0) {
@@ -1181,9 +1185,8 @@ public:
 				LoadSharedMemory();
 			}
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
-				uint32_t api_ver = 0;
-				sysclkIpcGetAPIVersion(&api_ver);
-				if (api_ver < 3) {
+				sysclkIpcGetAPIVersion(&sysClkApiVer);
+				if (sysClkApiVer < 3) {
 					sysclkIpcExit();
 				}
 				else sysclkCheck = 0;
