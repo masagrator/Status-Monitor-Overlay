@@ -451,7 +451,10 @@ public:
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
 		char MINI_RAM_var_compressed_c[27] = "";
-		snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "[%.0f/%.0fMB]%.1f%s@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, "%", (float)RAM_Hz / 1000000);
+		if (sysClkApiVer > 3) {
+			snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "[%.0f/%.0fMB]%.1f%s@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, "%", (float)RAM_Hz / 1000000);
+		}
+		else snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)RAM_Hz / 1000000);
 
 		char DIFF_compressed_c[22] = "";
 		if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
@@ -621,7 +624,22 @@ public:
 		
 		///RAM
 		char MICRO_RAM_all_c[12] = "";
-		snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%.1f%s", (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, "%");
+		if (sysClkApiVer > 3) {
+			snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%.1f%s", (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, "%");
+		}
+		else {
+			float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
+			float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
+			float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
+			float RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
+			float RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
+			float RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
+			float RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
+			float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
+			float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
+			float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
+			snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%.1f/%.1fGB", RAM_Used_all_f/1024, RAM_Total_all_f/1024);
+		}
 
 		if (realRAM_Hz) {
 			int32_t deltaRAM = realRAM_Hz - RAM_Hz;
