@@ -329,7 +329,7 @@ public:
 		snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%s\n%s\n%s\n%s\n%s", FULL_RAM_all_c, FULL_RAM_application_c, FULL_RAM_applet_c, FULL_RAM_system_c, FULL_RAM_systemunsafe_c);
 		if (R_SUCCEEDED(sysclkCheck) && sysClkApiVer > 3) {
 			float RAM_Load_GPU = (float)(_sysclkemcload.load[SysClkEmcLoad_All] - _sysclkemcload.load[SysClkEmcLoad_Cpu]) / 10;
-			snprintf(RAM_load_c, sizeof(RAM_load_c), "Load: %.1f%s (CPU %2.1f%s | GPU %2.1f%s)", (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, "%", (float)(_sysclkemcload.load[SysClkEmcLoad_Cpu]) / 10, "%", RAM_Load_GPU, "%");
+			snprintf(RAM_load_c, sizeof(RAM_load_c), "Load: %.1f%s (CPU %2.1f | GPU %2.1f)", (float)(_sysclkemcload.load[SysClkEmcLoad_All]) / 10, (float)(_sysclkemcload.load[SysClkEmcLoad_Cpu]) / 10, RAM_Load_GPU, "%");
 		}
 		///Thermal
 		char remainingBatteryLife[8];
