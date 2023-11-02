@@ -741,10 +741,13 @@ public:
 
 // Custom utility function for parsing an ini file
 void ParseIniFile() {
-	std::string overlayName, configIniPath, ultrahandConfigIniPath, teslaConfigIniPath;
+	std::string overlayName;
 	std::string directoryPath = "sdmc:/config/status-monitor/";
 	std::string ultrahandDirectoryPath = "sdmc:/config/ultrahand/";
 	std::string teslaDirectoryPath = "sdmc:/config/tesla/";
+	std::string configIniPath = directoryPath + "config.ini";
+	std::string ultrahandConfigIniPath = ultrahandDirectoryPath + "config.ini";
+	std::string teslaConfigIniPath = teslaDirectoryPath + "config.ini";
 	tsl::hlp::ini::IniData parsedData;
 	
 	struct stat st;
@@ -752,48 +755,45 @@ void ParseIniFile() {
 		mkdir(directoryPath.c_str(), 0777);
 	}
 
-	configIniPath = directoryPath + "config.ini";
-	ultrahandConfigIniPath = ultrahandDirectoryPath + "config.ini";
-	teslaConfigIniPath = teslaDirectoryPath + "config.ini";
-
-
-	FILE* ultrahandConfigFileIn = fopen(ultrahandConfigIniPath.c_str(), "r");
-	FILE* teslaConfigFileIn = fopen(teslaConfigIniPath.c_str(), "r");
-	if (!teslaConfigFileIn && !ultrahandConfigFileIn) {
-		// Open the INI file
-		FILE* configFileIn = fopen(configIniPath.c_str(), "r");
-		if (configFileIn) {
-			// Determine the size of the INI file
-			fseek(configFileIn, 0, SEEK_END);
-			long fileSize = ftell(configFileIn);
-			rewind(configFileIn);
+	
+	bool readExternalCombo = false;
+	// Open the INI file
+	FILE* configFileIn = fopen(configIniPath.c_str(), "r");
+	if (configFileIn) {
+		// Determine the size of the INI file
+		fseek(configFileIn, 0, SEEK_END);
+		long fileSize = ftell(configFileIn);
+		rewind(configFileIn);
 			
-			// Read the contents of the INI file
-			char* fileData = new char[fileSize + 1];
-			fread(fileData, sizeof(char), fileSize, configFileIn);
-			fileData[fileSize] = '\0';  // Add null-terminator to create a C-string
-			fclose(configFileIn);
+		// Read the contents of the INI file
+		char* fileData = new char[fileSize + 1];
+		fread(fileData, sizeof(char), fileSize, configFileIn);
+		fileData[fileSize] = '\0';  // Add null-terminator to create a C-string
+		fclose(configFileIn);
 			
-			// Parse the INI data
-			std::string fileDataString(fileData, fileSize);
-			parsedData = tsl::hlp::ini::parseIni(fileDataString);
-			
-			// Access and use the parsed data as needed
-			// For example, print the value of a specific section and key
-			if (parsedData.find("status-monitor") != parsedData.end() &&
-				parsedData["status-monitor"].find("key_combo") != parsedData["status-monitor"].end()) {
-				keyCombo = parsedData["status-monitor"]["key_combo"]; // load keyCombo variable
-				removeSpaces(keyCombo); // format combo
-				convertToUpper(keyCombo);
-			}
-			delete[] fileData;
+		// Parse the INI data
+		std::string fileDataString(fileData, fileSize);
+		parsedData = tsl::hlp::ini::parseIni(fileDataString);
+		delete[] fileData;
+		
+		// Access and use the parsed data as needed
+		// For example, print the value of a specific section and key
+		if (parsedData.find("status-monitor") != parsedData.end() &&
+			parsedData["status-monitor"].find("key_combo") != parsedData["status-monitor"].end()) {
+			keyCombo = parsedData["status-monitor"]["key_combo"]; // load keyCombo variable
+			removeSpaces(keyCombo); // format combo
+			convertToUpper(keyCombo);
 		} else {
-			// Write the default INI file
-			FILE* configFileOut = fopen(configIniPath.c_str(), "w");
-			fprintf(configFileOut, "[status-monitor]\nkey_combo=%s\n", keyCombo.c_str());
-			fclose(configFileOut);
+			readExternalCombo = true;
 		}
+		
 	} else {
+		readExternalCombo = true;
+	}
+
+	if (readExternalCombo) {
+		FILE* ultrahandConfigFileIn = fopen(ultrahandConfigIniPath.c_str(), "r");
+		FILE* teslaConfigFileIn = fopen(teslaConfigIniPath.c_str(), "r");
 		if (ultrahandConfigFileIn) {
 			if (teslaConfigFileIn)
 				fclose(teslaConfigFileIn);
@@ -814,7 +814,7 @@ void ParseIniFile() {
 				convertToUpper(keyCombo);
 			}
 			
-		} else {
+		} else if (teslaConfigFileIn) {
 			// load keyCombo from teslaConfig
 			std::string teslaFileData;
 			char buffer[256];
@@ -831,12 +831,6 @@ void ParseIniFile() {
 				convertToUpper(keyCombo);
 			}
 		}
-		
-		// Save keyCombo into configFileOut for status-monitor
-		FILE* configFileOut = fopen(configIniPath.c_str(), "w");
-		fprintf(configFileOut, "[status-monitor]\nkey_combo=%s\n", keyCombo.c_str());
-		fclose(configFileOut);
-		return;
 	}
 }
 
