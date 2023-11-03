@@ -276,7 +276,7 @@ public:
 			formatButtonCombination(formattedKeyCombo);
 			
 			std::string messageOne = "Hold " + formattedKeyCombo + " to Exit\nHold ZR + R + DDOWN to slow down refresh";
-			std::string messageTwo = "Hold " + formattedKeyCombo + " to Exit\nHold ZR + R + DDOWN to slow down refresh";
+			std::string messageTwo = "Hold " + formattedKeyCombo + " to Exit\nHold ZR + R + DUP to slow down refresh";
 			
 			if (refreshrate == 5) renderer->drawString(messageOne.c_str(), false, 20, 675, 15, renderer->a(0xFFFF));
 			else if (refreshrate == 1) renderer->drawString(messageTwo.c_str(), false, 20, 675, 15, renderer->a(0xFFFF));
