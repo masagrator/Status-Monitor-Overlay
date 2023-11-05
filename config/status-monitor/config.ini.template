@@ -1,0 +1,8 @@
+[status-monitor]
+key_combo=LSTICK+RSTICK
+[mini]
+font_size=15
+real_freqs=false
+[micro]
+font_size=18
+real_freqs=false
