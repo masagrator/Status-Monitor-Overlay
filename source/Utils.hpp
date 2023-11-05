@@ -644,7 +644,12 @@ void formatButtonCombination(std::string& line) {
 
 	// Replace '+' with ' + '
 	size_t pos = 0;
+	size_t max_pluses = 3;
 	while ((pos = line.find('+', pos)) != std::string::npos) {
+		if (!max_pluses) {
+			line = line.substr(0, pos);
+			return;
+		}
 		if (pos > 0 && pos < line.size() - 1) {
 			if (std::isalnum(line[pos - 1]) && std::isalnum(line[pos + 1])) {
 				line.replace(pos, 1, " + ");
@@ -652,6 +657,7 @@ void formatButtonCombination(std::string& line) {
 			}
 		}
 		++pos;
+		max_pluses--;
 	}
 }
 
@@ -697,12 +703,16 @@ public:
 		std::string delimiter = "+";
 		size_t pos = 0;
 		std::string button;
+		size_t max_delimiters = 4;
 		while ((pos = comboCopy.find(delimiter)) != std::string::npos) {
 			button = comboCopy.substr(0, pos);
 			if (buttonMap.find(button) != buttonMap.end()) {
 				mappedButtons.push_back(buttonMap[button]);
 			}
 			comboCopy.erase(0, pos + delimiter.length());
+			if(!--max_delimiters) {
+				return mappedButtons;
+			}
 		}
 		if (buttonMap.find(comboCopy) != buttonMap.end()) {
 			mappedButtons.push_back(buttonMap[comboCopy]);
@@ -710,7 +720,6 @@ public:
 		return mappedButtons;
 	}
 };
-
 
 // Custom utility function for parsing an ini file
 void ParseIniFile() {
@@ -807,3 +816,81 @@ void ParseIniFile() {
 	}
 }
 
+bool renderRealFreqs(bool Micro) {
+	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
+	if (!configFileIn)
+		return false;
+	fseek(configFileIn, 0, SEEK_END);
+	long fileSize = ftell(configFileIn);
+	rewind(configFileIn);
+
+	std::string fileDataString(fileSize, '\0');
+	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
+	fclose(configFileIn);
+	
+	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+
+	std::string key;
+	if (Micro) {
+		if (parsedData.find("micro") == parsedData.end())
+			return false;
+		if (parsedData["micro"].find("real_freqs") == parsedData["micro"].end())
+			return false;
+		key = parsedData["micro"]["real_freqs"];
+	}
+	else {
+		if (parsedData.find("mini") == parsedData.end())
+			return false;
+		if (parsedData["mini"].find("real_freqs") == parsedData["mini"].end())
+			return false;
+		key = parsedData["mini"]["real_freqs"];
+	}
+	convertToUpper(key);
+	return !(key.compare("TRUE"));
+}
+
+size_t getFontSize(bool Micro) {
+	size_t defaultFontSize = 15;
+	if (Micro) {
+		defaultFontSize = 18;
+	}
+	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
+	if (!configFileIn)
+		return false;
+	fseek(configFileIn, 0, SEEK_END);
+	long fileSize = ftell(configFileIn);
+	rewind(configFileIn);
+
+	std::string fileDataString(fileSize, '\0');
+	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
+	fclose(configFileIn);
+	
+	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+	
+	std::string key;
+	if (Micro) {
+		if (parsedData.find("micro") == parsedData.end())
+			return defaultFontSize;
+		if (parsedData["micro"].find("font_size") == parsedData["micro"].end())
+			return defaultFontSize;
+		key = parsedData["micro"]["font_size"];
+	}
+	else {
+		if (parsedData.find("mini") == parsedData.end())
+			return defaultFontSize;
+		if (parsedData["mini"].find("font_size") == parsedData["mini"].end())
+			return defaultFontSize;
+		key = parsedData["mini"]["font_size"];
+	}
+	long fontsize = atol(key.c_str());
+
+	long maxFontSize = 22;
+	if (Micro)
+		maxFontSize = 18;
+	long minFontSize = 8;
+	if (fontsize < minFontSize)
+		return minFontSize;
+	if (fontsize > maxFontSize)
+		return maxFontSize;
+	return fontsize;
+}

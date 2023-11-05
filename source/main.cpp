@@ -474,8 +474,13 @@ private:
 	uint32_t rectangleWidth = 0;
 	uint8_t fontsize = 15;
 	char Variables[512];
+	bool realFrequencies = false;
+	bool Initialized = false;
 public:
-    MiniOverlay() {}
+    MiniOverlay() {
+		realFrequencies = renderRealFreqs(false);
+		fontsize = getFontSize(false);
+	}
 
     virtual tsl::elm::Element* createUI() override {
 
@@ -483,26 +488,23 @@ public:
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
-			uint8_t entry_count = 6;
-
-			if (realCPU_Hz || realGPU_Hz || realRAM_Hz) entry_count++;
-			if (GameRunning) entry_count++;
-
-			uint32_t height = (fontsize * entry_count) + 5;
-			
-			if (!rectangleWidth) {
+			if (!Initialized) {
 				auto dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
 				rectangleWidth = dimensions.first;
+				Initialized = true;
 			}
-			renderer->drawRect(0, 0, 60 + rectangleWidth, height, a(0x7111));
+			uint8_t entry_count = 6;
+
+			if (GameRunning) entry_count++;
+
+			uint32_t height = (fontsize * entry_count) + (fontsize / 3);
+			uint32_t margin = (fontsize * 4);
+			
+			renderer->drawRect(0, 0, margin + rectangleWidth, height, a(0x7111));
 			
 			//Print strings
 			///CPU
-			std::string print_text = "CPU\nGPU\nRAM\n";
-			if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
-				print_text += "DIFF\n";
-			}
-			print_text += "TEMP\nFAN\nDRAW";
+			std::string print_text = "CPU\nGPU\nRAM\nTEMP\nFAN\nDRAW";
 			if (GameRunning) {
 				print_text += "\nFPS";
 			}
@@ -513,7 +515,7 @@ public:
 			delete[] buffer;
 			
 			///GPU
-			renderer->drawString(Variables, false, 60, fontsize, fontsize, renderer->a(0xFFFF));
+			renderer->drawString(Variables, false, margin, fontsize, fontsize, renderer->a(0xFFFF));
 		});
 
 		rootFrame->setContent(Status);
@@ -547,9 +549,15 @@ public:
 		snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%s", percent, "%");
 		
 		char MINI_CPU_compressed_c[42] = "";
-		snprintf(MINI_CPU_compressed_c, sizeof(MINI_CPU_compressed_c), "[%s,%s,%s,%s]@%.1f", MINI_CPU_Usage0, MINI_CPU_Usage1, MINI_CPU_Usage2, MINI_CPU_Usage3, (float)CPU_Hz / 1000000);
+		if (realFrequencies && realCPU_Hz) {
+			snprintf(MINI_CPU_compressed_c, sizeof(MINI_CPU_compressed_c), "[%s,%s,%s,%s]@%.1f", MINI_CPU_Usage0, MINI_CPU_Usage1, MINI_CPU_Usage2, MINI_CPU_Usage3, (float)realCPU_Hz / 1000000);
+		}
+		else snprintf(MINI_CPU_compressed_c, sizeof(MINI_CPU_compressed_c), "[%s,%s,%s,%s]@%.1f", MINI_CPU_Usage0, MINI_CPU_Usage1, MINI_CPU_Usage2, MINI_CPU_Usage3, (float)CPU_Hz / 1000000);
 		char MINI_GPU_Load_c[14];
-		snprintf(MINI_GPU_Load_c, sizeof(MINI_GPU_Load_c), "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)GPU_Hz / 1000000);
+		if (realFrequencies && realGPU_Hz) {
+			snprintf(MINI_GPU_Load_c, sizeof(MINI_GPU_Load_c), "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)realGPU_Hz / 1000000);
+		}
+		else snprintf(MINI_GPU_Load_c, sizeof(MINI_GPU_Load_c), "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)GPU_Hz / 1000000);
 		
 		///RAM
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
@@ -563,15 +571,10 @@ public:
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
 		char MINI_RAM_var_compressed_c[19] = "";
-		snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)RAM_Hz / 1000000);
-
-		char DIFF_compressed_c[22] = "";
-		if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
-			int deltaCPU = realCPU_Hz - CPU_Hz;
-			int deltaGPU = realGPU_Hz - GPU_Hz;
-			int deltaRAM = realRAM_Hz - RAM_Hz;
-			snprintf(DIFF_compressed_c, sizeof(DIFF_compressed_c), "%+2.1f %2.1f %+2.1f", (float)deltaCPU / 1000000, (float)deltaGPU / 1000000, (float)deltaRAM / 1000000);
+		if (realFrequencies && realRAM_Hz) {
+			snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)realRAM_Hz / 1000000);
 		}
+		else snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)RAM_Hz / 1000000);
 		
 		///Thermal
 		char remainingBatteryLife[8];
@@ -590,17 +593,12 @@ public:
 		///FPS
 		char Temp[71] = "";
 		snprintf(Temp, sizeof(Temp), "%s\n%s\n%s", MINI_CPU_compressed_c, MINI_GPU_Load_c, MINI_RAM_var_compressed_c);
-		char Temp2[93] = "";
-		if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
-			snprintf(Temp2, sizeof(Temp2), "%s\n%s", Temp, DIFF_compressed_c);
-		}
-		else strcpy(Temp2, Temp);
-		char Temp3[256] = "";
-		snprintf(Temp3, sizeof(Temp3), "%s\n%s\n%s\n%s", Temp2, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c);
+		char Temp2[256] = "";
+		snprintf(Temp2, sizeof(Temp2), "%s\n%s\n%s\n%s", Temp, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c);
 		if (GameRunning) {
-			snprintf(Variables, sizeof(Variables), "%s\n%2.1f", Temp3, FPSavg);
+			snprintf(Variables, sizeof(Variables), "%s\n%2.1f", Temp2, FPSavg);
 		}
-		else strcpy(Variables, Temp3);
+		else strcpy(Variables, Temp2);
 
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
@@ -642,74 +640,78 @@ private:
 	char batteryCharge[10]; // Declare the batteryCharge variable
 	char FPS_var_compressed_c[64];
 
-	uint32_t size = 18;
+	uint32_t fontsize = 18;
 	uint32_t margin = 8;
 
-	bool Initialized = false;
 	std::pair<u32, u32> dimensions1;
 	std::pair<u32, u32> dimensions2;
 	std::pair<u32, u32> dimensions3;
 	std::pair<u32, u32> dimensions4;
 	std::pair<u32, u32> dimensions5;
 	std::pair<u32, u32> dimensions6;
+	bool realFrequencies = false;
+	bool Initialized = false;
 public:
-    MicroOverlay() { }
+    MicroOverlay() { 
+		realFrequencies = renderRealFreqs(true);
+		fontsize = getFontSize(true);
+	}
     
     virtual tsl::elm::Element* createUI() override {
 		rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 
-			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, size + 4, a(0x7111));
-			
 			if (!Initialized) {
-				dimensions1 = renderer->drawString("CPU [100%,100%,100%,100%]△4444.4", false, 0, size, size, renderer->a(0x0000));
-				dimensions2 = renderer->drawString("GPU 100.0%△4444.4", false, 0, size, size, renderer->a(0x0000));
-				dimensions3 = renderer->drawString("RAM 4.4/4.4GB△4444.4", false, 0, size, size, renderer->a(0x0000));
-				dimensions4 = renderer->drawString("BRD 88.8/88.8/88.8\u00B0C@-15.5W[99:99]", false, 0, size, size, renderer->a(0x0000));
-				dimensions5 = renderer->drawString("FAN 100.0%", false, 0, size, size, renderer->a(0x0000));
-				dimensions6 = renderer->drawString("FPS 44.4", false, 0, size, size, renderer->a(0x0000));
-				auto spacesize = renderer->drawString(" ", false, 0, size, size, renderer->a(0x0000));
+				dimensions1 = renderer->drawString("CPU [100%,100%,100%,100%]△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions2 = renderer->drawString("GPU 100.0%△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions3 = renderer->drawString("RAM 4.4/4.4GB△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions4 = renderer->drawString("BRD 88.8/88.8/88.8\u00B0C@-15.5W[99:99]", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions5 = renderer->drawString("FAN 100.0%", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions6 = renderer->drawString("FPS 44.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				auto spacesize = renderer->drawString(" ", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				margin = spacesize.first;
 				Initialized = true;
 			}
+
+			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, fontsize + (fontsize / 3), a(0x7111));
 
 			uint32_t offset1 = 0;
 			uint32_t offset2 = offset1 + dimensions1.first + margin;
 			uint32_t offset3 = offset2 + dimensions2.first + margin;
 
-			auto dimensions1_s = renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
-			auto dimensions2_s = renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
-			auto dimensions3_s = renderer->drawString("RAM", false, offset3, size, size, renderer->a(0xFCCF));
+			auto dimensions1_s = renderer->drawString("CPU", false, offset1, fontsize, fontsize, renderer->a(0xFCCF));
+			auto dimensions2_s = renderer->drawString("GPU", false, offset2, fontsize, fontsize, renderer->a(0xFCCF));
+			auto dimensions3_s = renderer->drawString("RAM", false, offset3, fontsize, fontsize, renderer->a(0xFCCF));
 
 			uint32_t offset1_s = offset1 + dimensions1_s.first + margin;
 			uint32_t offset2_s = offset2 + dimensions2_s.first + margin;
 			uint32_t offset3_s = offset3 + dimensions3_s.first + margin;
 
-			renderer->drawString(CPU_compressed_c, false, offset1_s, size, size, renderer->a(0xFFFF));
-			renderer->drawString(GPU_Load_c, false, offset2_s, size, size, renderer->a(0xFFFF));
-			renderer->drawString(RAM_var_compressed_c, false, offset3_s, size, size, renderer->a(0xFFFF));
+			renderer->drawString(CPU_compressed_c, false, offset1_s, fontsize, fontsize, renderer->a(0xFFFF));
+			renderer->drawString(GPU_Load_c, false, offset2_s, fontsize, fontsize, renderer->a(0xFFFF));
+			renderer->drawString(RAM_var_compressed_c, false, offset3_s, fontsize, fontsize, renderer->a(0xFFFF));
 
 			if (!GameRunning) {
 				uint32_t offset4 = offset3 + dimensions3.first + margin;
-				uint32_t offset5 = framebufferWidth - dimensions5.first;
+				uint32_t offset5 = tsl::cfg::FramebufferWidth - dimensions5.first;
 				uint32_t space_free = offset5 - offset4;
 				uint32_t margins_free = space_free - dimensions4.first;
 
 				offset4 = offset4 + ((margins_free) / 2);
-				auto dimensions4_s = renderer->drawString("BRD", false, offset4, size, size, renderer->a(0xFCCF));
-				auto dimensions5_s = renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
+				auto dimensions4_s = renderer->drawString("BRD", false, offset4, fontsize, fontsize, renderer->a(0xFCCF));
+				auto dimensions5_s = renderer->drawString("FAN", false, offset5, fontsize, fontsize, renderer->a(0xFCCF));
 
 				uint32_t offset4_s = offset4 + dimensions4_s.first + margin;
 				uint32_t offset5_s = offset5 + dimensions5_s.first + margin;
 
-				renderer->drawString(skin_temperature_c, false, offset4_s, size, size, renderer->a(0xFFFF));
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, size, size, renderer->a(0xFFFF));
+				renderer->drawString(skin_temperature_c, false, offset4_s, fontsize, fontsize, renderer->a(0xFFFF));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, fontsize, fontsize, renderer->a(0xFFFF));
 			}
 			else {
 				uint32_t offset4 = offset3 + dimensions3.first + margin;
 				uint32_t offset5 = offset4 + dimensions4.first + margin;
-				uint32_t offset6 = framebufferWidth - dimensions6.first;
+				uint32_t offset6 = tsl::cfg::FramebufferWidth - dimensions6.first;
 
 				uint32_t space_free = offset6 - offset5;
 				uint32_t margins_free = space_free - dimensions5.first;
@@ -717,17 +719,17 @@ public:
 				offset4 = offset4 + ((margins_free) / 2);
 				offset5 = offset4 + dimensions4.first + margin;
 
-				auto dimensions4_s = renderer->drawString("BRD", false, offset4, size, size, renderer->a(0xFCCF));
-				auto dimensions5_s = renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
-				auto dimensions6_s = renderer->drawString("FPS", false, offset6, size, size, renderer->a(0xFCCF));
+				auto dimensions4_s = renderer->drawString("BRD", false, offset4, fontsize, fontsize, renderer->a(0xFCCF));
+				auto dimensions5_s = renderer->drawString("FAN", false, offset5, fontsize, fontsize, renderer->a(0xFCCF));
+				auto dimensions6_s = renderer->drawString("FPS", false, offset6, fontsize, fontsize, renderer->a(0xFCCF));
 
 				uint32_t offset4_s = offset4 + dimensions4_s.first + margin;
 				uint32_t offset5_s = offset5 + dimensions5_s.first + margin;
 				uint32_t offset6_s = offset6 + dimensions6_s.first + margin;
 
-				renderer->drawString(skin_temperature_c, false, offset4_s, size, size, renderer->a(0xFFFF));
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, size, size, renderer->a(0xFFFF));
-				renderer->drawString(FPS_var_compressed_c, false, offset6_s, size, size, renderer->a(0xFFFF));
+				renderer->drawString(skin_temperature_c, false, offset4_s, fontsize, fontsize, renderer->a(0xFFFF));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, fontsize, fontsize, renderer->a(0xFFFF));
+				renderer->drawString(FPS_var_compressed_c, false, offset6_s, fontsize, fontsize, renderer->a(0xFFFF));
 			}
 		});
 
@@ -763,49 +765,43 @@ public:
 		if (realCPU_Hz) {
 			int32_t deltaCPU = realCPU_Hz - CPU_Hz;
 			if (deltaCPU > 20000000) {
-				strcpy(difference, "▲");
-			}
-			else if (deltaCPU > 100000) {
 				strcpy(difference, "△");
 			}
-			else if (deltaCPU < -100000) {
-				strcpy(difference, "▽");
+			else if (deltaCPU < -50000000) {
+				strcpy(difference, "≠");
 			}
 			else if (deltaCPU < -20000000) {
-				strcpy(difference, "▼");
-			}
-			else if (deltaCPU < -50000000) {
-				strcpy(difference, "◘");
+				strcpy(difference, "▽");
 			}
 		}
-		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]%s%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, difference, (float)CPU_Hz / 1000000);
+		if (realFrequencies && realCPU_Hz) {
+			snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]%s%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, difference, (float)realCPU_Hz / 1000000);
+		}
+		else snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]%s%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, difference, (float)CPU_Hz / 1000000);
 		
 		///GPU
 		if (realGPU_Hz) {
 			int32_t deltaGPU = realGPU_Hz - GPU_Hz;
 			if (deltaGPU >= 20000000) {
-				strcpy(difference, "▲");
-			}
-			else if (deltaGPU >= 100000) {
 				strcpy(difference, "△");
 			}
-			else if (deltaGPU > -100000) {
+			else if (deltaGPU > -20000000) {
 				strcpy(difference, "@");
 			}
-			else if (deltaGPU <= -100000) {
+			else if (deltaGPU < -50000000) {
+				strcpy(difference, "≠");
+			}
+			else if (deltaGPU < -20000000) {
 				strcpy(difference, "▽");
-			}
-			else if (deltaGPU <= -20000000) {
-				strcpy(difference, "▼");
-			}
-			else if (deltaGPU <= -50000000) {
-				strcpy(difference, "◘");
 			}
 		}
 		else {
 			strcpy(difference, "@");
 		}
-		snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s%s%.1f", (float)GPU_Load_u / 10, "%", difference, (float)GPU_Hz / 1000000);
+		if (realFrequencies && realGPU_Hz) {
+			snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s%s%.1f", (float)GPU_Load_u / 10, "%", difference, (float)realGPU_Hz / 1000000);
+		}
+		else snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s%s%.1f", (float)GPU_Load_u / 10, "%", difference, (float)GPU_Hz / 1000000);
 		
 		///RAM
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
@@ -824,28 +820,25 @@ public:
 		if (realRAM_Hz) {
 			int32_t deltaRAM = realRAM_Hz - RAM_Hz;
 			if (deltaRAM >= 20000000) {
-				strcpy(difference, "▲");
-			}
-			else if (deltaRAM >= 100000) {
 				strcpy(difference, "△");
 			}
-			else if (deltaRAM > -100000) {
+			else if (deltaRAM > -20000000) {
 				strcpy(difference, "@");
 			}
-			else if (deltaRAM <= -100000) {
+			else if (deltaRAM < -50000000) {
+				strcpy(difference, "≠");
+			}
+			else if (deltaRAM < -20000000) {
 				strcpy(difference, "▽");
-			}
-			else if (deltaRAM <= -20000000) {
-				strcpy(difference, "▼");
-			}
-			else if (deltaRAM <= -50000000) {
-				strcpy(difference, "◘");
 			}
 		}
 		else {
 			strcpy(difference, "@");
 		}
-		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s%s%.1f", MICRO_RAM_all_c, difference, (float)RAM_Hz / 1000000);
+		if (realFrequencies && realRAM_Hz) {
+			snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s%s%.1f", MICRO_RAM_all_c, difference, (float)realRAM_Hz / 1000000);
+		}
+		else snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s%s%.1f", MICRO_RAM_all_c, difference, (float)RAM_Hz / 1000000);
 		
 		char remainingBatteryLife[8];
 		if (batTimeEstimate >= 0) {
