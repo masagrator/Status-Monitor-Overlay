@@ -592,7 +592,7 @@ public:
 			uint32_t margin = (fontsize * 4);
 			
 			renderer->drawRect(0, 0, margin + rectangleWidth + (fontsize / 3), height, a(settings.backgroundColor));
-			renderer->drawString(print_text, false, 0, fontsize, fontsize, renderer->a(settings.textColor));
+			renderer->drawString(print_text, false, 0, fontsize, fontsize, renderer->a(settings.catColor));
 			
 			///GPU
 			renderer->drawString(Variables, false, margin, fontsize, fontsize, renderer->a(settings.textColor));
