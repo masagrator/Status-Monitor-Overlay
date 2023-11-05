@@ -638,6 +638,10 @@ void convertToUpper(std::string& str) {
 	std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }
 
+void convertToLower(std::string& str) {
+	std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+}
+
 void formatButtonCombination(std::string& line) {
 	// Remove all spaces from the line
 	line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
@@ -816,10 +820,31 @@ void ParseIniFile() {
 	}
 }
 
-bool renderRealFreqs(bool Micro) {
+struct MiniSettings {
+	bool realFrequencies;
+	size_t fontSize;
+	int backgroundColor;
+	int catColor;
+	int textColor;
+};
+
+struct MicroSettings {
+	bool realFrequencies;
+	size_t fontSize;
+	uint8_t alignTo;
+	int backgroundColor;
+	int catColor;
+	int textColor;
+};
+
+void GetConfigSettings(MiniSettings* settings) {
+	settings -> realFrequencies = false;
+	settings -> fontSize = 15;
+	settings -> backgroundColor = 0x7111;
+
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
-		return false;
+		return;
 	fseek(configFileIn, 0, SEEK_END);
 	long fileSize = ftell(configFileIn);
 	rewind(configFileIn);
@@ -831,32 +856,78 @@ bool renderRealFreqs(bool Micro) {
 	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
 
 	std::string key;
-	if (Micro) {
-		if (parsedData.find("micro") == parsedData.end())
-			return false;
-		if (parsedData["micro"].find("real_freqs") == parsedData["micro"].end())
-			return false;
-		key = parsedData["micro"]["real_freqs"];
-	}
-	else {
-		if (parsedData.find("mini") == parsedData.end())
-			return false;
-		if (parsedData["mini"].find("real_freqs") == parsedData["mini"].end())
-			return false;
+	if (parsedData.find("mini") == parsedData.end())
+		return;
+	if (parsedData["mini"].find("real_freqs") != parsedData["mini"].end()) {
 		key = parsedData["mini"]["real_freqs"];
+		convertToUpper(key);
+		settings -> realFrequencies = !(key.compare("TRUE"));
 	}
-	convertToUpper(key);
-	return !(key.compare("TRUE"));
+	if (parsedData["mini"].find("font_size") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["font_size"];
+		long fontsize = atol(key.c_str());
+
+		long maxFontSize = 22;
+		long minFontSize = 8;
+		if (fontsize < minFontSize)
+			settings -> fontSize = minFontSize;
+		if (fontsize > maxFontSize)
+			settings -> fontSize = maxFontSize;
+		settings -> fontSize = fontsize;	
+	}
+	if (parsedData["mini"].find("background_color") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["background_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					color = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> backgroundColor = color;
+		}
+	}
+	if (parsedData["mini"].find("cat_color") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["cat_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					color = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> catColor = color;
+		}
+	}
+	if (parsedData["mini"].find("text_color") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["text_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					color = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> textColor = color;
+		}
+	}
 }
 
-size_t getFontSize(bool Micro) {
-	size_t defaultFontSize = 15;
-	if (Micro) {
-		defaultFontSize = 18;
-	}
+void GetConfigSettings(MicroSettings* settings) {
+	settings -> realFrequencies = false;
+	settings -> fontSize = 18;
+	settings -> alignTo = 1;
+	settings -> backgroundColor = 0x7111;
+
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
-		return false;
+		return;
 	fseek(configFileIn, 0, SEEK_END);
 	long fileSize = ftell(configFileIn);
 	rewind(configFileIn);
@@ -866,31 +937,80 @@ size_t getFontSize(bool Micro) {
 	fclose(configFileIn);
 	
 	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
-	
-	std::string key;
-	if (Micro) {
-		if (parsedData.find("micro") == parsedData.end())
-			return defaultFontSize;
-		if (parsedData["micro"].find("font_size") == parsedData["micro"].end())
-			return defaultFontSize;
-		key = parsedData["micro"]["font_size"];
-	}
-	else {
-		if (parsedData.find("mini") == parsedData.end())
-			return defaultFontSize;
-		if (parsedData["mini"].find("font_size") == parsedData["mini"].end())
-			return defaultFontSize;
-		key = parsedData["mini"]["font_size"];
-	}
-	long fontsize = atol(key.c_str());
 
-	long maxFontSize = 22;
-	if (Micro)
-		maxFontSize = 18;
-	long minFontSize = 8;
-	if (fontsize < minFontSize)
-		return minFontSize;
-	if (fontsize > maxFontSize)
-		return maxFontSize;
-	return fontsize;
+	std::string key;
+	if (parsedData.find("micro") == parsedData.end())
+		return;
+	if (parsedData["micro"].find("real_freqs") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["real_freqs"];
+		convertToUpper(key);
+		settings -> realFrequencies = !(key.compare("TRUE"));
+	}
+	if (parsedData["micro"].find("align_to") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["align_to"];
+		convertToUpper(key);
+		if (!key.compare("LEFT")) {
+			settings -> alignTo = 0;
+		}
+		else if (!key.compare("CENTER")) {
+			settings -> alignTo = 1;
+		}		
+		else if (!key.compare("RIGHT")) {
+			settings -> alignTo = 2;
+		}
+	}
+	if (parsedData["micro"].find("font_size") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["font_size"];
+		long fontsize = atol(key.c_str());
+
+		long maxFontSize = 18;
+		long minFontSize = 8;
+		if (fontsize < minFontSize)
+			settings -> fontSize = minFontSize;
+		if (fontsize > maxFontSize)
+			settings -> fontSize = maxFontSize;
+		settings -> fontSize = fontsize;	
+	}
+	if (parsedData["micro"].find("background_color") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["background_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					color = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> backgroundColor = color;
+		}
+	}
+	if (parsedData["micro"].find("cat_color") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["cat_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					color = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> catColor = color;
+		}
+	}
+	if (parsedData["micro"].find("text_color") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["text_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					color = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> textColor = color;
+		}
+	}
 }

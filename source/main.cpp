@@ -472,14 +472,12 @@ private:
 	char skin_temperature_c[32];
 
 	uint32_t rectangleWidth = 0;
-	uint8_t fontsize = 15;
 	char Variables[512];
-	bool realFrequencies = false;
+	MiniSettings settings;
 	bool Initialized = false;
 public:
     MiniOverlay() {
-		realFrequencies = renderRealFreqs(false);
-		fontsize = getFontSize(false);
+		GetConfigSettings(&settings);
 	}
 
     virtual tsl::elm::Element* createUI() override {
@@ -489,7 +487,7 @@ public:
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
 			if (!Initialized) {
-				auto dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
+				auto dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, settings.fontSize, renderer->a(0x0000));
 				rectangleWidth = dimensions.first;
 				Initialized = true;
 			}
@@ -497,10 +495,10 @@ public:
 
 			if (GameRunning) entry_count++;
 
-			uint32_t height = (fontsize * entry_count) + (fontsize / 3);
-			uint32_t margin = (fontsize * 4);
+			uint32_t height = (settings.fontSize * entry_count) + (settings.fontSize / 3);
+			uint32_t margin = (settings.fontSize * 4);
 			
-			renderer->drawRect(0, 0, margin + rectangleWidth, height, a(0x7111));
+			renderer->drawRect(0, 0, margin + rectangleWidth, height, a(settings.backgroundColor));
 			
 			//Print strings
 			///CPU
@@ -511,11 +509,11 @@ public:
 			size_t str_size = print_text.size() + 1;
 			char* buffer = new char[str_size];
 			strncpy(buffer, print_text.c_str(), str_size);
-			renderer->drawString(buffer, false, 0, fontsize, fontsize, renderer->a(0xFFFF));
+			renderer->drawString(buffer, false, 0, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
 			delete[] buffer;
 			
 			///GPU
-			renderer->drawString(Variables, false, margin, fontsize, fontsize, renderer->a(0xFFFF));
+			renderer->drawString(Variables, false, margin, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
 		});
 
 		rootFrame->setContent(Status);
@@ -549,12 +547,12 @@ public:
 		snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%s", percent, "%");
 		
 		char MINI_CPU_compressed_c[42] = "";
-		if (realFrequencies && realCPU_Hz) {
+		if (settings.realFrequencies && realCPU_Hz) {
 			snprintf(MINI_CPU_compressed_c, sizeof(MINI_CPU_compressed_c), "[%s,%s,%s,%s]@%.1f", MINI_CPU_Usage0, MINI_CPU_Usage1, MINI_CPU_Usage2, MINI_CPU_Usage3, (float)realCPU_Hz / 1000000);
 		}
 		else snprintf(MINI_CPU_compressed_c, sizeof(MINI_CPU_compressed_c), "[%s,%s,%s,%s]@%.1f", MINI_CPU_Usage0, MINI_CPU_Usage1, MINI_CPU_Usage2, MINI_CPU_Usage3, (float)CPU_Hz / 1000000);
 		char MINI_GPU_Load_c[14];
-		if (realFrequencies && realGPU_Hz) {
+		if (settings.realFrequencies && realGPU_Hz) {
 			snprintf(MINI_GPU_Load_c, sizeof(MINI_GPU_Load_c), "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)realGPU_Hz / 1000000);
 		}
 		else snprintf(MINI_GPU_Load_c, sizeof(MINI_GPU_Load_c), "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)GPU_Hz / 1000000);
@@ -571,7 +569,7 @@ public:
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
 		char MINI_RAM_var_compressed_c[19] = "";
-		if (realFrequencies && realRAM_Hz) {
+		if (settings.realFrequencies && realRAM_Hz) {
 			snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)realRAM_Hz / 1000000);
 		}
 		else snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)RAM_Hz / 1000000);
@@ -640,7 +638,6 @@ private:
 	char batteryCharge[10]; // Declare the batteryCharge variable
 	char FPS_var_compressed_c[64];
 
-	uint32_t fontsize = 18;
 	uint32_t margin = 8;
 
 	std::pair<u32, u32> dimensions1;
@@ -649,12 +646,13 @@ private:
 	std::pair<u32, u32> dimensions4;
 	std::pair<u32, u32> dimensions5;
 	std::pair<u32, u32> dimensions6;
-	bool realFrequencies = false;
 	bool Initialized = false;
+	MicroSettings settings;
+	size_t text_width = 0;
+	size_t fps_width = 0;
 public:
     MicroOverlay() { 
-		realFrequencies = renderRealFreqs(true);
-		fontsize = getFontSize(true);
+		GetConfigSettings(&settings);
 	}
     
     virtual tsl::elm::Element* createUI() override {
@@ -663,34 +661,50 @@ public:
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 
 			if (!Initialized) {
-				dimensions1 = renderer->drawString("CPU [100%,100%,100%,100%]△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
-				dimensions2 = renderer->drawString("GPU 100.0%△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
-				dimensions3 = renderer->drawString("RAM 4.4/4.4GB△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
-				dimensions4 = renderer->drawString("BRD 88.8/88.8/88.8\u00B0C@-15.5W[99:99]", false, 0, fontsize, fontsize, renderer->a(0x0000));
-				dimensions5 = renderer->drawString("FAN 100.0%", false, 0, fontsize, fontsize, renderer->a(0x0000));
-				dimensions6 = renderer->drawString("FPS 44.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
-				auto spacesize = renderer->drawString(" ", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions1 = renderer->drawString("CPU [100%,100%,100%,100%]△4444.4", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
+				dimensions2 = renderer->drawString("GPU 100.0%△4444.4", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
+				dimensions3 = renderer->drawString("RAM 4.4/4.4GB△4444.4", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
+				dimensions4 = renderer->drawString("BRD 88.8/88.8/88.8\u00B0C@-15.5W[99:99]", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
+				dimensions5 = renderer->drawString("FAN 100.0%", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
+				dimensions6 = renderer->drawString("FPS 44.4", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
+				auto spacesize = renderer->drawString(" ", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
 				margin = spacesize.first;
+				text_width = dimensions1.first + dimensions2.first + dimensions3.first + dimensions4.first + dimensions5.first + (margin * 4);
+				fps_width = dimensions6.first + margin;
 				Initialized = true;
 			}
 
-			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, fontsize + (fontsize / 3), a(0x7111));
+			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, settings.fontSize + (settings.fontSize / 4), a(settings.backgroundColor));
 
 			uint32_t offset1 = 0;
+			if (settings.fontSize < 18) {
+				if (settings.alignTo == 1) {
+					if (GameRunning) {
+						offset1 = (tsl::cfg::FramebufferWidth - (text_width + fps_width)) / 2;
+					}
+					else offset1 = (tsl::cfg::FramebufferWidth - text_width) / 2;
+				}
+				else if (settings.alignTo == 2) {
+					if (GameRunning) {
+						offset1 = tsl::cfg::FramebufferWidth - (text_width + fps_width);
+					}
+					else offset1 = tsl::cfg::FramebufferWidth - text_width;
+				}
+			}
 			uint32_t offset2 = offset1 + dimensions1.first + margin;
 			uint32_t offset3 = offset2 + dimensions2.first + margin;
 
-			auto dimensions1_s = renderer->drawString("CPU", false, offset1, fontsize, fontsize, renderer->a(0xFCCF));
-			auto dimensions2_s = renderer->drawString("GPU", false, offset2, fontsize, fontsize, renderer->a(0xFCCF));
-			auto dimensions3_s = renderer->drawString("RAM", false, offset3, fontsize, fontsize, renderer->a(0xFCCF));
+			auto dimensions1_s = renderer->drawString("CPU", false, offset1, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
+			auto dimensions2_s = renderer->drawString("GPU", false, offset2, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
+			auto dimensions3_s = renderer->drawString("RAM", false, offset3, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
 
 			uint32_t offset1_s = offset1 + dimensions1_s.first + margin;
 			uint32_t offset2_s = offset2 + dimensions2_s.first + margin;
 			uint32_t offset3_s = offset3 + dimensions3_s.first + margin;
 
-			renderer->drawString(CPU_compressed_c, false, offset1_s, fontsize, fontsize, renderer->a(0xFFFF));
-			renderer->drawString(GPU_Load_c, false, offset2_s, fontsize, fontsize, renderer->a(0xFFFF));
-			renderer->drawString(RAM_var_compressed_c, false, offset3_s, fontsize, fontsize, renderer->a(0xFFFF));
+			renderer->drawString(CPU_compressed_c, false, offset1_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
+			renderer->drawString(GPU_Load_c, false, offset2_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
+			renderer->drawString(RAM_var_compressed_c, false, offset3_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
 
 			if (!GameRunning) {
 				uint32_t offset4 = offset3 + dimensions3.first + margin;
@@ -698,15 +712,19 @@ public:
 				uint32_t space_free = offset5 - offset4;
 				uint32_t margins_free = space_free - dimensions4.first;
 
-				offset4 = offset4 + ((margins_free) / 2);
-				auto dimensions4_s = renderer->drawString("BRD", false, offset4, fontsize, fontsize, renderer->a(0xFCCF));
-				auto dimensions5_s = renderer->drawString("FAN", false, offset5, fontsize, fontsize, renderer->a(0xFCCF));
+				if (settings.fontSize < 18) {
+					offset5 = offset4 + dimensions4.first + margin;
+				}
+				else offset4 = offset4 + ((margins_free) / 2);
+
+				auto dimensions4_s = renderer->drawString("BRD", false, offset4, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
+				auto dimensions5_s = renderer->drawString("FAN", false, offset5, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
 
 				uint32_t offset4_s = offset4 + dimensions4_s.first + margin;
 				uint32_t offset5_s = offset5 + dimensions5_s.first + margin;
 
-				renderer->drawString(skin_temperature_c, false, offset4_s, fontsize, fontsize, renderer->a(0xFFFF));
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, fontsize, fontsize, renderer->a(0xFFFF));
+				renderer->drawString(skin_temperature_c, false, offset4_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
 			}
 			else {
 				uint32_t offset4 = offset3 + dimensions3.first + margin;
@@ -716,20 +734,25 @@ public:
 				uint32_t space_free = offset6 - offset5;
 				uint32_t margins_free = space_free - dimensions5.first;
 
-				offset4 = offset4 + ((margins_free) / 2);
-				offset5 = offset4 + dimensions4.first + margin;
+				if (settings.fontSize < 18) {
+					offset6 = offset5 + dimensions5.first + margin;
+				}
+				else {
+					offset4 = offset4 + ((margins_free) / 2);
+					offset5 = offset4 + dimensions4.first + margin;
+				}
 
-				auto dimensions4_s = renderer->drawString("BRD", false, offset4, fontsize, fontsize, renderer->a(0xFCCF));
-				auto dimensions5_s = renderer->drawString("FAN", false, offset5, fontsize, fontsize, renderer->a(0xFCCF));
-				auto dimensions6_s = renderer->drawString("FPS", false, offset6, fontsize, fontsize, renderer->a(0xFCCF));
+				auto dimensions4_s = renderer->drawString("BRD", false, offset4, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
+				auto dimensions5_s = renderer->drawString("FAN", false, offset5, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
+				auto dimensions6_s = renderer->drawString("FPS", false, offset6, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
 
 				uint32_t offset4_s = offset4 + dimensions4_s.first + margin;
 				uint32_t offset5_s = offset5 + dimensions5_s.first + margin;
 				uint32_t offset6_s = offset6 + dimensions6_s.first + margin;
 
-				renderer->drawString(skin_temperature_c, false, offset4_s, fontsize, fontsize, renderer->a(0xFFFF));
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, fontsize, fontsize, renderer->a(0xFFFF));
-				renderer->drawString(FPS_var_compressed_c, false, offset6_s, fontsize, fontsize, renderer->a(0xFFFF));
+				renderer->drawString(skin_temperature_c, false, offset4_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
+				renderer->drawString(FPS_var_compressed_c, false, offset6_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
 			}
 		});
 
@@ -774,7 +797,7 @@ public:
 				strcpy(difference, "▽");
 			}
 		}
-		if (realFrequencies && realCPU_Hz) {
+		if (settings.realFrequencies && realCPU_Hz) {
 			snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]%s%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, difference, (float)realCPU_Hz / 1000000);
 		}
 		else snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]%s%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, difference, (float)CPU_Hz / 1000000);
@@ -798,7 +821,7 @@ public:
 		else {
 			strcpy(difference, "@");
 		}
-		if (realFrequencies && realGPU_Hz) {
+		if (settings.realFrequencies && realGPU_Hz) {
 			snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s%s%.1f", (float)GPU_Load_u / 10, "%", difference, (float)realGPU_Hz / 1000000);
 		}
 		else snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s%s%.1f", (float)GPU_Load_u / 10, "%", difference, (float)GPU_Hz / 1000000);
@@ -835,7 +858,7 @@ public:
 		else {
 			strcpy(difference, "@");
 		}
-		if (realFrequencies && realRAM_Hz) {
+		if (settings.realFrequencies && realRAM_Hz) {
 			snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s%s%.1f", MICRO_RAM_all_c, difference, (float)realRAM_Hz / 1000000);
 		}
 		else snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s%s%.1f", MICRO_RAM_all_c, difference, (float)RAM_Hz / 1000000);
@@ -856,16 +879,6 @@ public:
 		
 		///FPS
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", FPSavg);
-		
-		//Debug
-		/*
-		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "", "%", "%", "%", "%");
-		snprintf(GPU_Load_c, sizeof GPU_Load_c, "100.0%s@2400.0", "%");
-		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "4.4/4.4GB@4444.4");
-		snprintf(skin_temperature_c, sizeof skin_temperature_c, "88.8/88.8/88.8\u00B0C@-15.5W[99:99]");
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "100.0%s", "%");
-		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "60.0");
-		*/
 		
 		
 		
