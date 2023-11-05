@@ -13,8 +13,20 @@ class com_FPS : public tsl::Gui {
 private:
 	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
 	char FPSavg_c[8];
+	FpsCounterSettings settings;
+	size_t fontsize = 0;
+	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
 public:
-    com_FPS() { }
+    com_FPS() { 
+		GetConfigSettings(&settings);
+		apmGetPerformanceMode(&performanceMode);
+		if (performanceMode == ApmPerformanceMode_Normal) {
+			fontsize = settings.handheldFontSize;
+		}
+		else if (performanceMode == ApmPerformanceMode_Boost) {
+			fontsize = settings.dockedFontSize;
+		}
+	}
 
 	s16 base_y = 0;
 
@@ -22,12 +34,10 @@ public:
 		rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
-				static uint8_t avg = 0;
-				if (FPSavg >= 100) avg = 46;
-				else if (FPSavg >= 10) avg = 23;
-				else avg = 0;
-				renderer->drawRect(0, base_y, tsl::cfg::FramebufferWidth - 370 + avg, 50, a(0x7111));
-				renderer->drawString(FPSavg_c, false, 5, base_y+40, 40, renderer->a(0xFFFF));
+			auto dimensions = renderer->drawString(FPSavg_c, false, 5, base_y+fontsize, fontsize, renderer->a(0x0000));
+			size_t rectangleWidth = dimensions.first;
+			renderer->drawRect(0, base_y, rectangleWidth + (fontsize / 10), fontsize + (fontsize / 10), a(settings.backgroundColor));
+			renderer->drawString(FPSavg_c, false, 5, base_y+fontsize, fontsize, renderer->a(settings.textColor));
 		});
 
 		rootFrame->setContent(Status);
@@ -36,7 +46,13 @@ public:
 	}
 
 	virtual void update() override {
-		///FPS
+		apmGetPerformanceMode(&performanceMode);
+		if (performanceMode == ApmPerformanceMode_Normal) {
+			fontsize = settings.handheldFontSize;
+		}
+		else if (performanceMode == ApmPerformanceMode_Boost) {
+			fontsize = settings.dockedFontSize;
+		}
 		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f", FPSavg);
 		
 	}
@@ -60,15 +76,15 @@ public:
 			if ((keysHeld & KEY_DUP) && base_y != 0) {
 				base_y = 0;
 			}
-			else if ((keysHeld & KEY_DDOWN) && base_y != 670) {
-				base_y = 670;
+			else if ((keysHeld & KEY_DDOWN) && !base_y) {
+				base_y = tsl::cfg::FramebufferHeight - (fontsize + (fontsize / 10));
 			}
 		}
 		return false;
 	}
 };
 
-//FPS Counter mode
+//FPS Graph mode
 class com_FPSGraph : public tsl::Gui {
 private:
 	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
@@ -473,11 +489,20 @@ private:
 
 	uint32_t rectangleWidth = 0;
 	char Variables[512];
+	size_t fontsize = 0;
 	MiniSettings settings;
 	bool Initialized = false;
+	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
 public:
     MiniOverlay() {
 		GetConfigSettings(&settings);
+		apmGetPerformanceMode(&performanceMode);
+		if (performanceMode == ApmPerformanceMode_Normal) {
+			fontsize = settings.handheldFontSize;
+		}
+		else if (performanceMode == ApmPerformanceMode_Boost) {
+			fontsize = settings.dockedFontSize;
+		}
 	}
 
     virtual tsl::elm::Element* createUI() override {
@@ -487,33 +512,90 @@ public:
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
 			if (!Initialized) {
-				auto dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, settings.fontSize, renderer->a(0x0000));
+				std::pair<u32, u32> dimensions;
+				if (settings.showCPU) {
+					dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
+				}
+				else if (settings.showRAM) {
+					dimensions = renderer->drawString("4444/4444MB@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
+				}
+				else if (settings.showTEMP) {
+					dimensions = renderer->drawString("88.8\u00B0C/88.8\u00B0C/88.8\u00B0C", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				}
+				else if (settings.showGPU) {
+					dimensions = renderer->drawString("100.0%@4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				}
+				else if (settings.showDRAW) {
+					dimensions = renderer->drawString("-44.44W[44:44]", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				}
+				else if (settings.showFAN) {
+					dimensions = renderer->drawString("100.0%", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				}
+				else {
+					dimensions = renderer->drawString("444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				}
+
 				rectangleWidth = dimensions.first;
 				Initialized = true;
 			}
-			uint8_t entry_count = 6;
-
-			if (GameRunning) entry_count++;
-
-			uint32_t height = (settings.fontSize * entry_count) + (settings.fontSize / 3);
-			uint32_t margin = (settings.fontSize * 4);
 			
-			renderer->drawRect(0, 0, margin + rectangleWidth, height, a(settings.backgroundColor));
-			
-			//Print strings
-			///CPU
-			std::string print_text = "CPU\nGPU\nRAM\nTEMP\nFAN\nDRAW";
-			if (GameRunning) {
-				print_text += "\nFPS";
+			char print_text[24] = "";
+			size_t entry_count = 0;
+			if (settings.showCPU) {
+				strcat(print_text, "CPU");
+				entry_count++;
 			}
-			size_t str_size = print_text.size() + 1;
-			char* buffer = new char[str_size];
-			strncpy(buffer, print_text.c_str(), str_size);
-			renderer->drawString(buffer, false, 0, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
-			delete[] buffer;
+			if (settings.showGPU) {
+				if (print_text[0]) {
+					strcat(print_text, "\n");
+				}
+				strcat(print_text, "GPU");
+				entry_count++;
+			}
+			if (settings.showRAM) {
+				if (print_text[0]) {
+					strcat(print_text, "\n");
+				}
+				strcat(print_text, "RAM");
+				entry_count++;
+			}
+			if (settings.showTEMP) {
+				if (print_text[0]) {
+					strcat(print_text, "\n");
+				}
+				strcat(print_text, "TEMP");
+				entry_count++;
+			}
+			if (settings.showFAN) {
+				if (print_text[0]) {
+					strcat(print_text, "\n");
+				}
+				strcat(print_text, "FAN");
+				entry_count++;
+			}
+			if (settings.showDRAW) {
+				if (print_text[0]) {
+					strcat(print_text, "\n");
+				}
+				strcat(print_text, "DRAW");
+				entry_count++;
+			}
+			if (settings.showFPS && GameRunning) {
+				if (print_text[0]) {
+					strcat(print_text, "\n");
+				}
+				strcat(print_text, "FPS");
+				entry_count++;
+			}
+
+			uint32_t height = (fontsize * entry_count) + (fontsize / 3);
+			uint32_t margin = (fontsize * 4);
+			
+			renderer->drawRect(0, 0, margin + rectangleWidth + (fontsize / 3), height, a(settings.backgroundColor));
+			renderer->drawString(print_text, false, 0, fontsize, fontsize, renderer->a(settings.textColor));
 			
 			///GPU
-			renderer->drawString(Variables, false, margin, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
+			renderer->drawString(Variables, false, margin, fontsize, fontsize, renderer->a(settings.textColor));
 		});
 
 		rootFrame->setContent(Status);
@@ -522,6 +604,13 @@ public:
 	}
 
 	virtual void update() override {
+		apmGetPerformanceMode(&performanceMode);
+		if (performanceMode == ApmPerformanceMode_Normal) {
+			fontsize = settings.handheldFontSize;
+		}
+		else if (performanceMode == ApmPerformanceMode_Boost) {
+			fontsize = settings.dockedFontSize;
+		}
 		if (TeslaFPS == 60) TeslaFPS = 1;
 		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
 		//This is because making each loop also takes time, which is not considered because this will take also additional time
@@ -589,14 +678,47 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
-		char Temp[71] = "";
-		snprintf(Temp, sizeof(Temp), "%s\n%s\n%s", MINI_CPU_compressed_c, MINI_GPU_Load_c, MINI_RAM_var_compressed_c);
-		char Temp2[256] = "";
-		snprintf(Temp2, sizeof(Temp2), "%s\n%s\n%s\n%s", Temp, skin_temperature_c, Rotation_SpeedLevel_c, SoCPCB_temperature_c);
-		if (GameRunning) {
-			snprintf(Variables, sizeof(Variables), "%s\n%2.1f", Temp2, FPSavg);
+		char Temp[256] = "";
+		if (settings.showCPU) {
+			strcat(Temp, MINI_CPU_compressed_c);
 		}
-		else strcpy(Variables, Temp2);
+		if (settings.showGPU) {
+			if (Temp[0]) {
+				strcat(Temp, "\n");
+			}
+			strcat(Temp, MINI_GPU_Load_c);
+		}
+		if (settings.showRAM) {
+			if (Temp[0]) {
+				strcat(Temp, "\n");
+			}
+			strcat(Temp, MINI_RAM_var_compressed_c);
+		}
+		if (settings.showTEMP) {
+			if (Temp[0]) {
+				strcat(Temp, "\n");
+			}
+			strcat(Temp, skin_temperature_c);
+		}
+		if (settings.showFAN) {
+			if (Temp[0]) {
+				strcat(Temp, "\n");
+			}
+			strcat(Temp, Rotation_SpeedLevel_c);
+		}
+		if (settings.showDRAW) {
+			if (Temp[0]) {
+				strcat(Temp, "\n");
+			}
+			strcat(Temp, SoCPCB_temperature_c);
+		}
+		if (settings.showFPS && GameRunning) {
+			if (Temp[0]) {
+				strcat(Temp, "\n");
+			}
+			snprintf(Variables, sizeof(Variables), "%s%2.1f", Temp, FPSavg);
+		}
+		else strcpy(Variables, Temp);
 
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
@@ -622,7 +744,7 @@ public:
 	}
 };
 
-//Mini mode
+//Micro mode
 class MicroOverlay : public tsl::Gui {
 private:
 	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
@@ -650,9 +772,18 @@ private:
 	MicroSettings settings;
 	size_t text_width = 0;
 	size_t fps_width = 0;
+	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
+	size_t fontsize = 0;
 public:
     MicroOverlay() { 
 		GetConfigSettings(&settings);
+		apmGetPerformanceMode(&performanceMode);
+		if (performanceMode == ApmPerformanceMode_Normal) {
+			fontsize = settings.handheldFontSize;
+		}
+		else if (performanceMode == ApmPerformanceMode_Boost) {
+			fontsize = settings.dockedFontSize;
+		}
 	}
     
     virtual tsl::elm::Element* createUI() override {
@@ -661,23 +792,23 @@ public:
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 
 			if (!Initialized) {
-				dimensions1 = renderer->drawString("CPU [100%,100%,100%,100%]△4444.4", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
-				dimensions2 = renderer->drawString("GPU 100.0%△4444.4", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
-				dimensions3 = renderer->drawString("RAM 4.4/4.4GB△4444.4", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
-				dimensions4 = renderer->drawString("BRD 88.8/88.8/88.8\u00B0C@-15.5W[99:99]", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
-				dimensions5 = renderer->drawString("FAN 100.0%", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
-				dimensions6 = renderer->drawString("FPS 44.4", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
-				auto spacesize = renderer->drawString(" ", false, 0, settings.fontSize, settings.fontSize, renderer->a(0x0000));
+				dimensions1 = renderer->drawString("CPU [100%,100%,100%,100%]△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions2 = renderer->drawString("GPU 100.0%△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions3 = renderer->drawString("RAM 4.4/4.4GB△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions4 = renderer->drawString("BRD 88.8/88.8/88.8\u00B0C@-15.5W[99:99]", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions5 = renderer->drawString("FAN 100.0%", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				dimensions6 = renderer->drawString("FPS 44.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				auto spacesize = renderer->drawString(" ", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				margin = spacesize.first;
 				text_width = dimensions1.first + dimensions2.first + dimensions3.first + dimensions4.first + dimensions5.first + (margin * 4);
 				fps_width = dimensions6.first + margin;
 				Initialized = true;
 			}
 
-			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, settings.fontSize + (settings.fontSize / 4), a(settings.backgroundColor));
+			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, fontsize + (fontsize / 4), a(settings.backgroundColor));
 
 			uint32_t offset1 = 0;
-			if (settings.fontSize < 18) {
+			if (fontsize < 18) {
 				if (settings.alignTo == 1) {
 					if (GameRunning) {
 						offset1 = (tsl::cfg::FramebufferWidth - (text_width + fps_width)) / 2;
@@ -694,17 +825,17 @@ public:
 			uint32_t offset2 = offset1 + dimensions1.first + margin;
 			uint32_t offset3 = offset2 + dimensions2.first + margin;
 
-			auto dimensions1_s = renderer->drawString("CPU", false, offset1, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
-			auto dimensions2_s = renderer->drawString("GPU", false, offset2, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
-			auto dimensions3_s = renderer->drawString("RAM", false, offset3, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
+			auto dimensions1_s = renderer->drawString("CPU", false, offset1, fontsize, fontsize, renderer->a(settings.catColor));
+			auto dimensions2_s = renderer->drawString("GPU", false, offset2, fontsize, fontsize, renderer->a(settings.catColor));
+			auto dimensions3_s = renderer->drawString("RAM", false, offset3, fontsize, fontsize, renderer->a(settings.catColor));
 
 			uint32_t offset1_s = offset1 + dimensions1_s.first + margin;
 			uint32_t offset2_s = offset2 + dimensions2_s.first + margin;
 			uint32_t offset3_s = offset3 + dimensions3_s.first + margin;
 
-			renderer->drawString(CPU_compressed_c, false, offset1_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
-			renderer->drawString(GPU_Load_c, false, offset2_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
-			renderer->drawString(RAM_var_compressed_c, false, offset3_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
+			renderer->drawString(CPU_compressed_c, false, offset1_s, fontsize, fontsize, renderer->a(settings.textColor));
+			renderer->drawString(GPU_Load_c, false, offset2_s, fontsize, fontsize, renderer->a(settings.textColor));
+			renderer->drawString(RAM_var_compressed_c, false, offset3_s, fontsize, fontsize, renderer->a(settings.textColor));
 
 			if (!GameRunning) {
 				uint32_t offset4 = offset3 + dimensions3.first + margin;
@@ -712,19 +843,19 @@ public:
 				uint32_t space_free = offset5 - offset4;
 				uint32_t margins_free = space_free - dimensions4.first;
 
-				if (settings.fontSize < 18) {
+				if (fontsize < 18) {
 					offset5 = offset4 + dimensions4.first + margin;
 				}
 				else offset4 = offset4 + ((margins_free) / 2);
 
-				auto dimensions4_s = renderer->drawString("BRD", false, offset4, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
-				auto dimensions5_s = renderer->drawString("FAN", false, offset5, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
+				auto dimensions4_s = renderer->drawString("BRD", false, offset4, fontsize, fontsize, renderer->a(settings.catColor));
+				auto dimensions5_s = renderer->drawString("FAN", false, offset5, fontsize, fontsize, renderer->a(settings.catColor));
 
 				uint32_t offset4_s = offset4 + dimensions4_s.first + margin;
 				uint32_t offset5_s = offset5 + dimensions5_s.first + margin;
 
-				renderer->drawString(skin_temperature_c, false, offset4_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
+				renderer->drawString(skin_temperature_c, false, offset4_s, fontsize, fontsize, renderer->a(settings.textColor));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, fontsize, fontsize, renderer->a(settings.textColor));
 			}
 			else {
 				uint32_t offset4 = offset3 + dimensions3.first + margin;
@@ -734,7 +865,7 @@ public:
 				uint32_t space_free = offset6 - offset5;
 				uint32_t margins_free = space_free - dimensions5.first;
 
-				if (settings.fontSize < 18) {
+				if (fontsize < 18) {
 					offset6 = offset5 + dimensions5.first + margin;
 				}
 				else {
@@ -742,17 +873,17 @@ public:
 					offset5 = offset4 + dimensions4.first + margin;
 				}
 
-				auto dimensions4_s = renderer->drawString("BRD", false, offset4, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
-				auto dimensions5_s = renderer->drawString("FAN", false, offset5, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
-				auto dimensions6_s = renderer->drawString("FPS", false, offset6, settings.fontSize, settings.fontSize, renderer->a(settings.catColor));
+				auto dimensions4_s = renderer->drawString("BRD", false, offset4, fontsize, fontsize, renderer->a(settings.catColor));
+				auto dimensions5_s = renderer->drawString("FAN", false, offset5, fontsize, fontsize, renderer->a(settings.catColor));
+				auto dimensions6_s = renderer->drawString("FPS", false, offset6, fontsize, fontsize, renderer->a(settings.catColor));
 
 				uint32_t offset4_s = offset4 + dimensions4_s.first + margin;
 				uint32_t offset5_s = offset5 + dimensions5_s.first + margin;
 				uint32_t offset6_s = offset6 + dimensions6_s.first + margin;
 
-				renderer->drawString(skin_temperature_c, false, offset4_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
-				renderer->drawString(FPS_var_compressed_c, false, offset6_s, settings.fontSize, settings.fontSize, renderer->a(settings.textColor));
+				renderer->drawString(skin_temperature_c, false, offset4_s, fontsize, fontsize, renderer->a(settings.textColor));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, fontsize, fontsize, renderer->a(settings.textColor));
+				renderer->drawString(FPS_var_compressed_c, false, offset6_s, fontsize, fontsize, renderer->a(settings.textColor));
 			}
 		});
 
@@ -762,6 +893,13 @@ public:
 	}
 
 	virtual void update() override {
+		apmGetPerformanceMode(&performanceMode);
+		if (performanceMode == ApmPerformanceMode_Normal) {
+			fontsize = settings.handheldFontSize;
+		}
+		else if (performanceMode == ApmPerformanceMode_Boost) {
+			fontsize = settings.dockedFontSize;
+		}
 		if (TeslaFPS == 60) {
 			TeslaFPS = 1;
 			tsl::hlp::requestForeground(false);
@@ -1382,6 +1520,7 @@ public:
 		//Initialize services
 		tsl::hlp::doWithSmSession([this]{
 			
+			apmInitialize();
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
 			
@@ -1452,6 +1591,7 @@ public:
 			audsnoopDisableDspUsageMeasurement();
 		}
 		audsnoopExit();
+		apmExit();
 	}
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state
@@ -1469,6 +1609,7 @@ public:
 		//Initialize services
 		tsl::hlp::doWithSmSession([this]{
 			
+			apmInitialize();
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
 			
@@ -1519,6 +1660,7 @@ public:
 		psmExit();
 		nvClose(fd);
 		nvExit();
+		apmExit();
 	}
 
     virtual void onShow() override {}    // Called before overlay wants to change from invisible to visible state

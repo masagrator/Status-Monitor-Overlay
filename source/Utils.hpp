@@ -822,27 +822,51 @@ void ParseIniFile() {
 
 struct MiniSettings {
 	bool realFrequencies;
-	size_t fontSize;
+	size_t handheldFontSize;
+	size_t dockedFontSize;
 	int backgroundColor;
 	int catColor;
 	int textColor;
+	bool showCPU;
+	bool showGPU;
+	bool showRAM;
+	bool showTEMP;
+	bool showFAN;
+	bool showDRAW;
+	bool showFPS;
 };
 
 struct MicroSettings {
 	bool realFrequencies;
-	size_t fontSize;
+	size_t handheldFontSize;
+	size_t dockedFontSize;
 	uint8_t alignTo;
 	int backgroundColor;
 	int catColor;
 	int textColor;
 };
 
+struct FpsCounterSettings {
+	size_t handheldFontSize;
+	size_t dockedFontSize;
+	int backgroundColor;
+	int textColor;
+};
+
 void GetConfigSettings(MiniSettings* settings) {
 	settings -> realFrequencies = false;
-	settings -> fontSize = 15;
+	settings -> handheldFontSize = 15;
+	settings -> dockedFontSize = 15;
 	settings -> backgroundColor = 0x7111;
 	settings -> catColor = 0xFCCF;
 	settings -> textColor = 0xFFFF;
+	settings -> showCPU = true;
+	settings -> showGPU = true;
+	settings -> showRAM = true;
+	settings -> showTEMP = true;
+	settings -> showFAN = true;
+	settings -> showDRAW = true;
+	settings -> showFPS = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -865,17 +889,29 @@ void GetConfigSettings(MiniSettings* settings) {
 		convertToUpper(key);
 		settings -> realFrequencies = !(key.compare("TRUE"));
 	}
-	if (parsedData["mini"].find("font_size") != parsedData["mini"].end()) {
-		key = parsedData["mini"]["font_size"];
+	if (parsedData["mini"].find("handheld_font_size") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["handheld_font_size"];
 		long fontsize = atol(key.c_str());
 
 		long maxFontSize = 22;
 		long minFontSize = 8;
 		if (fontsize < minFontSize)
-			settings -> fontSize = minFontSize;
-		if (fontsize > maxFontSize)
-			settings -> fontSize = maxFontSize;
-		settings -> fontSize = fontsize;	
+			settings -> handheldFontSize = minFontSize;
+		else if (fontsize > maxFontSize)
+			settings -> handheldFontSize = maxFontSize;
+		else settings -> handheldFontSize = fontsize;	
+	}
+	if (parsedData["mini"].find("docked_font_size") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["docked_font_size"];
+		long fontsize = atol(key.c_str());
+
+		long maxFontSize = 22;
+		long minFontSize = 8;
+		if (fontsize < minFontSize)
+			settings -> dockedFontSize = minFontSize;
+		else if (fontsize > maxFontSize)
+			settings -> dockedFontSize = maxFontSize;
+		else settings -> dockedFontSize = fontsize;	
 	}
 	if (parsedData["mini"].find("background_color") != parsedData["mini"].end()) {
 		key = parsedData["mini"]["background_color"];
@@ -919,11 +955,47 @@ void GetConfigSettings(MiniSettings* settings) {
 				settings -> textColor = color;
 		}
 	}
+	if (parsedData["mini"].find("show_CPU") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["show_CPU"];
+		convertToUpper(key);
+		settings -> showCPU = key.compare("FALSE");
+	}
+	if (parsedData["mini"].find("show_GPU") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["show_GPU"];
+		convertToUpper(key);
+		settings -> showGPU = key.compare("FALSE");
+	}
+	if (parsedData["mini"].find("show_RAM") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["show_RAM"];
+		convertToUpper(key);
+		settings -> showRAM = key.compare("FALSE");
+	}
+	if (parsedData["mini"].find("show_TEMP") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["show_TEMP"];
+		convertToUpper(key);
+		settings -> showTEMP = key.compare("FALSE");
+	}
+	if (parsedData["mini"].find("show_FAN") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["show_FAN"];
+		convertToUpper(key);
+		settings -> showFAN = key.compare("FALSE");
+	}
+	if (parsedData["mini"].find("show_DRAW") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["show_DRAW"];
+		convertToUpper(key);
+		settings -> showDRAW = key.compare("FALSE");
+	}
+	if (parsedData["mini"].find("show_FPS") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["show_FPS"];
+		convertToUpper(key);
+		settings -> showFPS = key.compare("FALSE");
+	}
 }
 
 void GetConfigSettings(MicroSettings* settings) {
 	settings -> realFrequencies = false;
-	settings -> fontSize = 18;
+	settings -> handheldFontSize = 18;
+	settings -> dockedFontSize = 18;
 	settings -> alignTo = 1;
 	settings -> backgroundColor = 0x7111;
 	settings -> catColor = 0xFCCF;
@@ -963,17 +1035,29 @@ void GetConfigSettings(MicroSettings* settings) {
 			settings -> alignTo = 2;
 		}
 	}
-	if (parsedData["micro"].find("font_size") != parsedData["micro"].end()) {
-		key = parsedData["micro"]["font_size"];
+	if (parsedData["micro"].find("handheld_font_size") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["handheld_font_size"];
 		long fontsize = atol(key.c_str());
 
 		long maxFontSize = 18;
 		long minFontSize = 8;
 		if (fontsize < minFontSize)
-			settings -> fontSize = minFontSize;
-		if (fontsize > maxFontSize)
-			settings -> fontSize = maxFontSize;
-		settings -> fontSize = fontsize;	
+			settings -> handheldFontSize = minFontSize;
+		else if (fontsize > maxFontSize)
+			settings -> handheldFontSize = maxFontSize;
+		else settings -> handheldFontSize = fontsize;	
+	}
+	if (parsedData["micro"].find("docked_font_size") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["docked_font_size"];
+		long fontsize = atol(key.c_str());
+
+		long maxFontSize = 18;
+		long minFontSize = 8;
+		if (fontsize < minFontSize)
+			settings -> dockedFontSize = minFontSize;
+		else if (fontsize > maxFontSize)
+			settings -> dockedFontSize = maxFontSize;
+		else settings -> dockedFontSize = fontsize;	
 	}
 	if (parsedData["micro"].find("background_color") != parsedData["micro"].end()) {
 		key = parsedData["micro"]["background_color"];
@@ -1001,6 +1085,82 @@ void GetConfigSettings(MicroSettings* settings) {
 			}
 			else if (color < 0x10000 && color > 0)
 				settings -> catColor = color;
+		}
+	}
+	if (parsedData["micro"].find("text_color") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["text_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					color = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> textColor = color;
+		}
+	}
+}
+
+void GetConfigSettings(FpsCounterSettings* settings) {
+	settings -> handheldFontSize = 40;
+	settings -> dockedFontSize = 40;
+	settings -> backgroundColor = 0x7111;
+	settings -> textColor = 0xFFFF;
+
+	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
+	if (!configFileIn)
+		return;
+	fseek(configFileIn, 0, SEEK_END);
+	long fileSize = ftell(configFileIn);
+	rewind(configFileIn);
+
+	std::string fileDataString(fileSize, '\0');
+	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
+	fclose(configFileIn);
+	
+	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+
+	std::string key;
+	if (parsedData.find("fps-counter") == parsedData.end())
+		return;
+	if (parsedData["fps-counter"].find("handheld_font_size") != parsedData["fps-counter"].end()) {
+		key = parsedData["fps-counter"]["handheld_font_size"];
+		long fontsize = atol(key.c_str());
+
+		long maxFontSize = 80;
+		long minFontSize = 8;
+		if (fontsize < minFontSize)
+			settings -> handheldFontSize = minFontSize;
+		else if (fontsize > maxFontSize)
+			settings -> handheldFontSize = maxFontSize;
+		else settings -> handheldFontSize = fontsize;	
+	}
+	if (parsedData["fps-counter"].find("docked_font_size") != parsedData["fps-counter"].end()) {
+		key = parsedData["fps-counter"]["docked_font_size"];
+		long fontsize = atol(key.c_str());
+
+		long maxFontSize = 80;
+		long minFontSize = 8;
+		if (fontsize < minFontSize)
+			settings -> dockedFontSize = minFontSize;
+		else if (fontsize > maxFontSize)
+			settings -> dockedFontSize = maxFontSize;
+		else settings -> dockedFontSize = fontsize;	
+	}
+	if (parsedData["micro"].find("background_color") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["background_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					color = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> backgroundColor = color;
 		}
 	}
 	if (parsedData["micro"].find("text_color") != parsedData["micro"].end()) {
