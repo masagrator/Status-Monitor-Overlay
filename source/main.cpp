@@ -36,8 +36,8 @@ public:
 			auto dimensions = renderer->drawString(FPSavg_c, false, 0, base_y+fontsize, fontsize, renderer->a(0x0000));
 			size_t rectangleWidth = dimensions.first;
 			size_t margin = (fontsize / 8);
-			renderer->drawRect(0, base_y, rectangleWidth + (margin * 2), fontsize + (margin * 2), a(settings.backgroundColor));
-			renderer->drawString(FPSavg_c, false, margin, base_y+(fontsize-margin), fontsize, renderer->a(settings.textColor));
+			renderer->drawRect(0, base_y, rectangleWidth + margin, fontsize + (margin / 2), a(settings.backgroundColor));
+			renderer->drawString(FPSavg_c, false, (margin / 2), base_y+(fontsize-margin), fontsize, renderer->a(settings.textColor));
 		});
 
 		rootFrame->setContent(Status);
