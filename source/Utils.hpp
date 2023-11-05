@@ -73,25 +73,18 @@ bool Nifm_showpass = false;
 Result Nifm_internet_rc = -1;
 Result Nifm_profile_rc = -1;
 NifmNetworkProfileData_new Nifm_profile = {0};
-char Nifm_pass[96];
 
 //Multimedia engines
 uint32_t NVDEC_Hz = 0;
 uint32_t NVENC_Hz = 0;
 uint32_t NVJPG_Hz = 0;
-char NVDEC_Hz_c[32];
-char NVENC_Hz_c[32];
-char NVJPG_Hz_c[32];
 
 //DSP
 uint32_t DSP_Load_u = -1;
-char DSP_Load_c[16];
 
 //Battery
 Service* psmService = 0;
 BatteryChargeInfoFields _batteryChargeInfoFields = {0};
-char Battery_c[512];
-char BatteryDraw_c[64];
 float batCurrentAvg = 0;
 float batVoltageAvg = 0;
 float PowerConsumption = 0;
@@ -105,33 +98,19 @@ float PCB_temperatureF = 0;
 int32_t SOC_temperatureC = 0;
 int32_t PCB_temperatureC = 0;
 int32_t skin_temperaturemiliC = 0;
-char SoCPCB_temperature_c[64];
-char skin_temperature_c[32];
 
 //CPU Usage
 uint64_t idletick0 = systemtickfrequency;
 uint64_t idletick1 = systemtickfrequency;
 uint64_t idletick2 = systemtickfrequency;
 uint64_t idletick3 = systemtickfrequency;
-char CPU_Usage0[32];
-char CPU_Usage1[32];
-char CPU_Usage2[32];
-char CPU_Usage3[32];
-char CPU_compressed_c[160];
+
 //Frequency
-///CPU
 uint32_t CPU_Hz = 0;
-char CPU_Hz_c[64];
-///GPU
 uint32_t GPU_Hz = 0;
-char GPU_Hz_c[64];
-///RAM
 uint32_t RAM_Hz = 0;
-char RAM_Hz_c[64];
 
 //RAM Size
-char RAM_compressed_c[64];
-char RAM_var_compressed_c[128];
 uint64_t RAM_Total_all_u = 0;
 uint64_t RAM_Total_application_u = 0;
 uint64_t RAM_Total_applet_u = 0;
@@ -145,12 +124,10 @@ uint64_t RAM_Used_systemunsafe_u = 0;
 
 //Fan
 float Rotation_SpeedLevel_f = 0;
-char Rotation_SpeedLevel_c[64];
 
 //GPU Usage
 FieldDescriptor fd = 0;
 uint32_t GPU_Load_u = 0;
-char GPU_Load_c[32];
 
 //NX-FPS
 bool GameRunning = false;
@@ -161,10 +138,6 @@ uintptr_t FPSavgaddress = 0;
 uint64_t PID = 0;
 uint32_t FPS = 0xFE;
 float FPSavg = 254;
-char FPS_c[32];
-char FPSavg_c[32];
-char FPS_compressed_c[64];
-char FPS_var_compressed_c[64];
 SharedMemory _sharedmemory = {};
 bool SharedMemoryUsed = false;
 uint32_t* MAGIC_shared = 0;
