@@ -3,6 +3,13 @@ key_combo=LSTICK+RSTICK
 [mini]
 font_size=15
 real_freqs=false
+background_color=0x7111
+cat_color=0xFFFF
+text_color=0xFFFF
 [micro]
 font_size=18
 real_freqs=false
+align_to=center
+background_color=0x7111
+cat_color=0xFCCF
+text_color=0xFFFF
