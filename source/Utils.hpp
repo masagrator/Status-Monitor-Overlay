@@ -8,6 +8,8 @@
 #include "max17050.h"
 #include <numeric>
 #include "sysclk/emc.h"
+#include <tesla.hpp>
+#include <sys/stat.h>
 
 #if defined(__cplusplus)
 extern "C"
@@ -41,6 +43,7 @@ FanController g_ICon;
 std::string folderpath = "sdmc:/switch/.overlays/";
 std::string filename = "";
 std::string filepath = "";
+std::string keyCombo = "L+DDOWN+RSTICK"; // default Tesla Menu combo
 
 //Misc2
 MmuRequest nvdecRequest;
@@ -71,25 +74,18 @@ bool Nifm_showpass = false;
 Result Nifm_internet_rc = -1;
 Result Nifm_profile_rc = -1;
 NifmNetworkProfileData_new Nifm_profile = {0};
-char Nifm_pass[96];
 
 //Multimedia engines
 uint32_t NVDEC_Hz = 0;
 uint32_t NVENC_Hz = 0;
 uint32_t NVJPG_Hz = 0;
-char NVDEC_Hz_c[32];
-char NVENC_Hz_c[32];
-char NVJPG_Hz_c[32];
 
 //DSP
 uint32_t DSP_Load_u = -1;
-char DSP_Load_c[16];
 
 //Battery
 Service* psmService = 0;
 BatteryChargeInfoFields _batteryChargeInfoFields = {0};
-char Battery_c[512];
-char BatteryDraw_c[64];
 float batCurrentAvg = 0;
 float batVoltageAvg = 0;
 float PowerConsumption = 0;
@@ -103,33 +99,19 @@ float PCB_temperatureF = 0;
 int32_t SOC_temperatureC = 0;
 int32_t PCB_temperatureC = 0;
 int32_t skin_temperaturemiliC = 0;
-char SoCPCB_temperature_c[64];
-char skin_temperature_c[32];
 
 //CPU Usage
 uint64_t idletick0 = systemtickfrequency;
 uint64_t idletick1 = systemtickfrequency;
 uint64_t idletick2 = systemtickfrequency;
 uint64_t idletick3 = systemtickfrequency;
-char CPU_Usage0[32];
-char CPU_Usage1[32];
-char CPU_Usage2[32];
-char CPU_Usage3[32];
-char CPU_compressed_c[160];
+
 //Frequency
-///CPU
 uint32_t CPU_Hz = 0;
-char CPU_Hz_c[64];
-///GPU
 uint32_t GPU_Hz = 0;
-char GPU_Hz_c[64];
-///RAM
 uint32_t RAM_Hz = 0;
-char RAM_Hz_c[64];
 
 //RAM Size
-char RAM_compressed_c[64];
-char RAM_var_compressed_c[128];
 uint64_t RAM_Total_all_u = 0;
 uint64_t RAM_Total_application_u = 0;
 uint64_t RAM_Total_applet_u = 0;
@@ -143,12 +125,10 @@ uint64_t RAM_Used_systemunsafe_u = 0;
 
 //Fan
 float Rotation_SpeedLevel_f = 0;
-char Rotation_SpeedLevel_c[64];
 
 //GPU Usage
 FieldDescriptor fd = 0;
 uint32_t GPU_Load_u = 0;
-char GPU_Load_c[32];
 
 //NX-FPS
 bool GameRunning = false;
@@ -159,10 +139,6 @@ uintptr_t FPSavgaddress = 0;
 uint64_t PID = 0;
 uint32_t FPS = 0xFE;
 float FPSavg = 254;
-char FPS_c[32];
-char FPSavg_c[32];
-char FPS_compressed_c[64];
-char FPS_var_compressed_c[64];
 SharedMemory _sharedmemory = {};
 bool SharedMemoryUsed = false;
 uint32_t* MAGIC_shared = 0;
@@ -658,3 +634,183 @@ void EndFPSCounterThread() {
 	threadexit = false;
 	threadexit2 = false;
 }
+
+
+// String formatting functions
+void removeSpaces(std::string& str) {
+	str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+}
+
+void convertToUpper(std::string& str) {
+	std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+}
+
+void formatButtonCombination(std::string& line) {
+	// Remove all spaces from the line
+	line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
+
+	// Replace '+' with ' + '
+	size_t pos = 0;
+	while ((pos = line.find('+', pos)) != std::string::npos) {
+		if (pos > 0 && pos < line.size() - 1) {
+			if (std::isalnum(line[pos - 1]) && std::isalnum(line[pos + 1])) {
+				line.replace(pos, 1, " + ");
+				pos += 3;
+			}
+		}
+		++pos;
+	}
+}
+
+
+// Base class with virtual function
+class ButtonMapper {
+public:
+	virtual std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) = 0;
+};
+
+// Derived class implementing the virtual function
+class ButtonMapperImpl : public ButtonMapper {
+public:
+	std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) override {
+		std::map<std::string, HidNpadButton> buttonMap = {
+			{"A", static_cast<HidNpadButton>(HidNpadButton_A)},
+			{"B", static_cast<HidNpadButton>(HidNpadButton_B)},
+			{"X", static_cast<HidNpadButton>(HidNpadButton_X)},
+			{"Y", static_cast<HidNpadButton>(HidNpadButton_Y)},
+			{"L", static_cast<HidNpadButton>(HidNpadButton_L)},
+			{"R", static_cast<HidNpadButton>(HidNpadButton_R)},
+			{"ZL", static_cast<HidNpadButton>(HidNpadButton_ZL)},
+			{"ZR", static_cast<HidNpadButton>(HidNpadButton_ZR)},
+			{"PLUS", static_cast<HidNpadButton>(HidNpadButton_Plus)},
+			{"MINUS", static_cast<HidNpadButton>(HidNpadButton_Minus)},
+			{"DUP", static_cast<HidNpadButton>(HidNpadButton_Up)},
+			{"DDOWN", static_cast<HidNpadButton>(HidNpadButton_Down)},
+			{"DLEFT", static_cast<HidNpadButton>(HidNpadButton_Left)},
+			{"DRIGHT", static_cast<HidNpadButton>(HidNpadButton_Right)},
+			{"SL", static_cast<HidNpadButton>(HidNpadButton_AnySL)},
+			{"SR", static_cast<HidNpadButton>(HidNpadButton_AnySR)},
+			{"LSTICK", static_cast<HidNpadButton>(HidNpadButton_StickL)},
+			{"RSTICK", static_cast<HidNpadButton>(HidNpadButton_StickR)},
+			{"UP", static_cast<HidNpadButton>(HidNpadButton_Up | HidNpadButton_StickLUp | HidNpadButton_StickRUp)},
+			{"DOWN", static_cast<HidNpadButton>(HidNpadButton_Down | HidNpadButton_StickLDown | HidNpadButton_StickRDown)},
+			{"LEFT", static_cast<HidNpadButton>(HidNpadButton_Left | HidNpadButton_StickLLeft | HidNpadButton_StickRLeft)},
+			{"RIGHT", static_cast<HidNpadButton>(HidNpadButton_Right | HidNpadButton_StickLRight | HidNpadButton_StickRRight)}
+		};
+
+		std::list<HidNpadButton> mappedButtons;
+		std::string comboCopy = buttonCombo;  // Make a copy of buttonCombo
+
+		std::string delimiter = "+";
+		size_t pos = 0;
+		std::string button;
+		while ((pos = comboCopy.find(delimiter)) != std::string::npos) {
+			button = comboCopy.substr(0, pos);
+			if (buttonMap.find(button) != buttonMap.end()) {
+				mappedButtons.push_back(buttonMap[button]);
+			}
+			comboCopy.erase(0, pos + delimiter.length());
+		}
+		if (buttonMap.find(comboCopy) != buttonMap.end()) {
+			mappedButtons.push_back(buttonMap[comboCopy]);
+		}
+		return mappedButtons;
+	}
+};
+
+
+// Custom utility function for parsing an ini file
+void ParseIniFile() {
+	std::string overlayName;
+	std::string directoryPath = "sdmc:/config/status-monitor/";
+	std::string ultrahandDirectoryPath = "sdmc:/config/ultrahand/";
+	std::string teslaDirectoryPath = "sdmc:/config/tesla/";
+	std::string configIniPath = directoryPath + "config.ini";
+	std::string ultrahandConfigIniPath = ultrahandDirectoryPath + "config.ini";
+	std::string teslaConfigIniPath = teslaDirectoryPath + "config.ini";
+	tsl::hlp::ini::IniData parsedData;
+	
+	struct stat st;
+	if (stat(directoryPath.c_str(), &st) != 0) {
+		mkdir(directoryPath.c_str(), 0777);
+	}
+
+	
+	bool readExternalCombo = false;
+	// Open the INI file
+	FILE* configFileIn = fopen(configIniPath.c_str(), "r");
+	if (configFileIn) {
+		// Determine the size of the INI file
+		fseek(configFileIn, 0, SEEK_END);
+		long fileSize = ftell(configFileIn);
+		rewind(configFileIn);
+			
+		// Read the contents of the INI file
+		char* fileData = new char[fileSize + 1];
+		fread(fileData, sizeof(char), fileSize, configFileIn);
+		fileData[fileSize] = '\0';  // Add null-terminator to create a C-string
+		fclose(configFileIn);
+			
+		// Parse the INI data
+		std::string fileDataString(fileData, fileSize);
+		parsedData = tsl::hlp::ini::parseIni(fileDataString);
+		delete[] fileData;
+		
+		// Access and use the parsed data as needed
+		// For example, print the value of a specific section and key
+		if (parsedData.find("status-monitor") != parsedData.end() &&
+			parsedData["status-monitor"].find("key_combo") != parsedData["status-monitor"].end()) {
+			keyCombo = parsedData["status-monitor"]["key_combo"]; // load keyCombo variable
+			removeSpaces(keyCombo); // format combo
+			convertToUpper(keyCombo);
+		} else {
+			readExternalCombo = true;
+		}
+		
+	} else {
+		readExternalCombo = true;
+	}
+
+	if (readExternalCombo) {
+		FILE* ultrahandConfigFileIn = fopen(ultrahandConfigIniPath.c_str(), "r");
+		FILE* teslaConfigFileIn = fopen(teslaConfigIniPath.c_str(), "r");
+		if (ultrahandConfigFileIn) {
+			if (teslaConfigFileIn)
+				fclose(teslaConfigFileIn);
+			
+			// load keyCombo from teslaConfig
+			std::string ultrahandFileData;
+			char buffer[256];
+			while (fgets(buffer, sizeof(buffer), ultrahandConfigFileIn) != NULL) {
+				ultrahandFileData += buffer;
+			}
+			fclose(ultrahandConfigFileIn);
+			
+			parsedData = tsl::hlp::ini::parseIni(ultrahandFileData);
+			if (parsedData.find("ultrahand") != parsedData.end() &&
+				parsedData["ultrahand"].find("key_combo") != parsedData["ultrahand"].end()) {
+				keyCombo = parsedData["ultrahand"]["key_combo"];
+				removeSpaces(keyCombo); // format combo
+				convertToUpper(keyCombo);
+			}
+			
+		} else if (teslaConfigFileIn) {
+			// load keyCombo from teslaConfig
+			std::string teslaFileData;
+			char buffer[256];
+			while (fgets(buffer, sizeof(buffer), teslaConfigFileIn) != NULL) {
+				teslaFileData += buffer;
+			}
+			fclose(teslaConfigFileIn);
+			
+			parsedData = tsl::hlp::ini::parseIni(teslaFileData);
+			if (parsedData.find("tesla") != parsedData.end() &&
+				parsedData["tesla"].find("key_combo") != parsedData["tesla"].end()) {
+				keyCombo = parsedData["tesla"]["key_combo"];
+				removeSpaces(keyCombo); // format combo
+				convertToUpper(keyCombo);
+			}
+		}
+	}
+}
+

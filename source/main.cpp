@@ -2,15 +2,24 @@
 #include <tesla.hpp>
 #include "Utils.hpp"
 
+ButtonMapperImpl buttonMapper; // Custom button mapper implementation
+static bool returningFromSelection = false; // for removing the necessity of svcSleepThread
+static tsl::elm::OverlayFrame* rootFrame = nullptr;
+static bool skipMain = false;
+
+
 //FPS Counter mode
 class com_FPS : public tsl::Gui {
+private:
+	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+	char FPSavg_c[8];
 public:
     com_FPS() { }
 
 	s16 base_y = 0;
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("", "");
+		rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 				static uint8_t avg = 0;
@@ -32,8 +41,18 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
+
+		bool allButtonsHeld = true;
+		for (const HidNpadButton& button : mappedButtons) {
+			if (!(keysHeld & static_cast<uint64_t>(button))) {
+				allButtonsHeld = false;
+				break;
+			}
+		}
+
+		if (allButtonsHeld) {
 			EndFPSCounterThread();
+			returningFromSelection = true;
 			tsl::goBack();
 			return true;
 		}
@@ -51,6 +70,9 @@ public:
 
 //FPS Counter mode
 class com_FPSGraph : public tsl::Gui {
+private:
+	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+	char FPSavg_c[8];
 public:
     com_FPSGraph() { }
 
@@ -78,7 +100,7 @@ public:
 	bool isAbove = false;
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("", "");
+		rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			renderer->drawRect(0, base_y, 201, 72, a(0x7111));
@@ -170,8 +192,18 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
+
+		bool allButtonsHeld = true;
+		for (const HidNpadButton& button : mappedButtons) {
+			if (!(keysHeld & static_cast<uint64_t>(button))) {
+				allButtonsHeld = false;
+				break;
+			}
+		}
+
+		if (allButtonsHeld) {
 			EndFPSCounterThread();
+			returningFromSelection = true;
 			tsl::goBack();
 			return true;
 		}
@@ -189,39 +221,107 @@ public:
 
 //Full mode
 class FullOverlay : public tsl::Gui {
+private:
+	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+	char RealCPU_Hz_c[32];
+	char DeltaCPU_c[12];
+	char DeltaGPU_c[12];
+	char DeltaRAM_c[12];
+	char RealGPU_Hz_c[32];
+	char RealRAM_Hz_c[32];
+	char GPU_Load_c[32];
+	char Rotation_SpeedLevel_c[64];
+	char RAM_compressed_c[64];
+	char RAM_var_compressed_c[128];
+	char CPU_Hz_c[64];
+	char GPU_Hz_c[64];
+	char RAM_Hz_c[64];
+	char CPU_compressed_c[160];
+	char CPU_Usage0[32];
+	char CPU_Usage1[32];
+	char CPU_Usage2[32];
+	char CPU_Usage3[32];
+	char SoCPCB_temperature_c[64];
+	char skin_temperature_c[32];
+	char BatteryDraw_c[64];
+	char FPS_var_compressed_c[64];
+
+	uint8_t COMMON_MARGIN = 20;
 public:
     FullOverlay() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
+		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 
-		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
 			//Print strings
 			///CPU
 			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) {
-				renderer->drawString("CPU Usage:", false, 20, 120, 20, renderer->a(0xFFFF));
-				renderer->drawString(CPU_Hz_c, false, 20, 155, 15, renderer->a(0xFFFF));
-				renderer->drawString(CPU_compressed_c, false, 20, 185, 15, renderer->a(0xFFFF));
+
+				uint32_t height_offset = 155;
+				if (realCPU_Hz) {
+					height_offset = 162;
+				}
+				renderer->drawString("CPU Usage:", false, COMMON_MARGIN, 120, 20, renderer->a(0xFFFF));
+				auto dimensions = renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
+				uint32_t offset = COMMON_MARGIN + dimensions.first;
+				renderer->drawString(CPU_Hz_c, false, offset, height_offset, 15, renderer->a(0xFFFF));
+				if (realCPU_Hz) {
+					renderer->drawString("Real Frequency:", false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
+					renderer->drawString(RealCPU_Hz_c, false, offset, height_offset - 15, 15, renderer->a(0xFFFF));
+					renderer->drawString(DeltaCPU_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
+				}
+				renderer->drawString(CPU_compressed_c, false, COMMON_MARGIN, height_offset + 30, 15, renderer->a(0xFFFF));
 			}
 			
 			///GPU
 			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(nvCheck)) {
 				
-				renderer->drawString("GPU Usage:", false, 20, 285, 20, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) renderer->drawString(GPU_Hz_c, false, 20, 320, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(nvCheck)) renderer->drawString(GPU_Load_c, false, 20, 335, 15, renderer->a(0xFFFF));
+				uint32_t height_offset = 320;
+				if (realGPU_Hz) {
+					height_offset = 327;
+				}
+
+				renderer->drawString("GPU Usage:", false, COMMON_MARGIN, 285, 20, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) {
+					auto dimensions = renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
+					uint32_t offset = COMMON_MARGIN + dimensions.first;
+					renderer->drawString(GPU_Hz_c, false, offset, height_offset, 15, renderer->a(0xFFFF));
+					if (realCPU_Hz) {
+						renderer->drawString("Real Frequency: ", false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
+						renderer->drawString(RealGPU_Hz_c, false, offset, height_offset - 15, 15, renderer->a(0xFFFF));
+						renderer->drawString(DeltaGPU_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
+					}
+				}
+				if (R_SUCCEEDED(nvCheck)) {
+					renderer->drawString(GPU_Load_c, false, COMMON_MARGIN, height_offset + 15, 15, renderer->a(0xFFFF));
+				}
 				
 			}
 			
 			///RAM
 			if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck) || R_SUCCEEDED(Hinted)) {
 				
-				renderer->drawString("RAM Usage:", false, 20, 375, 20, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) renderer->drawString(RAM_Hz_c, false, 20, 410, 15, renderer->a(0xFFFF));
+				uint32_t height_offset = 410;
+				if (realRAM_Hz) {
+					height_offset = 417;
+				}
+
+				renderer->drawString("RAM Usage:", false, COMMON_MARGIN, 375, 20, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) {
+					auto dimensions = renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
+					uint32_t offset = COMMON_MARGIN + dimensions.first;
+					renderer->drawString(RAM_Hz_c, false, offset, height_offset, 15, renderer->a(0xFFFF));
+					if (realRAM_Hz) {
+						renderer->drawString("Real Frequency:", false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
+						renderer->drawString(RealRAM_Hz_c, false, offset, height_offset - 15, 15, renderer->a(0xFFFF));
+						renderer->drawString(DeltaRAM_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
+					}
+				}
 				if (R_SUCCEEDED(Hinted)) {
-					renderer->drawString(RAM_compressed_c, false, 20, 440, 15, renderer->a(0xFFFF));
-					renderer->drawString(RAM_var_compressed_c, false, 140, 440, 15, renderer->a(0xFFFF));
+					renderer->drawString(RAM_compressed_c, false, COMMON_MARGIN, height_offset + 30, 15, renderer->a(0xFFFF));
+					renderer->drawString(RAM_var_compressed_c, false, COMMON_MARGIN + 120, height_offset + 30, 15, renderer->a(0xFFFF));
 				}
 				renderer->drawString(RAM_load_c, false, 20, 425, 15, renderer->a(0xFFFF));
 			}
@@ -229,21 +329,29 @@ public:
 			///Thermal
 			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
 				renderer->drawString("Board:", false, 20, 540, 20, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tsCheck)) renderer->drawString(BatteryDraw_c, false, 20, 575, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tsCheck)) renderer->drawString("Temperatures: SoC\n\t\t\t\t\t\t\t PCB\n\t\t\t\t\t\t\t Skin", false, 20, 590, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tsCheck)) renderer->drawString(SoCPCB_temperature_c, false, 170, 590, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(fanCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, 20, 635, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tsCheck)) renderer->drawString(BatteryDraw_c, false, COMMON_MARGIN, 575, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tsCheck)) renderer->drawString("Temperatures: SoC\n\t\t\t\t\t\t\t PCB\n\t\t\t\t\t\t\t Skin", false, COMMON_MARGIN, 590, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tsCheck)) renderer->drawString(SoCPCB_temperature_c, false, COMMON_MARGIN + 150, 590, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(fanCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, COMMON_MARGIN, 635, 15, renderer->a(0xFFFF));
 			}
 			
 			///FPS
 			if (GameRunning) {
-				renderer->drawString(FPS_compressed_c, false, 235, 120, 20, renderer->a(0xFFFF));
-				renderer->drawString(FPS_var_compressed_c, false, 295, 120, 20, renderer->a(0xFFFF));
+				uint32_t width_offset = 230;
+				auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
+				uint32_t offset = COMMON_MARGIN + width_offset + dimensions.first;
+				renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
 			}
 			
-			if (refreshrate == 5) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Down to slow down refresh", false, 20, 675, 15, renderer->a(0xFFFF));
-			else if (refreshrate == 1) renderer->drawString("Hold Left Stick & Right Stick to Exit\nHold ZR + R + D-Pad Up to speed up refresh", false, 20, 675, 15, renderer->a(0xFFFF));
-		
+			std::string formattedKeyCombo = keyCombo;
+			formatButtonCombination(formattedKeyCombo);
+			
+			std::string messageOne = "Hold " + formattedKeyCombo + " to Exit\nHold ZR + R + DDOWN to slow down refresh";
+			std::string messageTwo = "Hold " + formattedKeyCombo + " to Exit\nHold ZR + R + DUP to speed up refresh";
+			
+			if (refreshrate == 5) renderer->drawString(messageOne.c_str(), false, COMMON_MARGIN, 675, 15, renderer->a(0xFFFF));
+			else if (refreshrate == 1) renderer->drawString(messageTwo.c_str(), false, COMMON_MARGIN, 675, 15, renderer->a(0xFFFF));
+			
 		});
 
 		rootFrame->setContent(Status);
@@ -262,16 +370,11 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		if (realCPU_Hz == 0) {
-			snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz", (float)CPU_Hz / 1000000);
-		}
-		else {
+		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "%.1f MHz", (float)CPU_Hz / 1000000);
+		if (realCPU_Hz) {
+			snprintf(RealCPU_Hz_c, sizeof(RealCPU_Hz_c), "%.1f MHz", (float)realCPU_Hz / 1000000);
 			int32_t deltaCPU = realCPU_Hz - CPU_Hz;
-			if ((deltaCPU < 100000 && deltaCPU > -100000)) {
-				snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz (Δ 0.0)", (float)CPU_Hz / 1000000);
-			}
-			else
-				snprintf(CPU_Hz_c, sizeof CPU_Hz_c, "Frequency: %.1f MHz (Δ%+.1f)", (float)CPU_Hz / 1000000, (float)deltaCPU / 1000000);
+			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %.1f", (float)deltaCPU / 1000000);
 		}
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100, "%");
 		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100, "%");
@@ -280,30 +383,20 @@ public:
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 		
 		///GPU
-		if (realGPU_Hz == 0) {
-			snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz", (float)GPU_Hz / 1000000);
-		}
-		else {
+		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "%.1f MHz", (float)GPU_Hz / 1000000);
+		if (realGPU_Hz) {
+			snprintf(RealGPU_Hz_c, sizeof(RealGPU_Hz_c), "%.1f MHz", (float)realGPU_Hz / 1000000);
 			int32_t deltaGPU = realGPU_Hz - GPU_Hz;
-			if (deltaGPU < 100000 && deltaGPU > -100000) {
-				snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz (Δ 0.0)", (float)GPU_Hz / 1000000);
-			}
-			else
-				snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Frequency: %.1f MHz (Δ%+.1f)", (float)GPU_Hz / 1000000, (float)deltaGPU / 1000000);
+			snprintf(DeltaGPU_c, sizeof(DeltaGPU_c), "Δ %.1f", (float)deltaGPU / 1000000);
 		}
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", (float)GPU_Load_u / 10, "%");
 		
 		///RAM
-		int32_t deltaRAM = realRAM_Hz - RAM_Hz;
-		if (realRAM_Hz == 0) {
-			snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz", (float)RAM_Hz / 1000000);
-		}
-		else {
-			if (deltaRAM < 100000 && deltaRAM > -100000) {
-				snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz (Δ 0.0)", (float)RAM_Hz / 1000000);
-			}
-			else
-				snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Frequency: %.1f MHz (Δ%+.1f)", (float)RAM_Hz / 1000000, (float)deltaRAM / 1000000);
+		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "%.1f MHz", (float)RAM_Hz / 1000000);
+		if (realRAM_Hz) {
+			snprintf(RealRAM_Hz_c, sizeof(RealRAM_Hz_c), "%.1f MHz", (float)realRAM_Hz / 1000000);
+			int32_t deltaRAM = realRAM_Hz - RAM_Hz;
+			snprintf(DeltaRAM_c, sizeof(DeltaRAM_c), "Δ %.1f", (float)deltaRAM / 1000000);
 		}
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
@@ -346,17 +439,27 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level:\t%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
 		
 		///FPS
-		snprintf(FPS_c, sizeof FPS_c, "PFPS:"); //Pushed Frames Per Second
-		snprintf(FPSavg_c, sizeof FPSavg_c, "FPS:"); //Frames Per Second calculated from averaged frametime 
-		snprintf(FPS_compressed_c, sizeof FPS_compressed_c, "%s\n%s", FPS_c, FPSavg_c);
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.1f", FPS, FPSavg);
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
+
+		bool allButtonsHeld = true;
+		for (const HidNpadButton& button : mappedButtons) {
+			if (!(keysHeld & static_cast<uint64_t>(button))) {
+				allButtonsHeld = false;
+				break;
+			}
+		}
+
+		if (allButtonsHeld) {
 			CloseThreads();
+			returningFromSelection = true;
 			tsl::goBack();
 			return true;
+		}
+		if (keysHeld & KEY_B) {
+			return false;
 		}
 		return false;
 	}
@@ -364,25 +467,38 @@ public:
 
 //Mini mode
 class MiniOverlay : public tsl::Gui {
+private:
+	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+	char GPU_Load_c[32];
+	char Rotation_SpeedLevel_c[64];
+	char RAM_var_compressed_c[128];
+	char SoCPCB_temperature_c[64];
+	char skin_temperature_c[32];
+
+	uint32_t rectangleWidth = 0;
+	uint8_t fontsize = 15;
+	char Variables[512];
 public:
     MiniOverlay() {}
 
-	char Variables[512] = "";
-
     virtual tsl::elm::Element* createUI() override {
 
-		auto rootFrame = new tsl::elm::OverlayFrame("", "");
+		rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
-			uint32_t height = 95;
-			if (realCPU_Hz || realGPU_Hz || realRAM_Hz) {
-				height += 15;
+			uint8_t entry_count = 6;
+
+			if (realCPU_Hz || realGPU_Hz || realRAM_Hz) entry_count++;
+			if (GameRunning) entry_count++;
+
+			uint32_t height = (fontsize * entry_count) + 5;
+			
+			if (!rectangleWidth) {
+				auto dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
+				rectangleWidth = dimensions.first;
 			}
-			if (GameRunning) {
-				height += 15;
-			}
-			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth - 150, height, a(0x7111));
+			renderer->drawRect(0, 0, 60 + rectangleWidth, height, a(0x7111));
 			
 			//Print strings
 			///CPU
@@ -397,11 +513,11 @@ public:
 			size_t str_size = print_text.size() + 1;
 			char* buffer = new char[str_size];
 			strncpy(buffer, print_text.c_str(), str_size);
-			renderer->drawString(buffer, false, 0, 15, 15, renderer->a(0xFFFF));
+			renderer->drawString(buffer, false, 0, fontsize, fontsize, renderer->a(0xFFFF));
 			delete[] buffer;
 			
 			///GPU
-			renderer->drawString(Variables, false, 60, 15, 15, renderer->a(0xFFFF));
+			renderer->drawString(Variables, false, 60, fontsize, fontsize, renderer->a(0xFFFF));
 		});
 
 		rootFrame->setContent(Status);
@@ -495,10 +611,23 @@ public:
 
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
+		
+		bool allButtonsHeld = true;
+		for (const HidNpadButton& button : mappedButtons) {
+			if (!(keysHeld & static_cast<uint64_t>(button))) {
+				allButtonsHeld = false;
+				break;
+			}
+		}
+
+		if (allButtonsHeld) {
 			CloseThreads();
+			returningFromSelection = true;
 			tsl::goBack();
 			return true;
+		}
+		if (keysHeld & KEY_B) {
+			return false;
 		}
 		return false;
 	}
@@ -506,55 +635,106 @@ public:
 
 //Mini mode
 class MicroOverlay : public tsl::Gui {
+private:
+	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+	char GPU_Load_c[32];
+	char Rotation_SpeedLevel_c[64];
+	char RAM_var_compressed_c[128];
+	char CPU_compressed_c[160];
+	char CPU_Usage0[32];
+	char CPU_Usage1[32];
+	char CPU_Usage2[32];
+	char CPU_Usage3[32];
+	char skin_temperature_c[32];
+	char batteryCharge[10]; // Declare the batteryCharge variable
+	char FPS_var_compressed_c[64];
+
+	uint32_t size = 18;
+	uint32_t margin = 8;
+
+	bool Initialized = false;
+	std::pair<u32, u32> dimensions1;
+	std::pair<u32, u32> dimensions2;
+	std::pair<u32, u32> dimensions3;
+	std::pair<u32, u32> dimensions4;
+	std::pair<u32, u32> dimensions5;
+	std::pair<u32, u32> dimensions6;
 public:
     MicroOverlay() { }
-
+    
     virtual tsl::elm::Element* createUI() override {
+		rootFrame = new tsl::elm::OverlayFrame("", "");
 
-		auto rootFrame = new tsl::elm::OverlayFrame("", "");
+		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 
-		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, size + 4, a(0x7111));
 			
+			if (!Initialized) {
+				dimensions1 = renderer->drawString("CPU [100%,100%,100%,100%]△4444.4", false, 0, size, size, renderer->a(0x0000));
+				dimensions2 = renderer->drawString("GPU 100.0%△4444.4", false, 0, size, size, renderer->a(0x0000));
+				dimensions3 = renderer->drawString("RAM 4.4/4.4GB△4444.4", false, 0, size, size, renderer->a(0x0000));
+				dimensions4 = renderer->drawString("BRD 88.8/88.8/88.8\u00B0C@-15.5W[99:99]", false, 0, size, size, renderer->a(0x0000));
+				dimensions5 = renderer->drawString("FAN 100.0%", false, 0, size, size, renderer->a(0x0000));
+				dimensions6 = renderer->drawString("FPS 44.4", false, 0, size, size, renderer->a(0x0000));
+				auto spacesize = renderer->drawString(" ", false, 0, size, size, renderer->a(0x0000));
+				margin = spacesize.first;
+				Initialized = true;
+			}
+
+			uint32_t offset1 = 0;
+			uint32_t offset2 = offset1 + dimensions1.first + margin;
+			uint32_t offset3 = offset2 + dimensions2.first + margin;
+
+			auto dimensions1_s = renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
+			auto dimensions2_s = renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
+			auto dimensions3_s = renderer->drawString("RAM", false, offset3, size, size, renderer->a(0xFCCF));
+
+			uint32_t offset1_s = offset1 + dimensions1_s.first + margin;
+			uint32_t offset2_s = offset2 + dimensions2_s.first + margin;
+			uint32_t offset3_s = offset3 + dimensions3_s.first + margin;
+
+			renderer->drawString(CPU_compressed_c, false, offset1_s, size, size, renderer->a(0xFFFF));
+			renderer->drawString(GPU_Load_c, false, offset2_s, size, size, renderer->a(0xFFFF));
+			renderer->drawString(RAM_var_compressed_c, false, offset3_s, size, size, renderer->a(0xFFFF));
+
 			if (!GameRunning) {
-				uint32_t size = 18;
-				uint32_t offset1 = 0;
-				uint32_t offset2 = offset1 + 355;
-				uint32_t offset3 = offset2 + 210;
-				uint32_t offset4 = offset3 + 245;
-				uint32_t offset5 = offset4 + 360;
-				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
-				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
-				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
-				renderer->drawString("RAM", false, offset3, size, size, renderer->a(0xFCCF));
-				renderer->drawString("BRD", false, offset4, size, size, renderer->a(0xFCCF));
-				renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
-				renderer->drawString(CPU_compressed_c, false, offset1+42, size, size, renderer->a(0xFFFF));
-				renderer->drawString(GPU_Load_c, false, offset2+45, size, size, renderer->a(0xFFFF));
-				renderer->drawString(RAM_var_compressed_c, false, offset3+47, size, size, renderer->a(0xFFFF));
-				renderer->drawString(skin_temperature_c, false, offset4+45, size, size, renderer->a(0xFFFF));
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset5+43, size, size, renderer->a(0xFFFF));
+				uint32_t offset4 = offset3 + dimensions3.first + margin;
+				uint32_t offset5 = framebufferWidth - dimensions5.first;
+				uint32_t space_free = offset5 - offset4;
+				uint32_t margins_free = space_free - dimensions4.first;
+
+				offset4 = offset4 + ((margins_free) / 2);
+				auto dimensions4_s = renderer->drawString("BRD", false, offset4, size, size, renderer->a(0xFCCF));
+				auto dimensions5_s = renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
+
+				uint32_t offset4_s = offset4 + dimensions4_s.first + margin;
+				uint32_t offset5_s = offset5 + dimensions5_s.first + margin;
+
+				renderer->drawString(skin_temperature_c, false, offset4_s, size, size, renderer->a(0xFFFF));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, size, size, renderer->a(0xFFFF));
 			}
 			else {
-				uint32_t size = 18;
-				uint32_t offset1 = 0;
-				uint32_t offset2 = offset1 + 343;
-				uint32_t offset3 = offset2 + 197;
-				uint32_t offset4 = offset3 + 218;
-				uint32_t offset5 = offset4 + 328;
-				uint32_t offset6 = offset5 + 116;
-				renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, 22, a(0x7111));
-				renderer->drawString("CPU", false, offset1, size, size, renderer->a(0xFCCF));
-				renderer->drawString("GPU", false, offset2, size, size, renderer->a(0xFCCF));
-				renderer->drawString("RAM", false, offset3, size, size, renderer->a(0xFCCF));
-				renderer->drawString("BRD", false, offset4, size, size, renderer->a(0xFCCF));
-				renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
-				renderer->drawString("FPS", false, offset6, size, size, renderer->a(0xFCCF));
-				renderer->drawString(CPU_compressed_c, false, offset1+42, size, size, renderer->a(0xFFFF));
-				renderer->drawString(GPU_Load_c, false, offset2+42, size, size, renderer->a(0xFFFF));
-				renderer->drawString(RAM_var_compressed_c, false, offset3+47, size, size, renderer->a(0xFFFF));
-				renderer->drawString(skin_temperature_c, false, offset4+42, size, size, renderer->a(0xFFFF));
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset5+43, size, size, renderer->a(0xFFFF));
-				renderer->drawString(FPS_var_compressed_c, false, offset6+38, size, size, renderer->a(0xFFFF));
+				uint32_t offset4 = offset3 + dimensions3.first + margin;
+				uint32_t offset5 = offset4 + dimensions4.first + margin;
+				uint32_t offset6 = framebufferWidth - dimensions6.first;
+
+				uint32_t space_free = offset6 - offset5;
+				uint32_t margins_free = space_free - dimensions5.first;
+
+				offset4 = offset4 + ((margins_free) / 2);
+				offset5 = offset4 + dimensions4.first + margin;
+
+				auto dimensions4_s = renderer->drawString("BRD", false, offset4, size, size, renderer->a(0xFCCF));
+				auto dimensions5_s = renderer->drawString("FAN", false, offset5, size, size, renderer->a(0xFCCF));
+				auto dimensions6_s = renderer->drawString("FPS", false, offset6, size, size, renderer->a(0xFCCF));
+
+				uint32_t offset4_s = offset4 + dimensions4_s.first + margin;
+				uint32_t offset5_s = offset5 + dimensions5_s.first + margin;
+				uint32_t offset6_s = offset6 + dimensions6_s.first + margin;
+
+				renderer->drawString(skin_temperature_c, false, offset4_s, size, size, renderer->a(0xFFFF));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, size, size, renderer->a(0xFFFF));
+				renderer->drawString(FPS_var_compressed_c, false, offset6_s, size, size, renderer->a(0xFFFF));
 			}
 		});
 
@@ -677,10 +857,10 @@ public:
 		
 		///FPS
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", FPSavg);
-
+		
 		//Debug
 		/*
-		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[100%s,100%s,100%s,100%s]@1785.0", "%", "%", "%", "%");
+		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "", "%", "%", "%", "%");
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "100.0%s@2400.0", "%");
 		snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "4.4/4.4GB@4444.4");
 		snprintf(skin_temperature_c, sizeof skin_temperature_c, "88.8/88.8/88.8\u00B0C@-15.5W[99:99]");
@@ -692,12 +872,32 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if ((keysHeld & KEY_LSTICK) && (keysHeld & KEY_RSTICK)) {
+		//std::list<HidNpadButton> mappedButtons;
+		//ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
+		//mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+		
+		bool allButtonsHeld = true;
+		for (const HidNpadButton& button : mappedButtons) {
+			if (!(keysHeld & static_cast<uint64_t>(button))) {
+				allButtonsHeld = false;
+				break;
+			}
+		}
+
+		if (allButtonsHeld) {
 			TeslaFPS = 60;
 			refreshrate = 60;
-			tsl::setNextOverlay(filepath);
-			tsl::Overlay::get()->close();
+			returningFromSelection = true;
+            if (skipMain)
+                tsl::goBack();
+            else {
+			    tsl::setNextOverlay(filepath.c_str());
+			    tsl::Overlay::get()->close();
+            }
 			return true;
+		}
+		if (keysHeld & KEY_B) {
+			return false;
 		}
 		return false;
 	}
@@ -705,13 +905,15 @@ public:
 
 //Battery
 class BatteryOverlay : public tsl::Gui {
+private:
+	char Battery_c[512];
 public:
     BatteryOverlay() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
+		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 
-		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
 			if (R_SUCCEEDED(psmCheck)) {
 				
@@ -796,7 +998,8 @@ public:
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if (keysHeld & KEY_B) {
 			CloseThreads();
-			svcSleepThread(500'000'000);
+			//svcSleepThread(500'000'000);
+			returningFromSelection = true;
 			tsl::goBack();
 			return true;
 		}
@@ -817,13 +1020,19 @@ void EndMiscThread() {
 }
 
 class MiscOverlay : public tsl::Gui {
+private:
+	char DSP_Load_c[16];
+	char NVDEC_Hz_c[18];
+	char NVENC_Hz_c[18];
+	char NVJPG_Hz_c[18];
+	char Nifm_pass[96];
 public:
     MiscOverlay() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
+		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 
-		auto Status = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
 			///DSP
 			if (R_SUCCEEDED(audsnoopCheck)) {
@@ -900,9 +1109,13 @@ public:
 		if (keysHeld & KEY_B) {
 			EndMiscThread();
 			nifmExit();
-			svcSleepThread(500'000'000);
+			//svcSleepThread(500'000'000);
+			returningFromSelection = true;
 			tsl::goBack();
 			return true;
+		}
+		if (keysHeld & KEY_B) {
+			return false;
 		}
 		return false;
 	}
@@ -914,7 +1127,7 @@ public:
     GraphsMenu() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Graphs");
+		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Graphs");
 		auto list = new tsl::elm::List();
 
 		auto comFPSGraph = new tsl::elm::ListItem("FPS");
@@ -949,14 +1162,15 @@ public:
 		}
 	}
 
-    virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if (keysHeld & KEY_B) {
-			svcSleepThread(300'000'000);
+			//svcSleepThread(300'000'000);
+			returningFromSelection = true;
 			tsl::goBack();
 			return true;
 		}
 		return false;
-    }
+	}
 };
 
 //Other
@@ -965,7 +1179,7 @@ public:
     OtherMenu() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Other");
+		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Other");
 		auto list = new tsl::elm::List();
 
 		auto Battery = new tsl::elm::ListItem("Battery/Charger");
@@ -1000,14 +1214,21 @@ public:
 
 	virtual void update() override {}
 
-    virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (keysHeld & KEY_B) {
-			svcSleepThread(300'000'000);
+	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if (!returningFromSelection && (keysHeld & KEY_B)) {
+			//svcSleepThread(300'000'000);
+			returningFromSelection = true;
 			tsl::goBack();
 			return true;
 		}
+		if (returningFromSelection && !(keysHeld & KEY_B)) {
+			returningFromSelection = false;
+		}
+		if (keysHeld & KEY_B) {
+			return false;
+		}
 		return false;
-    }
+	}
 };
 
 //Main Menu
@@ -1016,8 +1237,9 @@ public:
     MainMenu() { }
 
     virtual tsl::elm::Element* createUI() override {
-		auto rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
-		auto list = new tsl::elm::List(6);
+		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
+		auto list = new tsl::elm::List();
+		//list->addItem(new tsl::elm::CategoryHeader("Monitor Modes"));
 		
 		auto Full = new tsl::elm::ListItem("Full");
 		Full->setClickListener([](uint64_t keys) {
@@ -1067,7 +1289,7 @@ public:
 			auto Micro = new tsl::elm::ListItem("Micro");
 			Micro->setClickListener([](uint64_t keys) {
 				if (keys & KEY_A) {
-					tsl::setNextOverlay(filepath, "--microOverlay");
+					tsl::setNextOverlay(filepath, "--microOverlay_");
 					tsl::Overlay::get()->close();
 					return true;
 				}
@@ -1126,13 +1348,19 @@ public:
 			systemtickfrequency = 19200000;
 		}
 	}
-    virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (keysHeld & KEY_B) {
+	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		if (!returningFromSelection && (keysHeld & KEY_B)) {
 			tsl::goBack();
 			return true;
 		}
+		if (returningFromSelection && !(keysHeld & KEY_B)) {
+			returningFromSelection = false;
+		}
+		if (keysHeld & KEY_B) {
+			return false;
+		}
 		return false;
-    }
+	}
 };
 
 class MonitorOverlay : public tsl::Overlay {
@@ -1292,13 +1520,36 @@ public:
     }
 };
 
+
+
 // This function gets called on startup to create a new Overlay object
 int main(int argc, char **argv) {
+	ParseIniFile(); // parse INI from file
+    
 	if (argc > 0) {
 		filename = argv[0];
 	}
 	for (u8 arg = 0; arg < argc; arg++) {
-		if (strcasecmp(argv[arg], "--microOverlay") == 0) {
+		if (strcasecmp(argv[arg], "--microOverlay_") == 0) {
+			framebufferWidth = 1280;
+			framebufferHeight = 28;
+			FullMode = false;
+			alphabackground = 0x0;
+			FILE* test = fopen(std::string(folderpath + filename).c_str(), "rb");
+			if (test) {
+				fclose(test);
+				filepath = folderpath + filename;
+			}
+			else {
+				test = fopen(std::string(folderpath + "Status-Monitor-Overlay.ovl").c_str(), "rb");
+				if (test) {
+					fclose(test);
+					filepath = folderpath + "Status-Monitor-Overlay.ovl";
+				}
+			}
+			return tsl::loop<MicroMode>(argc, argv);
+		} else if (strcasecmp(argv[arg], "--microOverlay") == 0) {
+            skipMain = true;
 			framebufferWidth = 1280;
 			framebufferHeight = 28;
 			FullMode = false;
