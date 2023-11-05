@@ -16,6 +16,7 @@ private:
 	FpsCounterSettings settings;
 	size_t fontsize = 0;
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
+	s16 base_y = 0;
 public:
     com_FPS() { 
 		GetConfigSettings(&settings);
@@ -28,16 +29,15 @@ public:
 		}
 	}
 
-	s16 base_y = 0;
-
     virtual tsl::elm::Element* createUI() override {
 		rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
-			auto dimensions = renderer->drawString(FPSavg_c, false, 5, base_y+fontsize, fontsize, renderer->a(0x0000));
+			auto dimensions = renderer->drawString(FPSavg_c, false, 0, base_y+fontsize, fontsize, renderer->a(0x0000));
 			size_t rectangleWidth = dimensions.first;
-			renderer->drawRect(0, base_y, rectangleWidth + (fontsize / 10), fontsize + (fontsize / 10), a(settings.backgroundColor));
-			renderer->drawString(FPSavg_c, false, 5, base_y+fontsize, fontsize, renderer->a(settings.textColor));
+			size_t margin = (fontsize / 8);
+			renderer->drawRect(0, base_y, rectangleWidth + (margin * 2), fontsize + (margin * 2), a(settings.backgroundColor));
+			renderer->drawString(FPSavg_c, false, margin, base_y+(fontsize-margin), fontsize, renderer->a(settings.textColor));
 		});
 
 		rootFrame->setContent(Status);

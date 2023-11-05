@@ -889,12 +889,11 @@ void GetConfigSettings(MiniSettings* settings) {
 		convertToUpper(key);
 		settings -> realFrequencies = !(key.compare("TRUE"));
 	}
+	long maxFontSize = 22;
+	long minFontSize = 8;
 	if (parsedData["mini"].find("handheld_font_size") != parsedData["mini"].end()) {
 		key = parsedData["mini"]["handheld_font_size"];
 		long fontsize = atol(key.c_str());
-
-		long maxFontSize = 22;
-		long minFontSize = 8;
 		if (fontsize < minFontSize)
 			settings -> handheldFontSize = minFontSize;
 		else if (fontsize > maxFontSize)
@@ -904,9 +903,6 @@ void GetConfigSettings(MiniSettings* settings) {
 	if (parsedData["mini"].find("docked_font_size") != parsedData["mini"].end()) {
 		key = parsedData["mini"]["docked_font_size"];
 		long fontsize = atol(key.c_str());
-
-		long maxFontSize = 22;
-		long minFontSize = 8;
 		if (fontsize < minFontSize)
 			settings -> dockedFontSize = minFontSize;
 		else if (fontsize > maxFontSize)
@@ -1035,12 +1031,11 @@ void GetConfigSettings(MicroSettings* settings) {
 			settings -> alignTo = 2;
 		}
 	}
+	long maxFontSize = 18;
+	long minFontSize = 8;
 	if (parsedData["micro"].find("handheld_font_size") != parsedData["micro"].end()) {
 		key = parsedData["micro"]["handheld_font_size"];
 		long fontsize = atol(key.c_str());
-
-		long maxFontSize = 18;
-		long minFontSize = 8;
 		if (fontsize < minFontSize)
 			settings -> handheldFontSize = minFontSize;
 		else if (fontsize > maxFontSize)
@@ -1050,9 +1045,6 @@ void GetConfigSettings(MicroSettings* settings) {
 	if (parsedData["micro"].find("docked_font_size") != parsedData["micro"].end()) {
 		key = parsedData["micro"]["docked_font_size"];
 		long fontsize = atol(key.c_str());
-
-		long maxFontSize = 18;
-		long minFontSize = 8;
 		if (fontsize < minFontSize)
 			settings -> dockedFontSize = minFontSize;
 		else if (fontsize > maxFontSize)
@@ -1125,12 +1117,11 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 	std::string key;
 	if (parsedData.find("fps-counter") == parsedData.end())
 		return;
+	long maxFontSize = 150;
+	long minFontSize = 8;
 	if (parsedData["fps-counter"].find("handheld_font_size") != parsedData["fps-counter"].end()) {
 		key = parsedData["fps-counter"]["handheld_font_size"];
 		long fontsize = atol(key.c_str());
-
-		long maxFontSize = 80;
-		long minFontSize = 8;
 		if (fontsize < minFontSize)
 			settings -> handheldFontSize = minFontSize;
 		else if (fontsize > maxFontSize)
@@ -1140,17 +1131,14 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 	if (parsedData["fps-counter"].find("docked_font_size") != parsedData["fps-counter"].end()) {
 		key = parsedData["fps-counter"]["docked_font_size"];
 		long fontsize = atol(key.c_str());
-
-		long maxFontSize = 80;
-		long minFontSize = 8;
 		if (fontsize < minFontSize)
 			settings -> dockedFontSize = minFontSize;
 		else if (fontsize > maxFontSize)
 			settings -> dockedFontSize = maxFontSize;
 		else settings -> dockedFontSize = fontsize;	
 	}
-	if (parsedData["micro"].find("background_color") != parsedData["micro"].end()) {
-		key = parsedData["micro"]["background_color"];
+	if (parsedData["fps-counter"].find("background_color") != parsedData["fps-counter"].end()) {
+		key = parsedData["fps-counter"]["background_color"];
 		if (key.size() == 6) {
 			convertToLower(key);
 			long color = strtol(key.c_str(), NULL, 16);
@@ -1163,8 +1151,8 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 				settings -> backgroundColor = color;
 		}
 	}
-	if (parsedData["micro"].find("text_color") != parsedData["micro"].end()) {
-		key = parsedData["micro"]["text_color"];
+	if (parsedData["fps-counter"].find("text_color") != parsedData["fps-counter"].end()) {
+		key = parsedData["fps-counter"]["text_color"];
 		if (key.size() == 6) {
 			convertToLower(key);
 			long color = strtol(key.c_str(), NULL, 16);
