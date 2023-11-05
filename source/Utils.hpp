@@ -841,6 +841,8 @@ void GetConfigSettings(MiniSettings* settings) {
 	settings -> realFrequencies = false;
 	settings -> fontSize = 15;
 	settings -> backgroundColor = 0x7111;
+	settings -> catColor = 0xFCCF;
+	settings -> textColor = 0xFFFF;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -924,6 +926,8 @@ void GetConfigSettings(MicroSettings* settings) {
 	settings -> fontSize = 18;
 	settings -> alignTo = 1;
 	settings -> backgroundColor = 0x7111;
+	settings -> catColor = 0xFCCF;
+	settings -> textColor = 0xFFFF;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
