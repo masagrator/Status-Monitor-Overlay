@@ -16,7 +16,6 @@ private:
 	FpsCounterSettings settings;
 	size_t fontsize = 0;
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
-	s16 base_y = 0;
 public:
     com_FPS() { 
 		GetConfigSettings(&settings);
@@ -27,17 +26,59 @@ public:
 		else if (performanceMode == ApmPerformanceMode_Boost) {
 			fontsize = settings.dockedFontSize;
 		}
+		switch(settings.setPos) {
+			case 1:
+			case 4:
+			case 7:
+				tsl::gfx::Renderer::getRenderer().setLayerPos(624, 0);
+				break;
+			case 2:
+			case 5:
+			case 8:
+				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+				break;
+		}
+	}
+	~com_FPS() {
+		if (settings.setPos)
+		tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
 	}
 
     virtual tsl::elm::Element* createUI() override {
 		rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
-			auto dimensions = renderer->drawString(FPSavg_c, false, 0, base_y+fontsize, fontsize, renderer->a(0x0000));
+			auto dimensions = renderer->drawString(FPSavg_c, false, 0, fontsize, fontsize, renderer->a(0x0000));
 			size_t rectangleWidth = dimensions.first;
 			size_t margin = (fontsize / 8);
-			renderer->drawRect(0, base_y, rectangleWidth + margin, fontsize + (margin / 2), a(settings.backgroundColor));
-			renderer->drawString(FPSavg_c, false, (margin / 2), base_y+(fontsize-margin), fontsize, renderer->a(settings.textColor));
+			int base_x = 0;
+			int base_y = 0;
+			switch(settings.setPos) {
+				case 1:
+					base_x = 224 - ((rectangleWidth + margin) / 2);
+					break;
+				case 4:
+					base_x = 224 - ((rectangleWidth + margin) / 2);
+					base_y = 360 - ((fontsize + (margin / 2)) / 2);
+					break;
+				case 7:
+					base_x = 224 - ((rectangleWidth + margin) / 2);
+					base_y = 720 - (fontsize + (margin / 2));
+					break;
+				case 2:
+					base_x = 448 - (rectangleWidth + margin);
+					break;
+				case 5:
+					base_x = 448 - (rectangleWidth + margin);
+					base_y = 360 - ((fontsize + (margin / 2)) / 2);
+					break;
+				case 8:
+					base_x = 448 - (rectangleWidth + margin);
+					base_y = 720 - (fontsize + (margin / 2));
+					break;
+			}
+			renderer->drawRect(base_x, base_y, rectangleWidth + margin, fontsize + (margin / 2), a(settings.backgroundColor));
+			renderer->drawString(FPSavg_c, false, base_x + (margin / 2), base_y+(fontsize-margin), fontsize, renderer->a(settings.textColor));
 		});
 
 		rootFrame->setContent(Status);
@@ -72,14 +113,6 @@ public:
 			tsl::goBack();
 			return true;
 		}
-		else if ((keysHeld & KEY_ZR) && (keysHeld & KEY_R)) {
-			if ((keysHeld & KEY_DUP) && base_y != 0) {
-				base_y = 0;
-			}
-			else if ((keysHeld & KEY_DDOWN) && !base_y) {
-				base_y = tsl::cfg::FramebufferHeight - (fontsize + (fontsize / 10));
-			}
-		}
 		return false;
 	}
 };
@@ -89,8 +122,28 @@ class com_FPSGraph : public tsl::Gui {
 private:
 	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
 	char FPSavg_c[8];
+	FpsGraphSettings settings;
 public:
-    com_FPSGraph() { }
+    com_FPSGraph() { 
+		GetConfigSettings(&settings);
+		switch(settings.setPos) {
+			case 1:
+			case 4:
+			case 7:
+				tsl::gfx::Renderer::getRenderer().setLayerPos(624, 0);
+				break;
+			case 2:
+			case 5:
+			case 8:
+				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+				break;
+		}
+	}
+
+	~com_FPSGraph() {
+		if (settings.setPos)
+			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
+	}
 
 	struct stats {
 		s16 value;
@@ -100,6 +153,7 @@ public:
 	std::vector<stats> readings;
 
 	s16 base_y = 0;
+	s16 base_x = 0;
 	s16 rectangle_width = 180;
 	s16 rectangle_height = 60;
 	s16 rectangle_x = 15;
@@ -119,19 +173,45 @@ public:
 		rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
-			renderer->drawRect(0, base_y, 201, 72, a(0x7111));
+			
+			switch(settings.setPos) {
+				case 1:
+					base_x = 224 - ((rectangle_width + 21) / 2);
+					break;
+				case 4:
+					base_x = 224 - ((rectangle_width + 21) / 2);
+					base_y = 360 - ((rectangle_height + 12) / 2);
+					break;
+				case 7:
+					base_x = 224 - ((rectangle_width + 21) / 2);
+					base_y = 720 - (rectangle_height + 12);
+					break;
+				case 2:
+					base_x = 448 - (rectangle_width + 21);
+					break;
+				case 5:
+					base_x = 448 - (rectangle_width + 21);
+					base_y = 360 - ((rectangle_height + 12) / 2);
+					break;
+				case 8:
+					base_x = 448 - (rectangle_width + 21);
+					base_y = 720 - (rectangle_height + 12);
+					break;
+			}
+
+			renderer->drawRect(base_x, base_y, rectangle_width + 21, rectangle_height + 12, a(settings.backgroundColor));
 			if (FPSavg < 10) {
-				renderer->drawString(FPSavg_c, false, 55, base_y+60, 63, renderer->a(0x4444));
+				renderer->drawString(FPSavg_c, false, base_x + 55, base_y+60, 63, renderer->a(settings.fpsColor));
 			}
 			else if (FPSavg < 100) {
-				renderer->drawString(FPSavg_c, false, 35, base_y+60, 63, renderer->a(0x4444));
+				renderer->drawString(FPSavg_c, false, base_x + 35, base_y+60, 63, renderer->a(settings.fpsColor));
 			} 
 			else 
-				renderer->drawString(FPSavg_c, false, 15, base_y+60, 63, renderer->a(0x4444));
-			renderer->drawEmptyRect(rectangle_x - 1, base_y+rectangle_y - 1, rectangle_width + 2, rectangle_height + 4, renderer->a(0xF77F));
-			renderer->drawDashedLine(rectangle_x, base_y+y_30FPS, rectangle_x+rectangle_width, base_y+y_30FPS, 6, renderer->a(0x8888));
-			renderer->drawString(&legend_max[0], false, rectangle_x-15, base_y+rectangle_y+7, 10, renderer->a(0xFFFF));
-			renderer->drawString(&legend_min[0], false, rectangle_x-10, base_y+rectangle_y+rectangle_height+3, 10, renderer->a(0xFFFF));
+				renderer->drawString(FPSavg_c, false, base_x + 15, base_y+60, 63, renderer->a(settings.fpsColor));
+			renderer->drawEmptyRect(base_x+(rectangle_x - 1), base_y+(rectangle_y - 1), rectangle_width + 2, rectangle_height + 4, renderer->a(settings.borderColor));
+			renderer->drawDashedLine(base_x+rectangle_x, base_y+y_30FPS, base_x+rectangle_x+rectangle_width, base_y+y_30FPS, 6, renderer->a(settings.dashedLineColor));
+			renderer->drawString(&legend_max[0], false, base_x+(rectangle_x-15), base_y+(rectangle_y+7), 10, renderer->a(settings.maxFPSTextColor));
+			renderer->drawString(&legend_min[0], false, base_x+(rectangle_x-10), base_y+(rectangle_y+rectangle_height+3), 10, renderer->a(settings.minFPSTextColor));
 
 			size_t last_element = readings.size() - 1;
 
@@ -146,12 +226,12 @@ public:
 				}
 				
 				s16 y = rectangle_y + static_cast<s16>(std::lround((float)rectangle_height * ((float)(range - y_on_range) / (float)range))); // 320 + (80 * ((61 - 61)/61)) = 320
-				auto colour = renderer->a(0xFFFF);
+				auto colour = renderer->a(settings.mainLineColor);
 				if (y == y_old && !isAbove && readings[last_element].zero_rounded) {
 					if ((y == y_30FPS || y == y_60FPS))
-						colour = renderer->a(0xF0C0);
+						colour = renderer->a(settings.perfectLineColor);
 					else
-						colour = renderer->a(0xFF0F);
+						colour = renderer->a(settings.dashedLineColor);
 				}
 
 				if (x == x_end) {
@@ -168,7 +248,7 @@ public:
 				}
 				*/
 
-				renderer->drawLine(x, base_y+y, x, base_y+y_old, colour);
+				renderer->drawLine(base_x+x, base_y+y, base_x+x, base_y+y_old, colour);
 				isAbove = false;
 				y_old = y;
 				last_element--;
@@ -513,7 +593,7 @@ private:
 	bool Initialized = false;
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
 public:
-    MiniOverlay() {
+    MiniOverlay() { 
 		GetConfigSettings(&settings);
 		apmGetPerformanceMode(&performanceMode);
 		if (performanceMode == ApmPerformanceMode_Normal) {
@@ -522,6 +602,22 @@ public:
 		else if (performanceMode == ApmPerformanceMode_Boost) {
 			fontsize = settings.dockedFontSize;
 		}
+		switch(settings.setPos) {
+			case 1:
+			case 4:
+			case 7:
+				tsl::gfx::Renderer::getRenderer().setLayerPos(624, 0);
+				break;
+			case 2:
+			case 5:
+			case 8:
+				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+				break;
+		}
+	}
+	~MiniOverlay() {
+		if (settings.setPos)
+			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
 	}
 
     virtual tsl::elm::Element* createUI() override {
@@ -609,12 +705,39 @@ public:
 
 			uint32_t height = (fontsize * entry_count) + (fontsize / 3);
 			uint32_t margin = (fontsize * 4);
+
+			int base_x = 0;
+			int base_y = 0;
+			switch(settings.setPos) {
+				case 1:
+					base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
+					break;
+				case 4:
+					base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
+					base_y = 360 - height / 2;
+					break;
+				case 7:
+					base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
+					base_y = 720 - height;
+					break;
+				case 2:
+					base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
+					break;
+				case 5:
+					base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
+					base_y = 360 - height / 2;
+					break;
+				case 8:
+					base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
+					base_y = 720 - height;
+					break;
+			}
 			
-			renderer->drawRect(0, 0, margin + rectangleWidth + (fontsize / 3), height, a(settings.backgroundColor));
-			renderer->drawString(print_text, false, 0, fontsize, fontsize, renderer->a(settings.catColor));
+			renderer->drawRect(base_x, base_y, margin + rectangleWidth + (fontsize / 3), height, a(settings.backgroundColor));
+			renderer->drawString(print_text, false, base_x, base_y + fontsize, fontsize, renderer->a(settings.catColor));
 			
 			///GPU
-			renderer->drawString(Variables, false, margin, fontsize, fontsize, renderer->a(settings.textColor));
+			renderer->drawString(Variables, false, base_x + margin, base_y + fontsize, fontsize, renderer->a(settings.textColor));
 		});
 
 		rootFrame->setContent(Status);
@@ -849,6 +972,9 @@ public:
 		else if (performanceMode == ApmPerformanceMode_Boost) {
 			fontsize = settings.dockedFontSize;
 		}
+		if (settings.setPosBottom) {
+			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 1038);
+		}
 	}
     
     virtual tsl::elm::Element* createUI() override {
@@ -894,7 +1020,12 @@ public:
 				Initialized = true;
 			}
 
-			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, fontsize + (fontsize / 4), a(settings.backgroundColor));
+			u32 base_y = 0;
+			if (settings.setPosBottom) {
+				base_y = tsl::cfg::FramebufferHeight - (fontsize + (fontsize / 4));
+			}
+
+			renderer->drawRect(0, base_y, tsl::cfg::FramebufferWidth, fontsize + (fontsize / 4), a(settings.backgroundColor));
 
 			uint32_t offset = 0;
 			if (settings.alignTo == 1) {
@@ -911,39 +1042,39 @@ public:
 			}
 			
 			if (settings.showCPU) {
-				auto dimensions_s = renderer->drawString("CPU", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				auto dimensions_s = renderer->drawString("CPU", false, offset, base_y+fontsize, fontsize, renderer->a(settings.catColor));
 				uint32_t offset_s = offset + dimensions_s.first + margin;
-				renderer->drawString(CPU_compressed_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				renderer->drawString(CPU_compressed_c, false, offset_s, base_y+fontsize, fontsize, renderer->a(settings.textColor));
 				offset += dimensions1.first + margin;
 			}
 			if (settings.showGPU) {
-				auto dimensions_s = renderer->drawString("GPU", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				auto dimensions_s = renderer->drawString("GPU", false, offset, base_y+fontsize, fontsize, renderer->a(settings.catColor));
 				uint32_t offset_s = offset + dimensions_s.first + margin;
-				renderer->drawString(GPU_Load_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				renderer->drawString(GPU_Load_c, false, offset_s, base_y+fontsize, fontsize, renderer->a(settings.textColor));
 				offset += dimensions2.first + margin;
 			}
 			if (settings.showRAM) {
-				auto dimensions_s = renderer->drawString("RAM", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				auto dimensions_s = renderer->drawString("RAM", false, offset, base_y+fontsize, fontsize, renderer->a(settings.catColor));
 				uint32_t offset_s = offset + dimensions_s.first + margin;
-				renderer->drawString(RAM_var_compressed_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				renderer->drawString(RAM_var_compressed_c, false, offset_s, base_y+fontsize, fontsize, renderer->a(settings.textColor));
 				offset += dimensions3.first + margin;
 			}
 			if (settings.showBRD) {
-				auto dimensions_s = renderer->drawString("BRD", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				auto dimensions_s = renderer->drawString("BRD", false, offset, base_y+fontsize, fontsize, renderer->a(settings.catColor));
 				uint32_t offset_s = offset + dimensions_s.first + margin;
-				renderer->drawString(skin_temperature_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				renderer->drawString(skin_temperature_c, false, offset_s, base_y+fontsize, fontsize, renderer->a(settings.textColor));
 				offset += dimensions4.first + margin;
 			}
 			if (settings.showFAN) {
-				auto dimensions_s = renderer->drawString("FAN", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				auto dimensions_s = renderer->drawString("FAN", false, offset, base_y+fontsize, fontsize, renderer->a(settings.catColor));
 				uint32_t offset_s = offset + dimensions_s.first + margin;
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset_s, base_y+fontsize, fontsize, renderer->a(settings.textColor));
 				offset += dimensions5.first + margin;
 			}
 			if (GameRunning && settings.showFPS) {
-				auto dimensions_s = renderer->drawString("FPS", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				auto dimensions_s = renderer->drawString("FPS", false, offset, base_y+fontsize, fontsize, renderer->a(settings.catColor));
 				uint32_t offset_s = offset + dimensions_s.first + margin;
-				renderer->drawString(FPS_var_compressed_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				renderer->drawString(FPS_var_compressed_c, false, offset_s, base_y+fontsize, fontsize, renderer->a(settings.textColor));
 			}
 		});
 

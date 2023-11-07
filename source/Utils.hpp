@@ -841,6 +841,7 @@ struct MiniSettings {
 	bool showDRAW;
 	bool showFPS;
 	bool showRAMLoad;
+	int setPos;
 };
 
 struct MicroSettings {
@@ -858,6 +859,7 @@ struct MicroSettings {
 	bool showFAN;
 	bool showFPS;
 	bool showRAMLoad;
+	bool setPosBottom;
 };
 
 struct FpsCounterSettings {
@@ -865,6 +867,20 @@ struct FpsCounterSettings {
 	size_t dockedFontSize;
 	int backgroundColor;
 	int textColor;
+	int setPos;
+};
+
+struct FpsGraphSettings {
+	int backgroundColor;
+	int fpsColor;
+	int mainLineColor;
+	int roundedLineColor;
+	int perfectLineColor;
+	int dashedLineColor;
+	int borderColor;
+	int maxFPSTextColor;
+	int minFPSTextColor;
+	int setPos;
 };
 
 void GetConfigSettings(MiniSettings* settings) {
@@ -931,7 +947,7 @@ void GetConfigSettings(MiniSettings* settings) {
 			long color = strtol(key.c_str(), NULL, 16);
 			if (!color) {
 				if (!key.compare(0x0000)) {
-					color = 0;
+					settings -> backgroundColor = 0;
 				}
 			}
 			else if (color < 0x10000 && color > 0)
@@ -945,7 +961,7 @@ void GetConfigSettings(MiniSettings* settings) {
 			long color = strtol(key.c_str(), NULL, 16);
 			if (!color) {
 				if (!key.compare(0x0000)) {
-					color = 0;
+					settings -> catColor = 0;
 				}
 			}
 			else if (color < 0x10000 && color > 0)
@@ -959,7 +975,7 @@ void GetConfigSettings(MiniSettings* settings) {
 			long color = strtol(key.c_str(), NULL, 16);
 			if (!color) {
 				if (!key.compare(0x0000)) {
-					color = 0;
+					settings -> textColor = 0;
 				}
 			}
 			else if (color < 0x10000 && color > 0)
@@ -1006,6 +1022,26 @@ void GetConfigSettings(MiniSettings* settings) {
 		convertToUpper(key);
 		settings -> showRAMLoad = key.compare("FALSE");
 	}
+	if (parsedData["mini"].find("layer_width_align") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["layer_width_align"];
+		convertToUpper(key);
+		if (!key.compare("CENTER")) {
+			settings -> setPos = 1;
+		}
+		if (!key.compare("RIGHT")) {
+			settings -> setPos = 2;
+		}
+	}
+	if (parsedData["mini"].find("layer_height_align") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["layer_height_align"];
+		convertToUpper(key);
+		if (!key.compare("CENTER")) {
+			settings -> setPos += 3;
+		}
+		if (!key.compare("BOTTOM")) {
+			settings -> setPos += 6;
+		}
+	}
 }
 
 void GetConfigSettings(MicroSettings* settings) {
@@ -1023,6 +1059,7 @@ void GetConfigSettings(MicroSettings* settings) {
 	settings -> showFAN = true;
 	settings -> showFPS = true;
 	settings -> showRAMLoad = true;
+	settings -> setPosBottom = false;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1045,8 +1082,8 @@ void GetConfigSettings(MicroSettings* settings) {
 		convertToUpper(key);
 		settings -> realFrequencies = !(key.compare("TRUE"));
 	}
-	if (parsedData["micro"].find("align_to") != parsedData["micro"].end()) {
-		key = parsedData["micro"]["align_to"];
+	if (parsedData["micro"].find("text_align") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["text_align"];
 		convertToUpper(key);
 		if (!key.compare("LEFT")) {
 			settings -> alignTo = 0;
@@ -1058,7 +1095,7 @@ void GetConfigSettings(MicroSettings* settings) {
 			settings -> alignTo = 2;
 		}
 	}
-	long maxFontSize = 19;
+	long maxFontSize = 18;
 	long minFontSize = 8;
 	if (parsedData["micro"].find("handheld_font_size") != parsedData["micro"].end()) {
 		key = parsedData["micro"]["handheld_font_size"];
@@ -1085,7 +1122,7 @@ void GetConfigSettings(MicroSettings* settings) {
 			long color = strtol(key.c_str(), NULL, 16);
 			if (!color) {
 				if (!key.compare(0x0000)) {
-					color = 0;
+					settings -> backgroundColor = 0;
 				}
 			}
 			else if (color < 0x10000 && color > 0)
@@ -1099,7 +1136,7 @@ void GetConfigSettings(MicroSettings* settings) {
 			long color = strtol(key.c_str(), NULL, 16);
 			if (!color) {
 				if (!key.compare(0x0000)) {
-					color = 0;
+					settings -> catColor = 0;
 				}
 			}
 			else if (color < 0x10000 && color > 0)
@@ -1113,7 +1150,7 @@ void GetConfigSettings(MicroSettings* settings) {
 			long color = strtol(key.c_str(), NULL, 16);
 			if (!color) {
 				if (!key.compare(0x0000)) {
-					color = 0;
+					settings -> textColor = 0;
 				}
 			}
 			else if (color < 0x10000 && color > 0)
@@ -1155,6 +1192,11 @@ void GetConfigSettings(MicroSettings* settings) {
 		convertToUpper(key);
 		settings -> showFPS = key.compare("FALSE");
 	}
+	if (parsedData["micro"].find("layer_height_align") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["layer_height_align"];
+		convertToUpper(key);
+		settings -> setPosBottom = !key.compare("BOTTOM");
+	}
 }
 
 void GetConfigSettings(FpsCounterSettings* settings) {
@@ -1162,6 +1204,7 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 	settings -> dockedFontSize = 40;
 	settings -> backgroundColor = 0x7111;
 	settings -> textColor = 0xFFFF;
+	settings -> setPos = 0;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1206,7 +1249,7 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 			long color = strtol(key.c_str(), NULL, 16);
 			if (!color) {
 				if (!key.compare(0x0000)) {
-					color = 0;
+					settings -> backgroundColor = 0;
 				}
 			}
 			else if (color < 0x10000 && color > 0)
@@ -1220,11 +1263,207 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 			long color = strtol(key.c_str(), NULL, 16);
 			if (!color) {
 				if (!key.compare(0x0000)) {
-					color = 0;
+					settings -> textColor = 0;
 				}
 			}
 			else if (color < 0x10000 && color > 0)
 				settings -> textColor = color;
+		}
+	}
+	if (parsedData["fps-counter"].find("layer_width_align") != parsedData["fps-counter"].end()) {
+		key = parsedData["fps-counter"]["layer_width_align"];
+		convertToUpper(key);
+		if (!key.compare("CENTER")) {
+			settings -> setPos = 1;
+		}
+		if (!key.compare("RIGHT")) {
+			settings -> setPos = 2;
+		}
+	}
+	if (parsedData["fps-counter"].find("layer_height_align") != parsedData["fps-counter"].end()) {
+		key = parsedData["fps-counter"]["layer_height_align"];
+		convertToUpper(key);
+		if (!key.compare("CENTER")) {
+			settings -> setPos += 3;
+		}
+		if (!key.compare("BOTTOM")) {
+			settings -> setPos += 6;
+		}
+	}
+}
+
+void GetConfigSettings(FpsGraphSettings* settings) {
+	settings -> setPos = 0;
+	settings -> backgroundColor = 0x7111;
+	settings -> fpsColor = 0x4444;
+	settings -> borderColor = 0xF77F;
+	settings -> dashedLineColor = 0x8888;
+	settings -> maxFPSTextColor = 0xFFFF;
+	settings -> minFPSTextColor = 0xFFFF;
+	settings -> mainLineColor = 0xFFFF;
+	settings -> roundedLineColor = 0xF0C0;
+	settings -> perfectLineColor = 0xFF0F;
+
+	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
+	if (!configFileIn)
+		return;
+	fseek(configFileIn, 0, SEEK_END);
+	long fileSize = ftell(configFileIn);
+	rewind(configFileIn);
+
+	std::string fileDataString(fileSize, '\0');
+	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
+	fclose(configFileIn);
+	
+	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+
+	std::string key;
+	if (parsedData.find("fps-graph") == parsedData.end())
+		return;
+	if (parsedData["fps-graph"].find("layer_width_align") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["layer_width_align"];
+		convertToUpper(key);
+		if (!key.compare("CENTER")) {
+			settings -> setPos = 1;
+		}
+		if (!key.compare("RIGHT")) {
+			settings -> setPos = 2;
+		}
+	}
+	if (parsedData["fps-graph"].find("layer_height_align") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["layer_height_align"];
+		convertToUpper(key);
+		if (!key.compare("CENTER")) {
+			settings -> setPos += 3;
+		}
+		if (!key.compare("BOTTOM")) {
+			settings -> setPos += 6;
+		}
+	}
+	if (parsedData["fps-graph"].find("min_fps_text_color") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["min_fps_text_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					settings -> minFPSTextColor = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> minFPSTextColor = color;
+		}
+	}
+	if (parsedData["fps-graph"].find("max_fps_text_color") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["max_fps_text_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					settings -> maxFPSTextColor = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> maxFPSTextColor = color;
+		}
+	}
+	if (parsedData["fps-graph"].find("background_color") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["background_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					settings -> backgroundColor = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> backgroundColor = color;
+		}
+	}
+	if (parsedData["fps-graph"].find("fps_counter_color") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["fps_counter_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					settings -> fpsColor = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> fpsColor = color;
+		}
+	}
+	if (parsedData["fps-graph"].find("border_color") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["border_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					settings -> borderColor = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> borderColor = color;
+		}
+	}
+	if (parsedData["fps-graph"].find("dashed_line_color") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["dashed_line_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					settings -> dashedLineColor = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> dashedLineColor = color;
+		}
+	}
+	if (parsedData["fps-graph"].find("main_line_color") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["main_line_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					settings -> mainLineColor = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> mainLineColor = color;
+		}
+	}
+	if (parsedData["fps-graph"].find("rounded_line_color") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["rounded_line_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					settings -> roundedLineColor = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> roundedLineColor = color;
+		}
+	}
+	if (parsedData["fps-graph"].find("perfect_line_color") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["perfect_line_color"];
+		if (key.size() == 6) {
+			convertToLower(key);
+			long color = strtol(key.c_str(), NULL, 16);
+			if (!color) {
+				if (!key.compare(0x0000)) {
+					settings -> perfectLineColor = 0;
+				}
+			}
+			else if (color < 0x10000 && color > 0)
+				settings -> perfectLineColor = color;
 		}
 	}
 }
