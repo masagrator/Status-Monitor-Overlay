@@ -261,6 +261,7 @@ private:
 	char skin_temperature_c[32];
 	char BatteryDraw_c[64];
 	char FPS_var_compressed_c[64];
+	char RAM_load_c[64];
 
 	uint8_t COMMON_MARGIN = 20;
 public:
@@ -321,7 +322,7 @@ public:
 				
 				uint32_t height_offset = 410;
 				if (realRAM_Hz) {
-					height_offset = 417;
+					height_offset += 7;
 				}
 
 				renderer->drawString("RAM Usage:", false, COMMON_MARGIN, 375, 20, renderer->a(0xFFFF));
@@ -333,6 +334,9 @@ public:
 						renderer->drawString("Real Frequency:", false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
 						renderer->drawString(RealRAM_Hz_c, false, offset, height_offset - 15, 15, renderer->a(0xFFFF));
 						renderer->drawString(DeltaRAM_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
+					}
+					if (sysClkApiVer >= 4) {
+						renderer->drawString(RAM_load_c, false, COMMON_MARGIN, height_offset+15, 15, renderer->a(0xFFFF));
 					}
 				}
 				if (R_SUCCEEDED(Hinted)) {
@@ -385,33 +389,33 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "%.1f MHz", (float)CPU_Hz / 1000000);
+		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "%d.%d MHz", CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
 		if (realCPU_Hz) {
-			snprintf(RealCPU_Hz_c, sizeof(RealCPU_Hz_c), "%.1f MHz", (float)realCPU_Hz / 1000000);
+			snprintf(RealCPU_Hz_c, sizeof(RealCPU_Hz_c), "%d.%d MHz", realCPU_Hz / 1000000, (realCPU_Hz / 100000) % 10);
 			int32_t deltaCPU = realCPU_Hz - CPU_Hz;
-			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %.1f", (float)deltaCPU / 1000000);
+			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %d.%d", deltaCPU / 1000000, (deltaCPU / 100000) % 10);
 		}
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%s", ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100, "%");
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%s", ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100, "%");
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%s", ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100, "%");
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%s", ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100, "%");
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", 100.0d * ((double)(idletick0) / systemtickfrequency));
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", 100.0d * ((double)(idletick1) / systemtickfrequency));
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%%", 100.0d * ((double)(idletick2) / systemtickfrequency));
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%%", 100.0d * ((double)(idletick3) / systemtickfrequency));
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 		
 		///GPU
-		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "%.1f MHz", (float)GPU_Hz / 1000000);
+		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "%d.%d MHz", GPU_Hz / 1000000, (GPU_Hz / 100000) % 10);
 		if (realGPU_Hz) {
-			snprintf(RealGPU_Hz_c, sizeof(RealGPU_Hz_c), "%.1f MHz", (float)realGPU_Hz / 1000000);
+			snprintf(RealGPU_Hz_c, sizeof(RealGPU_Hz_c), "%d.%d MHz", realGPU_Hz / 1000000, (realGPU_Hz / 100000) % 10);
 			int32_t deltaGPU = realGPU_Hz - GPU_Hz;
-			snprintf(DeltaGPU_c, sizeof(DeltaGPU_c), "Δ %.1f", (float)deltaGPU / 1000000);
+			snprintf(DeltaGPU_c, sizeof(DeltaGPU_c), "Δ %d.%d", deltaGPU / 1000000, (deltaGPU / 100000) % 10);
 		}
-		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %.1f%s", (float)GPU_Load_u / 10, "%");
+		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %d.%d%%", GPU_Load_u / 10, GPU_Load_u % 10);
 		
 		///RAM
-		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "%.1f MHz", (float)RAM_Hz / 1000000);
+		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "%d.%d MHz", RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
 		if (realRAM_Hz) {
-			snprintf(RealRAM_Hz_c, sizeof(RealRAM_Hz_c), "%.1f MHz", (float)realRAM_Hz / 1000000);
+			snprintf(RealRAM_Hz_c, sizeof(RealRAM_Hz_c), "%d.%d MHz", realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
 			int32_t deltaRAM = realRAM_Hz - RAM_Hz;
-			snprintf(DeltaRAM_c, sizeof(DeltaRAM_c), "Δ %.1f", (float)deltaRAM / 1000000);
+			snprintf(DeltaRAM_c, sizeof(DeltaRAM_c), "Δ %d.%d", deltaRAM / 1000000, (deltaRAM / 100000) % 10);
 		}
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
@@ -436,6 +440,14 @@ public:
 		snprintf(FULL_RAM_systemunsafe_c, sizeof(FULL_RAM_systemunsafe_c), "%4.2f / %4.2f MB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
 		snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%s\n%s\n%s\n%s\n%s", FULL_RAM_all_c, FULL_RAM_application_c, FULL_RAM_applet_c, FULL_RAM_system_c, FULL_RAM_systemunsafe_c);
 		
+		if (sysClkApiVer >= 4) {
+			int RAM_GPU_Load = _sysclkemcload.load[SysClkEmcLoad_All] - _sysclkemcload.load[SysClkEmcLoad_Cpu];
+			snprintf(RAM_load_c, sizeof RAM_load_c, 
+				"Load: %d.%d%% (CPU %d.%d | GPU %d.%d)", 
+				_sysclkemcload.load[SysClkEmcLoad_All] / 10, _sysclkemcload.load[SysClkEmcLoad_All] % 10,
+				_sysclkemcload.load[SysClkEmcLoad_Cpu] / 10, _sysclkemcload.load[SysClkEmcLoad_Cpu] % 10,
+				RAM_GPU_Load / 10, RAM_GPU_Load % 10);
+		}
 		///Thermal
 		char remainingBatteryLife[8];
 		if (batTimeEstimate >= 0) {
@@ -444,11 +456,18 @@ public:
 		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
 		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW[%s]", PowerConsumption, remainingBatteryLife);
 		if (hosversionAtLeast(10,0,0)) {
-			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2.1f \u00B0C\n%2.1f \u00B0C\n%2.1f \u00B0C", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000);
+			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, 
+				"%2.1f \u00B0C\n%2.1f \u00B0C\n%2d.%d \u00B0C", 
+				SOC_temperatureF, PCB_temperatureF, skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
 		}
-		else 
-			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%2.1f \u00B0C\n%2.1f\u00B0C\n%2.1f \u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level:\t%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
+		else {
+			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, 
+				"%2d.%d \u00B0C\n%2d.%d\u00B0C\n%2d.%d \u00B0C", 
+				SOC_temperatureC / 1000, (SOC_temperatureC / 100) % 10, 
+				PCB_temperatureC / 1000, (PCB_temperatureC % 100) % 10,
+				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
+		}
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level:\t%2.1f%%", Rotation_SpeedLevel_f * 100);
 		
 		///FPS
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.1f", FPS, FPSavg);
@@ -516,17 +535,17 @@ public:
 				if (settings.showCPU) {
 					dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
 				}
-				else if (settings.showRAM) {
+				else if (settings.showRAM && !settings.showRAMLoad) {
 					dimensions = renderer->drawString("4444/4444MB@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
 				}
 				else if (settings.showTEMP) {
 					dimensions = renderer->drawString("88.8\u00B0C/88.8\u00B0C/88.8\u00B0C", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				}
-				else if (settings.showGPU) {
-					dimensions = renderer->drawString("100.0%@4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
-				}
 				else if (settings.showDRAW) {
 					dimensions = renderer->drawString("-44.44W[44:44]", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				}
+				else if (settings.showGPU || (settings.showRAM && settings.showRAMLoad)) {
+					dimensions = renderer->drawString("100.0%@4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				}
 				else if (settings.showFAN) {
 					dimensions = renderer->drawString("100.0%", false, 0, fontsize, fontsize, renderer->a(0x0000));
@@ -626,42 +645,82 @@ public:
 		char MINI_CPU_Usage2[7] = "";
 		char MINI_CPU_Usage3[7] = "";
 
-		double percent = ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100;
-		snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0f%s", percent, "%");
-		percent = ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100;
-		snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%s", percent, "%");
-		percent = ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100;
-		snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%s", percent, "%");
-		percent = ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100;
-		snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%s", percent, "%");
+		double percent = 100.0d * ((double)(idletick0) / systemtickfrequency);
+		snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0f%%", percent);
+		percent = 100.0d * ((double)(idletick1) / systemtickfrequency);
+		snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%%", percent);
+		percent = 100.0d * ((double)(idletick2) / systemtickfrequency);
+		snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%%", percent);
+		percent = 100.0d * ((double)(idletick3) / systemtickfrequency);
+		snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%%", percent);
 		
 		char MINI_CPU_compressed_c[42] = "";
 		if (settings.realFrequencies && realCPU_Hz) {
-			snprintf(MINI_CPU_compressed_c, sizeof(MINI_CPU_compressed_c), "[%s,%s,%s,%s]@%.1f", MINI_CPU_Usage0, MINI_CPU_Usage1, MINI_CPU_Usage2, MINI_CPU_Usage3, (float)realCPU_Hz / 1000000);
+			snprintf(MINI_CPU_compressed_c, sizeof(MINI_CPU_compressed_c), 
+				"[%s,%s,%s,%s]@%hu.%hhu", 
+				MINI_CPU_Usage0, MINI_CPU_Usage1, MINI_CPU_Usage2, MINI_CPU_Usage3, 
+				realCPU_Hz / 1000000, (realCPU_Hz / 100000) % 10);
 		}
-		else snprintf(MINI_CPU_compressed_c, sizeof(MINI_CPU_compressed_c), "[%s,%s,%s,%s]@%.1f", MINI_CPU_Usage0, MINI_CPU_Usage1, MINI_CPU_Usage2, MINI_CPU_Usage3, (float)CPU_Hz / 1000000);
+		else {
+			snprintf(MINI_CPU_compressed_c, sizeof(MINI_CPU_compressed_c), 
+				"[%s,%s,%s,%s]@%hu.%hhu", 
+				MINI_CPU_Usage0, MINI_CPU_Usage1, MINI_CPU_Usage2, MINI_CPU_Usage3, 
+				CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
+		}
 		char MINI_GPU_Load_c[14];
 		if (settings.realFrequencies && realGPU_Hz) {
-			snprintf(MINI_GPU_Load_c, sizeof(MINI_GPU_Load_c), "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)realGPU_Hz / 1000000);
+			snprintf(MINI_GPU_Load_c, sizeof(MINI_GPU_Load_c), 
+				"%hu.%hhu%%@%hu.%hhu", 
+				GPU_Load_u / 10, GPU_Load_u % 10,
+				realGPU_Hz / 1000000, (realGPU_Hz / 100000) % 10);
 		}
-		else snprintf(MINI_GPU_Load_c, sizeof(MINI_GPU_Load_c), "%.1f%s@%.1f", (float)GPU_Load_u / 10, "%", (float)GPU_Hz / 1000000);
+		else {
+			snprintf(MINI_GPU_Load_c, sizeof(MINI_GPU_Load_c), 
+				"%hu.%hhu%%@%hu.%hhu", 
+				GPU_Load_u / 10, GPU_Load_u % 10, 
+				GPU_Hz / 1000000, (GPU_Hz / 100000) % 10);
+		}
 		
 		///RAM
-		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
-		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
-		float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
-		float RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
-		float RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
-		float RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
-		float RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
-		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
-		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
-		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
 		char MINI_RAM_var_compressed_c[19] = "";
-		if (settings.realFrequencies && realRAM_Hz) {
-			snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)realRAM_Hz / 1000000);
+		if (sysClkApiVer < 4 || !settings.showRAMLoad) {
+			float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
+			float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
+			float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
+			float RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
+			float RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
+			float RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
+			float RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
+			float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
+			float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
+			float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
+			if (settings.realFrequencies && realRAM_Hz) {
+				snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), 
+					"%.0f/%.0fMB@%hu.%hhu", 
+					RAM_Used_all_f, RAM_Total_all_f, 
+					realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
+			}
+			else {
+				snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), 
+					"%.0f/%.0fMB@%hu.%hhu",
+					RAM_Used_all_f, RAM_Total_all_f, 
+					RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
+			}
 		}
-		else snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), "%.0f/%.0fMB@%.1f", RAM_Used_all_f, RAM_Total_all_f, (float)RAM_Hz / 1000000);
+		else {
+			if (settings.realFrequencies && realRAM_Hz) {
+				snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), 
+					"%hu.%hhu%%@%hu.%hhu", 
+					_sysclkemcload.load[SysClkEmcLoad_All] / 10, _sysclkemcload.load[SysClkEmcLoad_All] % 10, 
+					realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
+			}
+			else {
+				snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), 
+					"%hu.%hhu%%@%hu.%hhu", 
+					_sysclkemcload.load[SysClkEmcLoad_All] / 10, _sysclkemcload.load[SysClkEmcLoad_All] % 10, 
+					RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
+			}
+		}
 		
 		///Thermal
 		char remainingBatteryLife[8];
@@ -671,11 +730,20 @@ public:
 		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
 		
 		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW[%s]", PowerConsumption, remainingBatteryLife);
-		if (hosversionAtLeast(10,0,0))
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000);
-		else
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f\u00B0C/%2.1f\u00B0C/%2.1f\u00B0C", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000);
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
+		if (hosversionAtLeast(10,0,0)) {
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, 
+				"%2.1f\u00B0C/%2.1f\u00B0C/%hu.%hhu\u00B0C", 
+				SOC_temperatureF, PCB_temperatureF, 
+				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
+		}
+		else {
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, 
+				"%hu.%hhu\u00B0C/%hu.%hhu\u00B0C/%hu.%hhu\u00B0C", 
+				SOC_temperatureC / 1000, (SOC_temperatureC / 100) % 10, 
+				PCB_temperatureC / 1000, (PCB_temperatureC / 100) % 10, 
+				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
+		}
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%%", Rotation_SpeedLevel_f * 100);
 		
 		///FPS
 		char Temp[256] = "";
@@ -913,14 +981,14 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		double percent = ((double)systemtickfrequency - (double)idletick0) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%s", percent, "%");
-		percent = ((double)systemtickfrequency - (double)idletick1) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%s", percent, "%");
-		percent = ((double)systemtickfrequency - (double)idletick2) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%s", percent, "%");
-		percent = ((double)systemtickfrequency - (double)idletick3) / (double)systemtickfrequency * 100;
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%s", percent, "%");
+		double percent = 100.0d * ((double)(idletick0) / systemtickfrequency);
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%%", percent);
+		percent = 100.0d * ((double)(idletick1) / systemtickfrequency);
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%%", percent);
+		percent = 100.0d * ((double)(idletick2) / systemtickfrequency);
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%%", percent);
+		percent = 100.0d * ((double)(idletick3) / systemtickfrequency);
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%%", percent);
 
 		char difference[5] = "@";
 		if (realCPU_Hz) {
@@ -936,9 +1004,19 @@ public:
 			}
 		}
 		if (settings.realFrequencies && realCPU_Hz) {
-			snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]%s%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, difference, (float)realCPU_Hz / 1000000);
+			snprintf(CPU_compressed_c, sizeof CPU_compressed_c, 
+				"[%s,%s,%s,%s]%s%d.%d", 
+				CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, 
+				difference, 
+				realCPU_Hz / 1000000, (realCPU_Hz / 100000) % 10);
 		}
-		else snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "[%s,%s,%s,%s]%s%.1f", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, difference, (float)CPU_Hz / 1000000);
+		else {
+			snprintf(CPU_compressed_c, sizeof CPU_compressed_c, 
+				"[%s,%s,%s,%s]%s%d.%d", 
+				CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3, 
+				difference, 
+				CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
+		}
 		
 		///GPU
 		if (realGPU_Hz) {
@@ -960,23 +1038,38 @@ public:
 			strcpy(difference, "@");
 		}
 		if (settings.realFrequencies && realGPU_Hz) {
-			snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s%s%.1f", (float)GPU_Load_u / 10, "%", difference, (float)realGPU_Hz / 1000000);
+			snprintf(GPU_Load_c, sizeof GPU_Load_c, 
+				"%d.%d%%%s%d.%d", 
+				GPU_Load_u / 10, GPU_Load_u % 10, 
+				difference, 
+				realGPU_Hz / 1000000, (realGPU_Hz / 100000) % 10);
 		}
-		else snprintf(GPU_Load_c, sizeof GPU_Load_c, "%.1f%s%s%.1f", (float)GPU_Load_u / 10, "%", difference, (float)GPU_Hz / 1000000);
+		else {
+			snprintf(GPU_Load_c, sizeof GPU_Load_c, 
+				"%d.%d%%%s%d.%d", 
+				GPU_Load_u / 10, GPU_Load_u % 10, 
+				difference, 
+				GPU_Hz / 1000000, (GPU_Hz / 100000) % 10);
+		}
 		
 		///RAM
-		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
-		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
-		float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
-		float RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
-		float RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
-		float RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
-		float RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
-		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
-		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
-		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
 		char MICRO_RAM_all_c[12] = "";
-		snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%.1f/%.1fGB", RAM_Used_all_f/1024, RAM_Total_all_f/1024);
+		if (!settings.showRAMLoad || sysClkApiVer < 4) {
+			float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
+			float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
+			float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
+			float RAM_Total_systemunsafe_f = (float)RAM_Total_systemunsafe_u / 1024 / 1024;
+			float RAM_Total_all_f = RAM_Total_application_f + RAM_Total_applet_f + RAM_Total_system_f + RAM_Total_systemunsafe_f;
+			float RAM_Used_application_f = (float)RAM_Used_application_u / 1024 / 1024;
+			float RAM_Used_applet_f = (float)RAM_Used_applet_u / 1024 / 1024;
+			float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
+			float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
+			float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
+			snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%.1f/%.1fGB", RAM_Used_all_f/1024, RAM_Total_all_f/1024);
+		}
+		else {
+			snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%hu.%hhu%%", _sysclkemcload.load[SysClkEmcLoad_All] / 10, _sysclkemcload.load[SysClkEmcLoad_All] % 10);
+		}
 
 		if (realRAM_Hz) {
 			int32_t deltaRAM = realRAM_Hz - RAM_Hz;
@@ -997,9 +1090,15 @@ public:
 			strcpy(difference, "@");
 		}
 		if (settings.realFrequencies && realRAM_Hz) {
-			snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s%s%.1f", MICRO_RAM_all_c, difference, (float)realRAM_Hz / 1000000);
+			snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, 
+				"%s%s%d.%d", 
+				MICRO_RAM_all_c, difference, realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
 		}
-		else snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, "%s%s%.1f", MICRO_RAM_all_c, difference, (float)RAM_Hz / 1000000);
+		else {
+			 snprintf(RAM_var_compressed_c, sizeof RAM_var_compressed_c, 
+				"%s%s%d.%d", 
+				MICRO_RAM_all_c, difference, RAM_Hz / 1000000, (RAM_Hz / 1000000) % 10);
+		}
 		
 		char remainingBatteryLife[8];
 		if (batTimeEstimate >= 0) {
@@ -1009,11 +1108,21 @@ public:
 
 		///Thermal
 		if (hosversionAtLeast(10,0,0)) {
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.1fW[%s]", SOC_temperatureF, PCB_temperatureF, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, 
+				"%2.1f/%2.1f/%hu.%hhu\u00B0C@%+.1fW[%s]", 
+				SOC_temperatureF, PCB_temperatureF, 
+				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10, 
+				PowerConsumption, remainingBatteryLife);
 		}
-		else
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, "%2.1f/%2.1f/%2.1f\u00B0C@%+.1fW[%s]", (float)SOC_temperatureC / 1000, (float)PCB_temperatureC / 1000, (float)skin_temperaturemiliC / 1000, PowerConsumption, remainingBatteryLife);
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%s", Rotation_SpeedLevel_f * 100, "%");
+		else {
+			snprintf(skin_temperature_c, sizeof skin_temperature_c, 
+				"%hu.%hhu/%hu.%hhu/%hu.%hhu\u00B0C@%+.1fW[%s]", 
+				SOC_temperatureC / 1000, (SOC_temperatureC / 100) % 10, 
+				PCB_temperatureC / 1000, (PCB_temperatureC / 100) % 10, 
+				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10, 
+				PowerConsumption, remainingBatteryLife);
+		}
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%%", Rotation_SpeedLevel_f * 100);
 		
 		///FPS
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", FPSavg);
@@ -1100,8 +1209,8 @@ public:
 				"Battery Actual Capacity: %.0f mAh\n"
 				"Battery Designed Capacity: %.0f mAh\n"
 				"Battery Temperature: %.1f\u00B0C\n"
-				"Battery Raw Charge: %.1f%s\n"
-				"Battery Age: %.1f%s\n"
+				"Battery Raw Charge: %.1f%%\n"
+				"Battery Age: %.1f%%\n"
 				"Battery Voltage (5s AVG): %.0f mV\n"
 				"Battery Current Flow (5s AVG): %+.0f mA\n"
 				"Battery Power Flow (5s AVG): %+.3f W\n"
@@ -1112,8 +1221,8 @@ public:
 				actualFullBatCapacity,
 				designedFullBatCapacity,
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
-				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000, "%",
-				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
+				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000,
+				(float)_batteryChargeInfoFields.BatteryAge / 1000,
 				batVoltageAvg,
 				batCurrentAvg,
 				PowerConsumption, 
@@ -1127,8 +1236,8 @@ public:
 				"Battery Actual Capacity: %.0f mAh\n"
 				"Battery Designed Capacity: %.0f mAh\n"
 				"Battery Temperature: %.1f\u00B0C\n"
-				"Battery Raw Charge: %.1f%s\n"
-				"Battery Age: %.1f%s\n"
+				"Battery Raw Charge: %.1f%%\n"
+				"Battery Age: %.1f%%\n"
 				"Battery Voltage (5s AVG): %.0f mV\n"
 				"Battery Current Flow (5s AVG): %.0f mA\n"
 				"Battery Power Flow (5s AVG): %+.3f W\n"
@@ -1136,8 +1245,8 @@ public:
 				actualFullBatCapacity,
 				designedFullBatCapacity,
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
-				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000, "%",
-				(float)_batteryChargeInfoFields.BatteryAge / 1000, "%",
+				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000,
+				(float)_batteryChargeInfoFields.BatteryAge / 1000,
 				batVoltageAvg,
 				batCurrentAvg,
 				PowerConsumption, 
@@ -1554,9 +1663,8 @@ public:
 				LoadSharedMemory();
 			}
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
-				uint32_t api_ver = 0;
-				sysclkIpcGetAPIVersion(&api_ver);
-				if (api_ver < 3) {
+				sysclkIpcGetAPIVersion(&sysClkApiVer);
+				if (sysClkApiVer < 3) {
 					sysclkIpcExit();
 				}
 				else sysclkCheck = 0;
@@ -1635,9 +1743,8 @@ public:
 				LoadSharedMemory();
 			}
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
-				uint32_t api_ver = 0;
-				sysclkIpcGetAPIVersion(&api_ver);
-				if (api_ver < 3) {
+				sysclkIpcGetAPIVersion(&sysClkApiVer);
+				if (sysClkApiVer < 3) {
 					sysclkIpcExit();
 				}
 				else sysclkCheck = 0;

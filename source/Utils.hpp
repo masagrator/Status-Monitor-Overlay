@@ -9,6 +9,7 @@
 #include <numeric>
 #include <tesla.hpp>
 #include <sys/stat.h>
+#include "sysclk/emc.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -151,6 +152,8 @@ Handle remoteSharedMemory = 1;
 int32_t realCPU_Hz = 0;
 int32_t realGPU_Hz = 0;
 int32_t realRAM_Hz = 0;
+uint32_t sysClkApiVer = 0;
+SysClkEmcLoad _sysclkemcload = {};
 
 void LoadSharedMemory() {
 	if (SaltySD_Connect())
@@ -421,6 +424,9 @@ void Misc(void*) {
 				realCPU_Hz = sysclkCTX.realFreqs[SysClkModule_CPU];
 				realGPU_Hz = sysclkCTX.realFreqs[SysClkModule_GPU];
 				realRAM_Hz = sysclkCTX.realFreqs[SysClkModule_MEM];
+			}
+			if (sysClkApiVer > 3) {
+				sysclkIpcGetEmcLoad(&_sysclkemcload);
 			}
 		}
 		
@@ -834,6 +840,7 @@ struct MiniSettings {
 	bool showFAN;
 	bool showDRAW;
 	bool showFPS;
+	bool showRAMLoad;
 };
 
 struct MicroSettings {
@@ -844,6 +851,14 @@ struct MicroSettings {
 	int backgroundColor;
 	int catColor;
 	int textColor;
+	bool showCPU;
+	bool showGPU;
+	bool showRAM;
+	bool showTEMP;
+	bool showFAN;
+	bool showDRAW;
+	bool showFPS;
+	bool showRAMLoad;
 };
 
 struct FpsCounterSettings {
@@ -867,6 +882,7 @@ void GetConfigSettings(MiniSettings* settings) {
 	settings -> showFAN = true;
 	settings -> showDRAW = true;
 	settings -> showFPS = true;
+	settings -> showRAMLoad = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -986,6 +1002,11 @@ void GetConfigSettings(MiniSettings* settings) {
 		convertToUpper(key);
 		settings -> showFPS = key.compare("FALSE");
 	}
+	if (parsedData["mini"].find("replace_MB_with_RAM_load") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["replace_MB_with_RAM_load"];
+		convertToUpper(key);
+		settings -> showRAMLoad = key.compare("FALSE");
+	}
 }
 
 void GetConfigSettings(MicroSettings* settings) {
@@ -996,6 +1017,14 @@ void GetConfigSettings(MicroSettings* settings) {
 	settings -> backgroundColor = 0x7111;
 	settings -> catColor = 0xFCCF;
 	settings -> textColor = 0xFFFF;
+	settings -> showCPU = true;
+	settings -> showGPU = true;
+	settings -> showRAM = true;
+	settings -> showTEMP = true;
+	settings -> showFAN = true;
+	settings -> showDRAW = true;
+	settings -> showFPS = true;
+	settings -> showRAMLoad = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1092,6 +1121,11 @@ void GetConfigSettings(MicroSettings* settings) {
 			else if (color < 0x10000 && color > 0)
 				settings -> textColor = color;
 		}
+	}
+	if (parsedData["mini"].find("replace_GB_with_RAM_load") != parsedData["mini"].end()) {
+		key = parsedData["mini"]["replace_GB_with_RAM_load"];
+		convertToUpper(key);
+		settings -> showRAMLoad = key.compare("FALSE");
 	}
 }
 
