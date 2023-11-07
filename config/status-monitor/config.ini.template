@@ -27,5 +27,5 @@ replace_GB_with_RAM_load=true
 [fps-counter]
 handheld_font_size=40
 docked_font_size=40
-background_color=0x711F
+background_color=0x7111
 text_color=0xFFFF
