@@ -393,12 +393,12 @@ public:
 		if (realCPU_Hz) {
 			snprintf(RealCPU_Hz_c, sizeof(RealCPU_Hz_c), "%d.%d MHz", realCPU_Hz / 1000000, (realCPU_Hz / 100000) % 10);
 			int32_t deltaCPU = realCPU_Hz - CPU_Hz;
-			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %d.%d", deltaCPU / 1000000, (deltaCPU / 100000) % 10);
+			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %d.%d", deltaCPU / 1000000, abs(deltaCPU / 100000) % 10);
 		}
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", 100.0d * ((double)(idletick0) / systemtickfrequency));
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", 100.0d * ((double)(idletick1) / systemtickfrequency));
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%%", 100.0d * ((double)(idletick2) / systemtickfrequency));
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%%", 100.0d * ((double)(idletick3) / systemtickfrequency));
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 		
 		///GPU
@@ -406,7 +406,7 @@ public:
 		if (realGPU_Hz) {
 			snprintf(RealGPU_Hz_c, sizeof(RealGPU_Hz_c), "%d.%d MHz", realGPU_Hz / 1000000, (realGPU_Hz / 100000) % 10);
 			int32_t deltaGPU = realGPU_Hz - GPU_Hz;
-			snprintf(DeltaGPU_c, sizeof(DeltaGPU_c), "Δ %d.%d", deltaGPU / 1000000, (deltaGPU / 100000) % 10);
+			snprintf(DeltaGPU_c, sizeof(DeltaGPU_c), "Δ %u.%u", deltaGPU / 1000000, abs(deltaGPU / 100000) % 10);
 		}
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %d.%d%%", GPU_Load_u / 10, GPU_Load_u % 10);
 		
@@ -415,7 +415,7 @@ public:
 		if (realRAM_Hz) {
 			snprintf(RealRAM_Hz_c, sizeof(RealRAM_Hz_c), "%d.%d MHz", realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
 			int32_t deltaRAM = realRAM_Hz - RAM_Hz;
-			snprintf(DeltaRAM_c, sizeof(DeltaRAM_c), "Δ %d.%d", deltaRAM / 1000000, (deltaRAM / 100000) % 10);
+			snprintf(DeltaRAM_c, sizeof(DeltaRAM_c), "Δ %d.%d", deltaRAM / 1000000, abs(deltaRAM / 100000) % 10);
 		}
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
@@ -645,14 +645,10 @@ public:
 		char MINI_CPU_Usage2[7] = "";
 		char MINI_CPU_Usage3[7] = "";
 
-		double percent = 100.0d * ((double)(idletick0) / systemtickfrequency);
-		snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0f%%", percent);
-		percent = 100.0d * ((double)(idletick1) / systemtickfrequency);
-		snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%%", percent);
-		percent = 100.0d * ((double)(idletick2) / systemtickfrequency);
-		snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%%", percent);
-		percent = 100.0d * ((double)(idletick3) / systemtickfrequency);
-		snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%%", percent);
+		snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
+		snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
+		snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
+		snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
 		
 		char MINI_CPU_compressed_c[42] = "";
 		if (settings.realFrequencies && realCPU_Hz) {
@@ -842,6 +838,7 @@ private:
 	size_t fps_width = 0;
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
 	size_t fontsize = 0;
+	bool showFULL = true;
 public:
     MicroOverlay() { 
 		GetConfigSettings(&settings);
@@ -868,90 +865,85 @@ public:
 				dimensions6 = renderer->drawString("FPS 44.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				auto spacesize = renderer->drawString(" ", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				margin = spacesize.first;
-				text_width = dimensions1.first + dimensions2.first + dimensions3.first + dimensions4.first + dimensions5.first + (margin * 4);
-				fps_width = dimensions6.first + margin;
+				int8_t entry_count = -1;
+				if (settings.showCPU) {
+					text_width += dimensions1.first;
+					entry_count += 1;
+				}
+				if (settings.showGPU) {
+					text_width += dimensions2.first;
+					entry_count += 1;
+				}
+				if (settings.showRAM) {
+					text_width += dimensions3.first;
+					entry_count += 1;
+				}
+				if (settings.showBRD) {
+					text_width += dimensions4.first;
+					entry_count += 1;
+				}
+				if (settings.showFAN) {
+					text_width += dimensions5.first;
+					entry_count += 1;
+				}
+				text_width += (margin * entry_count);
+				if (settings.showFPS) {
+					fps_width = dimensions6.first + margin;
+				}
+				showFULL = settings.showCPU && settings.showGPU && settings.showRAM && settings.showBRD && settings.showFAN;
 				Initialized = true;
 			}
 
 			renderer->drawRect(0, 0, tsl::cfg::FramebufferWidth, fontsize + (fontsize / 4), a(settings.backgroundColor));
 
-			uint32_t offset1 = 0;
-			if (fontsize < 18) {
-				if (settings.alignTo == 1) {
-					if (GameRunning) {
-						offset1 = (tsl::cfg::FramebufferWidth - (text_width + fps_width)) / 2;
-					}
-					else offset1 = (tsl::cfg::FramebufferWidth - text_width) / 2;
+			uint32_t offset = 0;
+			if (settings.alignTo == 1) {
+				if (GameRunning && settings.showFPS) {
+					offset = (tsl::cfg::FramebufferWidth - (text_width + fps_width)) / 2;
 				}
-				else if (settings.alignTo == 2) {
-					if (GameRunning) {
-						offset1 = tsl::cfg::FramebufferWidth - (text_width + fps_width);
-					}
-					else offset1 = tsl::cfg::FramebufferWidth - text_width;
-				}
+				else offset = (tsl::cfg::FramebufferWidth - text_width) / 2;
 			}
-			uint32_t offset2 = offset1 + dimensions1.first + margin;
-			uint32_t offset3 = offset2 + dimensions2.first + margin;
-
-			auto dimensions1_s = renderer->drawString("CPU", false, offset1, fontsize, fontsize, renderer->a(settings.catColor));
-			auto dimensions2_s = renderer->drawString("GPU", false, offset2, fontsize, fontsize, renderer->a(settings.catColor));
-			auto dimensions3_s = renderer->drawString("RAM", false, offset3, fontsize, fontsize, renderer->a(settings.catColor));
-
-			uint32_t offset1_s = offset1 + dimensions1_s.first + margin;
-			uint32_t offset2_s = offset2 + dimensions2_s.first + margin;
-			uint32_t offset3_s = offset3 + dimensions3_s.first + margin;
-
-			renderer->drawString(CPU_compressed_c, false, offset1_s, fontsize, fontsize, renderer->a(settings.textColor));
-			renderer->drawString(GPU_Load_c, false, offset2_s, fontsize, fontsize, renderer->a(settings.textColor));
-			renderer->drawString(RAM_var_compressed_c, false, offset3_s, fontsize, fontsize, renderer->a(settings.textColor));
-
-			if (!GameRunning) {
-				uint32_t offset4 = offset3 + dimensions3.first + margin;
-				uint32_t offset5 = tsl::cfg::FramebufferWidth - dimensions5.first;
-				uint32_t space_free = offset5 - offset4;
-				uint32_t margins_free = space_free - dimensions4.first;
-
-				if (fontsize < 18) {
-					offset5 = offset4 + dimensions4.first + margin;
+			else if (settings.alignTo == 2) {
+				if (GameRunning && settings.showFPS) {
+					offset = tsl::cfg::FramebufferWidth - (text_width + fps_width);
 				}
-				else offset4 = offset4 + ((margins_free) / 2);
-
-				auto dimensions4_s = renderer->drawString("BRD", false, offset4, fontsize, fontsize, renderer->a(settings.catColor));
-				auto dimensions5_s = renderer->drawString("FAN", false, offset5, fontsize, fontsize, renderer->a(settings.catColor));
-
-				uint32_t offset4_s = offset4 + dimensions4_s.first + margin;
-				uint32_t offset5_s = offset5 + dimensions5_s.first + margin;
-
-				renderer->drawString(skin_temperature_c, false, offset4_s, fontsize, fontsize, renderer->a(settings.textColor));
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, fontsize, fontsize, renderer->a(settings.textColor));
+				else offset = tsl::cfg::FramebufferWidth - text_width;
 			}
-			else {
-				uint32_t offset4 = offset3 + dimensions3.first + margin;
-				uint32_t offset5 = offset4 + dimensions4.first + margin;
-				uint32_t offset6 = tsl::cfg::FramebufferWidth - dimensions6.first;
-
-				uint32_t space_free = offset6 - offset5;
-				uint32_t margins_free = space_free - dimensions5.first;
-
-				if (fontsize < 18) {
-					offset6 = offset5 + dimensions5.first + margin;
-				}
-				else {
-					offset4 = offset4 + ((margins_free) / 2);
-					offset5 = offset4 + dimensions4.first + margin;
-				}
-
-				auto dimensions4_s = renderer->drawString("BRD", false, offset4, fontsize, fontsize, renderer->a(settings.catColor));
-				auto dimensions5_s = renderer->drawString("FAN", false, offset5, fontsize, fontsize, renderer->a(settings.catColor));
-				auto dimensions6_s = renderer->drawString("FPS", false, offset6, fontsize, fontsize, renderer->a(settings.catColor));
-
-				uint32_t offset4_s = offset4 + dimensions4_s.first + margin;
-				uint32_t offset5_s = offset5 + dimensions5_s.first + margin;
-				uint32_t offset6_s = offset6 + dimensions6_s.first + margin;
-
-				renderer->drawString(skin_temperature_c, false, offset4_s, fontsize, fontsize, renderer->a(settings.textColor));
-				renderer->drawString(Rotation_SpeedLevel_c, false, offset5_s, fontsize, fontsize, renderer->a(settings.textColor));
-				renderer->drawString(FPS_var_compressed_c, false, offset6_s, fontsize, fontsize, renderer->a(settings.textColor));
+			
+			if (settings.showCPU) {
+				auto dimensions_s = renderer->drawString("CPU", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				uint32_t offset_s = offset + dimensions_s.first + margin;
+				renderer->drawString(CPU_compressed_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				offset += dimensions1.first + margin;
+			}
+			if (settings.showGPU) {
+				auto dimensions_s = renderer->drawString("GPU", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				uint32_t offset_s = offset + dimensions_s.first + margin;
+				renderer->drawString(GPU_Load_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				offset += dimensions2.first + margin;
+			}
+			if (settings.showRAM) {
+				auto dimensions_s = renderer->drawString("RAM", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				uint32_t offset_s = offset + dimensions_s.first + margin;
+				renderer->drawString(RAM_var_compressed_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				offset += dimensions3.first + margin;
+			}
+			if (settings.showBRD) {
+				auto dimensions_s = renderer->drawString("BRD", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				uint32_t offset_s = offset + dimensions_s.first + margin;
+				renderer->drawString(skin_temperature_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				offset += dimensions4.first + margin;
+			}
+			if (settings.showFAN) {
+				auto dimensions_s = renderer->drawString("FAN", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				uint32_t offset_s = offset + dimensions_s.first + margin;
+				renderer->drawString(Rotation_SpeedLevel_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
+				offset += dimensions5.first + margin;
+			}
+			if (GameRunning && settings.showFPS) {
+				auto dimensions_s = renderer->drawString("FPS", false, offset, fontsize, fontsize, renderer->a(settings.catColor));
+				uint32_t offset_s = offset + dimensions_s.first + margin;
+				renderer->drawString(FPS_var_compressed_c, false, offset_s, fontsize, fontsize, renderer->a(settings.textColor));
 			}
 		});
 
@@ -981,14 +973,10 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		double percent = 100.0d * ((double)(idletick0) / systemtickfrequency);
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%%", percent);
-		percent = 100.0d * ((double)(idletick1) / systemtickfrequency);
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%%", percent);
-		percent = 100.0d * ((double)(idletick2) / systemtickfrequency);
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%%", percent);
-		percent = 100.0d * ((double)(idletick3) / systemtickfrequency);
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%%", percent);
+		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
+		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
+		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
+		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
 
 		char difference[5] = "@";
 		if (realCPU_Hz) {

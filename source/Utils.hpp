@@ -854,9 +854,8 @@ struct MicroSettings {
 	bool showCPU;
 	bool showGPU;
 	bool showRAM;
-	bool showTEMP;
+	bool showBRD;
 	bool showFAN;
-	bool showDRAW;
 	bool showFPS;
 	bool showRAMLoad;
 };
@@ -1020,9 +1019,8 @@ void GetConfigSettings(MicroSettings* settings) {
 	settings -> showCPU = true;
 	settings -> showGPU = true;
 	settings -> showRAM = true;
-	settings -> showTEMP = true;
+	settings -> showBRD = true;
 	settings -> showFAN = true;
-	settings -> showDRAW = true;
 	settings -> showFPS = true;
 	settings -> showRAMLoad = true;
 
@@ -1060,7 +1058,7 @@ void GetConfigSettings(MicroSettings* settings) {
 			settings -> alignTo = 2;
 		}
 	}
-	long maxFontSize = 18;
+	long maxFontSize = 19;
 	long minFontSize = 8;
 	if (parsedData["micro"].find("handheld_font_size") != parsedData["micro"].end()) {
 		key = parsedData["micro"]["handheld_font_size"];
@@ -1122,10 +1120,40 @@ void GetConfigSettings(MicroSettings* settings) {
 				settings -> textColor = color;
 		}
 	}
-	if (parsedData["mini"].find("replace_GB_with_RAM_load") != parsedData["mini"].end()) {
-		key = parsedData["mini"]["replace_GB_with_RAM_load"];
+	if (parsedData["micro"].find("replace_GB_with_RAM_load") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["replace_GB_with_RAM_load"];
 		convertToUpper(key);
 		settings -> showRAMLoad = key.compare("FALSE");
+	}
+	if (parsedData["micro"].find("show_CPU") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["show_CPU"];
+		convertToUpper(key);
+		settings -> showCPU = key.compare("FALSE");
+	}
+	if (parsedData["micro"].find("show_GPU") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["show_GPU"];
+		convertToUpper(key);
+		settings -> showGPU = key.compare("FALSE");
+	}
+	if (parsedData["micro"].find("show_RAM") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["show_RAM"];
+		convertToUpper(key);
+		settings -> showRAM = key.compare("FALSE");
+	}
+	if (parsedData["micro"].find("show_BRD") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["show_BRD"];
+		convertToUpper(key);
+		settings -> showBRD = key.compare("FALSE");
+	}
+	if (parsedData["micro"].find("show_FAN") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["show_FAN"];
+		convertToUpper(key);
+		settings -> showFAN = key.compare("FALSE");
+	}
+	if (parsedData["micro"].find("show_FPS") != parsedData["micro"].end()) {
+		key = parsedData["micro"]["show_FPS"];
+		convertToUpper(key);
+		settings -> showFPS = key.compare("FALSE");
 	}
 }
 
