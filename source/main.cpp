@@ -428,7 +428,7 @@ public:
 					height_offset += 7;
 				}
 
-				renderer->drawString("RAM Usage", false, COMMON_MARGIN, 375, 20, renderer->a(0xFFFF));
+				renderer->drawString("RAM Usage:", false, COMMON_MARGIN, 375, 20, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) {
 					auto dimensions = renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
 					uint32_t offset = COMMON_MARGIN + dimensions.first;
