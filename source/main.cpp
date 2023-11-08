@@ -409,7 +409,7 @@ public:
 					uint32_t offset = COMMON_MARGIN + dimensions.first;
 					renderer->drawString(GPU_Hz_c, false, offset, height_offset, 15, renderer->a(0xFFFF));
 					if (realCPU_Hz) {
-						renderer->drawString("Real Frequency: ", false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
+						renderer->drawString("Real Frequency:", false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
 						renderer->drawString(RealGPU_Hz_c, false, offset, height_offset - 15, 15, renderer->a(0xFFFF));
 						renderer->drawString(DeltaGPU_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
 					}
@@ -428,7 +428,7 @@ public:
 					height_offset += 7;
 				}
 
-				renderer->drawString("RAM Usage:", false, COMMON_MARGIN, 375, 20, renderer->a(0xFFFF));
+				renderer->drawString("RAM Usage", false, COMMON_MARGIN, 375, 20, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) {
 					auto dimensions = renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
 					uint32_t offset = COMMON_MARGIN + dimensions.first;
@@ -443,8 +443,9 @@ public:
 					}
 				}
 				if (R_SUCCEEDED(Hinted)) {
-					renderer->drawString(RAM_compressed_c, false, COMMON_MARGIN, height_offset + 30, 15, renderer->a(0xFFFF));
-					renderer->drawString(RAM_var_compressed_c, false, COMMON_MARGIN + 120, height_offset + 30, 15, renderer->a(0xFFFF));
+					auto dimensions = renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, 0, height_offset + 30, 15, renderer->a(0x0000));
+					renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, COMMON_MARGIN, height_offset + 30, 15, renderer->a(0xFFFF));
+					renderer->drawString(RAM_var_compressed_c, false, COMMON_MARGIN + dimensions.first, height_offset + 30, 15, renderer->a(0xFFFF));
 				}
 			}
 			
@@ -452,8 +453,13 @@ public:
 			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
 				renderer->drawString("Board:", false, 20, 540, 20, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(tsCheck)) renderer->drawString(BatteryDraw_c, false, COMMON_MARGIN, 575, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tsCheck)) renderer->drawString("Temperatures: SoC\n\t\t\t\t\t\t\t PCB\n\t\t\t\t\t\t\t Skin", false, COMMON_MARGIN, 590, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tsCheck)) renderer->drawString(SoCPCB_temperature_c, false, COMMON_MARGIN + 150, 590, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(tsCheck)) {
+					auto dimensions1 = renderer->drawString("Temperatures: ", false, 0, 590, 15, renderer->a(0x0000));
+					auto dimensions2 = renderer->drawString("SoC\nPCB\nSkin ", false, 0, 590, 15, renderer->a(0x0000));
+					renderer->drawString("Temperatures:", false, COMMON_MARGIN, 590, 15, renderer->a(0xFFFF));
+					renderer->drawString("SoC\nPCB\nSkin", false, COMMON_MARGIN + dimensions1.first + 15, 590, 15, renderer->a(0xFFFF));
+					renderer->drawString(SoCPCB_temperature_c, false, COMMON_MARGIN + dimensions1.first + 15 + dimensions2.first, 590, 15, renderer->a(0xFFFF));
+				}
 				if (R_SUCCEEDED(fanCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, COMMON_MARGIN, 635, 15, renderer->a(0xFFFF));
 			}
 			
@@ -527,7 +533,6 @@ public:
 		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
-		snprintf(RAM_compressed_c, sizeof RAM_compressed_c, "Total:\nApplication:\nApplet:\nSystem:\nSystem Unsafe:");
 		char FULL_RAM_all_c[21] = "";
 		char FULL_RAM_application_c[21] = "";
 		char FULL_RAM_applet_c[21] = "";
@@ -543,7 +548,7 @@ public:
 		if (sysClkApiVer >= 4) {
 			int RAM_GPU_Load = _sysclkemcload.load[SysClkEmcLoad_All] - _sysclkemcload.load[SysClkEmcLoad_Cpu];
 			snprintf(RAM_load_c, sizeof RAM_load_c, 
-				"Load: %d.%d%% (CPU %d.%d | GPU %d.%d)", 
+				"Load: %d.%d%% (CPU %d.%d | GPU %d.%d)",
 				_sysclkemcload.load[SysClkEmcLoad_All] / 10, _sysclkemcload.load[SysClkEmcLoad_All] % 10,
 				_sysclkemcload.load[SysClkEmcLoad_Cpu] / 10, _sysclkemcload.load[SysClkEmcLoad_Cpu] % 10,
 				RAM_GPU_Load / 10, RAM_GPU_Load % 10);
@@ -567,7 +572,7 @@ public:
 				PCB_temperatureC / 1000, (PCB_temperatureC % 100) % 10,
 				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
 		}
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level:\t%2.1f%%", Rotation_SpeedLevel_f * 100);
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level: %2.1f%%", Rotation_SpeedLevel_f * 100);
 		
 		///FPS
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.1f", FPS, FPSavg);
