@@ -238,7 +238,7 @@ void CheckIfGameRunning(void*) {
 
 void BatteryChecker(void*) {
 	if (R_SUCCEEDED(psmCheck)){
-		u16 data = 0;
+		uint16_t data = 0;
 		float tempV = 0;
 		float tempA = 0;
 		size_t ArraySize = 10;
@@ -801,9 +801,7 @@ void ParseIniFile() {
 
 
 bool isValidRGBA4Color(const std::string& hexColor) {
-	std::string temp_string = hexColor;
-    
-    for (char c : temp_string) {
+    for (char c : hexColor) {
         if (!isxdigit(c)) {
             return false; // Must contain only hexadecimal digits (0-9, A-F, a-f)
         }
@@ -812,7 +810,7 @@ bool isValidRGBA4Color(const std::string& hexColor) {
     return true;
 }
 
-bool convertStrToRGBA4444(std::string hexColor, u16* returnValue) {
+bool convertStrToRGBA4444(std::string hexColor, uint16_t* returnValue) {
 	// Check if # is present
 	if (hexColor.size() != 5 || hexColor[0] != '#')
 		return false;
@@ -831,9 +829,9 @@ struct MiniSettings {
 	bool realFrequencies;
 	size_t handheldFontSize;
 	size_t dockedFontSize;
-	u16 backgroundColor;
-	u16 catColor;
-	u16 textColor;
+	uint16_t backgroundColor;
+	uint16_t catColor;
+	uint16_t textColor;
 	std::string show;
 	bool showRAMLoad;
 	int setPos;
@@ -845,9 +843,9 @@ struct MicroSettings {
 	size_t handheldFontSize;
 	size_t dockedFontSize;
 	uint8_t alignTo;
-	u16 backgroundColor;
-	u16 catColor;
-	u16 textColor;
+	uint16_t backgroundColor;
+	uint16_t catColor;
+	uint16_t textColor;
 	std::string show;
 	bool showRAMLoad;
 	bool setPosBottom;
@@ -857,22 +855,22 @@ struct FpsCounterSettings {
 	uint8_t refreshRate;
 	size_t handheldFontSize;
 	size_t dockedFontSize;
-	u16 backgroundColor;
-	u16 textColor;
+	uint16_t backgroundColor;
+	uint16_t textColor;
 	int setPos;
 };
 
 struct FpsGraphSettings {
 	uint8_t refreshRate;
-	u16 backgroundColor;
-	u16 fpsColor;
-	u16 mainLineColor;
-	u16 roundedLineColor;
-	u16 perfectLineColor;
-	u16 dashedLineColor;
-	u16 borderColor;
-	u16 maxFPSTextColor;
-	u16 minFPSTextColor;
+	uint16_t backgroundColor;
+	uint16_t fpsColor;
+	uint16_t mainLineColor;
+	uint16_t roundedLineColor;
+	uint16_t perfectLineColor;
+	uint16_t dashedLineColor;
+	uint16_t borderColor;
+	uint16_t maxFPSTextColor;
+	uint16_t minFPSTextColor;
 	int setPos;
 };
 
@@ -881,7 +879,7 @@ void GetConfigSettings(MiniSettings* settings) {
 	settings -> handheldFontSize = 15;
 	settings -> dockedFontSize = 15;
 	convertStrToRGBA4444("#1117", &(settings -> backgroundColor));
-	convertStrToRGBA4444("#FCCF", &(settings -> catColor));
+	convertStrToRGBA4444("#FFFF", &(settings -> catColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> textColor));
 	settings -> show = "CPU+GPU+RAM+TEMP+DRAW+FAN+FPS";
 	settings -> showRAMLoad = true;
@@ -944,19 +942,19 @@ void GetConfigSettings(MiniSettings* settings) {
 	}
 	if (parsedData["mini"].find("background_color") != parsedData["mini"].end()) {
 		key = parsedData["mini"]["background_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> backgroundColor = temp;
 	}
 	if (parsedData["mini"].find("cat_color") != parsedData["mini"].end()) {
 		key = parsedData["mini"]["cat_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> catColor = temp;
 	}
 	if (parsedData["mini"].find("text_color") != parsedData["mini"].end()) {
 		key = parsedData["mini"]["text_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> textColor = temp;
 	}
@@ -1074,19 +1072,19 @@ void GetConfigSettings(MicroSettings* settings) {
 	}
 	if (parsedData["micro"].find("background_color") != parsedData["micro"].end()) {
 		key = parsedData["micro"]["background_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> backgroundColor = temp;
 	}
 	if (parsedData["micro"].find("cat_color") != parsedData["micro"].end()) {
 		key = parsedData["micro"]["cat_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> catColor = temp;
 	}
 	if (parsedData["micro"].find("text_color") != parsedData["micro"].end()) {
 		key = parsedData["micro"]["text_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> textColor = temp;
 	}
@@ -1165,13 +1163,13 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 	}
 	if (parsedData["fps-counter"].find("background_color") != parsedData["fps-counter"].end()) {
 		key = parsedData["fps-counter"]["background_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> backgroundColor = temp;
 	}
 	if (parsedData["fps-counter"].find("text_color") != parsedData["fps-counter"].end()) {
 		key = parsedData["fps-counter"]["text_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> textColor = temp;
 	}
@@ -1260,55 +1258,55 @@ void GetConfigSettings(FpsGraphSettings* settings) {
 	}
 	if (parsedData["fps-graph"].find("min_fps_text_color") != parsedData["fps-graph"].end()) {
 		key = parsedData["fps-graph"]["min_fps_text_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> minFPSTextColor = temp;
 	}
 	if (parsedData["fps-graph"].find("max_fps_text_color") != parsedData["fps-graph"].end()) {
 		key = parsedData["fps-graph"]["max_fps_text_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> maxFPSTextColor = temp;
 	}
 	if (parsedData["fps-graph"].find("background_color") != parsedData["fps-graph"].end()) {
 		key = parsedData["fps-graph"]["background_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> backgroundColor = temp;
 	}
 	if (parsedData["fps-graph"].find("fps_counter_color") != parsedData["fps-graph"].end()) {
 		key = parsedData["fps-graph"]["fps_counter_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> fpsColor = temp;
 	}
 	if (parsedData["fps-graph"].find("border_color") != parsedData["fps-graph"].end()) {
 		key = parsedData["fps-graph"]["border_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> borderColor = temp;
 	}
 	if (parsedData["fps-graph"].find("dashed_line_color") != parsedData["fps-graph"].end()) {
 		key = parsedData["fps-graph"]["dashed_line_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> dashedLineColor = temp;
 	}
 	if (parsedData["fps-graph"].find("main_line_color") != parsedData["fps-graph"].end()) {
 		key = parsedData["fps-graph"]["main_line_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> mainLineColor = temp;
 	}
 	if (parsedData["fps-graph"].find("rounded_line_color") != parsedData["fps-graph"].end()) {
 		key = parsedData["fps-graph"]["rounded_line_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> roundedLineColor = temp;
 	}
 	if (parsedData["fps-graph"].find("perfect_line_color") != parsedData["fps-graph"].end()) {
 		key = parsedData["fps-graph"]["perfect_line_color"];
-		u16 temp = 0;
+		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> perfectLineColor = temp;
 	}
