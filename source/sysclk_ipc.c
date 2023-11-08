@@ -126,8 +126,3 @@ Result sysclkIpcGetFreqList(SysClkModule module, u32* list, u32 maxCount, u32* o
         .buffers = {{list, maxCount * sizeof(u32)}},
     );
 }
-
-Result sysclkIpcGetEmcLoad(SysClkEmcLoad* out_emcLoad)
-{
-    return serviceDispatchOut(&g_sysclkSrv, 12, *out_emcLoad);
-}
