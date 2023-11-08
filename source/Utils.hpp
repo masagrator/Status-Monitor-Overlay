@@ -1129,18 +1129,6 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 	std::string key;
 	if (parsedData.find("fps-counter") == parsedData.end())
 		return;
-	long maxFPS = 60;
-	long minFPS = 1;
-	if (parsedData["fps-counter"].find("refresh_rate") != parsedData["fps-counter"].end()) {
-		key = parsedData["fps-counter"]["refresh_rate"];
-		long rate = atol(key.c_str());
-		if (rate < minFPS) {
-			settings -> refreshRate = minFPS;
-		}
-		else if (rate > maxFPS)
-			settings -> refreshRate = maxFPS;
-		else settings -> refreshRate = rate;	
-	}
 	long maxFontSize = 150;
 	long minFontSize = 8;
 	if (parsedData["fps-counter"].find("handheld_font_size") != parsedData["fps-counter"].end()) {
@@ -1224,18 +1212,6 @@ void GetConfigSettings(FpsGraphSettings* settings) {
 	std::string key;
 	if (parsedData.find("fps-graph") == parsedData.end())
 		return;
-	long maxFPS = 60;
-	long minFPS = 1;
-	if (parsedData["fps-graph"].find("refresh_rate") != parsedData["fps-graph"].end()) {
-		key = parsedData["fps-graph"]["refresh_rate"];
-		long rate = atol(key.c_str());
-		if (rate < minFPS) {
-			settings -> refreshRate = minFPS;
-		}
-		else if (rate > maxFPS)
-			settings -> refreshRate = maxFPS;
-		else settings -> refreshRate = rate;	
-	}
 	if (parsedData["fps-graph"].find("layer_width_align") != parsedData["fps-graph"].end()) {
 		key = parsedData["fps-graph"]["layer_width_align"];
 		convertToUpper(key);

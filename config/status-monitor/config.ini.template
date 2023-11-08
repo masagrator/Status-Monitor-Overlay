@@ -25,7 +25,6 @@ background_color=#1117
 cat_color=#FCCF
 text_color=#FFFF
 [fps-counter]
-refresh_rate=31
 layer_width_align=left
 layer_height_align=top
 handheld_font_size=40
@@ -33,7 +32,6 @@ docked_font_size=40
 text_color=#FFFF
 background_color=#1117
 [fps-graph]
-refresh_rate=31
 layer_width_align=right
 layer_height_align=bottom
 max_fps_text_color=#FFFF
