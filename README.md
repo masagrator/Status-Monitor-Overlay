@@ -6,8 +6,6 @@ You need to have installed Tesla environment to use it.
 
 Tool contains six modes to choose, each one is explained [here](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/modes.md).
 
-You can exit from selected mode by pressing and holding Left Stick + Right Stick. To exit from main menu press B.
-
 If it's not working in dock, you need to first start Status Monitor, then put Nintendo Switch to dock.
 
 # What is currently supported:
