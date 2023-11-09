@@ -1,9 +1,12 @@
 [status-monitor]
 key_combo=LSTICK+RSTICK
+[full]
+refresh_rate=1
+layer_width_align=left
 [mini]
 refresh_rate=1
-layer_width_align=right
-layer_height_align=bottom
+layer_width_align=left
+layer_height_align=top
 handheld_font_size=15
 docked_font_size=15
 real_freqs=false
@@ -32,8 +35,8 @@ docked_font_size=40
 text_color=#FFFF
 background_color=#1117
 [fps-graph]
-layer_width_align=right
-layer_height_align=bottom
+layer_width_align=left
+layer_height_align=top
 max_fps_text_color=#FFFF
 min_fps_text_color=#FFFF
 background_color=#1117
