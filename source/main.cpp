@@ -438,7 +438,7 @@ public:
 						renderer->drawString(RealRAM_Hz_c, false, offset, height_offset - 15, 15, renderer->a(0xFFFF));
 						renderer->drawString(DeltaRAM_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
 					}
-					if (sysClkApiVer >= 4) {
+					if (R_SUCCEEDED(sysclkCheck)) {
 						renderer->drawString(RAM_load_c, false, COMMON_MARGIN, height_offset+15, 15, renderer->a(0xFFFF));
 					}
 				}
@@ -545,12 +545,12 @@ public:
 		snprintf(FULL_RAM_systemunsafe_c, sizeof(FULL_RAM_systemunsafe_c), "%4.2f / %4.2f MB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
 		snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%s\n%s\n%s\n%s\n%s", FULL_RAM_all_c, FULL_RAM_application_c, FULL_RAM_applet_c, FULL_RAM_system_c, FULL_RAM_systemunsafe_c);
 		
-		if (sysClkApiVer >= 4) {
-			int RAM_GPU_Load = _sysclkemcload.load[SysClkEmcLoad_All] - _sysclkemcload.load[SysClkEmcLoad_Cpu];
+		if (R_SUCCEEDED(sysclkCheck)) {
+			int RAM_GPU_Load = ramLoad[SysClkRamLoad_All] - ramLoad[SysClkRamLoad_Cpu];
 			snprintf(RAM_load_c, sizeof RAM_load_c, 
 				"Load: %d.%d%% (CPU %d.%d | GPU %d.%d)",
-				_sysclkemcload.load[SysClkEmcLoad_All] / 10, _sysclkemcload.load[SysClkEmcLoad_All] % 10,
-				_sysclkemcload.load[SysClkEmcLoad_Cpu] / 10, _sysclkemcload.load[SysClkEmcLoad_Cpu] % 10,
+				ramLoad[SysClkRamLoad_All] / 10, ramLoad[SysClkRamLoad_All] % 10,
+				ramLoad[SysClkRamLoad_Cpu] / 10, ramLoad[SysClkRamLoad_Cpu] % 10,
 				RAM_GPU_Load / 10, RAM_GPU_Load % 10);
 		}
 		///Thermal
@@ -854,7 +854,7 @@ public:
 		
 		///RAM
 		char MINI_RAM_var_compressed_c[19] = "";
-		if (sysClkApiVer < 4 || !settings.showRAMLoad) {
+		if (R_FAILED(sysclkCheck) || !settings.showRAMLoad) {
 			float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 			float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
 			float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
@@ -882,13 +882,13 @@ public:
 			if (settings.realFrequencies && realRAM_Hz) {
 				snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), 
 					"%hu.%hhu%%@%hu.%hhu", 
-					_sysclkemcload.load[SysClkEmcLoad_All] / 10, _sysclkemcload.load[SysClkEmcLoad_All] % 10, 
+					ramLoad[SysClkRamLoad_All] / 10, ramLoad[SysClkRamLoad_All] % 10, 
 					realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
 			}
 			else {
 				snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c), 
 					"%hu.%hhu%%@%hu.%hhu", 
-					_sysclkemcload.load[SysClkEmcLoad_All] / 10, _sysclkemcload.load[SysClkEmcLoad_All] % 10, 
+					ramLoad[SysClkRamLoad_All] / 10, ramLoad[SysClkRamLoad_All] % 10, 
 					RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
 			}
 		}
@@ -1264,7 +1264,7 @@ public:
 		
 		///RAM
 		char MICRO_RAM_all_c[12] = "";
-		if (!settings.showRAMLoad || sysClkApiVer < 4) {
+		if (!settings.showRAMLoad || R_FAILED(sysclkCheck)) {
 			float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 			float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
 			float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
@@ -1278,7 +1278,7 @@ public:
 			snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%.1f/%.1fGB", RAM_Used_all_f/1024, RAM_Total_all_f/1024);
 		}
 		else {
-			snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%hu.%hhu%%", _sysclkemcload.load[SysClkEmcLoad_All] / 10, _sysclkemcload.load[SysClkEmcLoad_All] % 10);
+			snprintf(MICRO_RAM_all_c, sizeof(MICRO_RAM_all_c), "%hu.%hhu%%", ramLoad[SysClkRamLoad_All] / 10, ramLoad[SysClkRamLoad_All] % 10);
 		}
 
 		if (realRAM_Hz) {
@@ -1848,8 +1848,9 @@ public:
 				LoadSharedMemory();
 			}
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
+				uint32_t sysClkApiVer = 0;
 				sysclkIpcGetAPIVersion(&sysClkApiVer);
-				if (sysClkApiVer < 3) {
+				if (sysClkApiVer != 4) {
 					sysclkIpcExit();
 				}
 				else sysclkCheck = 0;
@@ -1920,8 +1921,9 @@ public:
 				LoadSharedMemory();
 			}
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
+				uint32_t sysClkApiVer = 0;
 				sysclkIpcGetAPIVersion(&sysClkApiVer);
-				if (sysClkApiVer < 3) {
+				if (sysClkApiVer != 4) {
 					sysclkIpcExit();
 				}
 				else sysclkCheck = 0;

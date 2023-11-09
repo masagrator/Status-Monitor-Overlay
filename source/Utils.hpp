@@ -9,7 +9,6 @@
 #include <numeric>
 #include <tesla.hpp>
 #include <sys/stat.h>
-#include "sysclk/emc.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -151,8 +150,7 @@ Handle remoteSharedMemory = 1;
 int32_t realCPU_Hz = 0;
 int32_t realGPU_Hz = 0;
 int32_t realRAM_Hz = 0;
-uint32_t sysClkApiVer = 0;
-SysClkEmcLoad _sysclkemcload = {};
+uint32_t ramLoad[SysClkRamLoad_EnumMax];
 
 void LoadSharedMemory() {
 	if (SaltySD_Connect())
@@ -401,9 +399,8 @@ void Misc(void*) {
 				realCPU_Hz = sysclkCTX.realFreqs[SysClkModule_CPU];
 				realGPU_Hz = sysclkCTX.realFreqs[SysClkModule_GPU];
 				realRAM_Hz = sysclkCTX.realFreqs[SysClkModule_MEM];
-			}
-			if (sysClkApiVer > 3) {
-				sysclkIpcGetEmcLoad(&_sysclkemcload);
+				ramLoad[SysClkRamLoad_All] = sysclkCTX.ramLoad[SysClkRamLoad_All];
+				ramLoad[SysClkRamLoad_Cpu] = sysclkCTX.ramLoad[SysClkRamLoad_Cpu];
 			}
 		}
 		
