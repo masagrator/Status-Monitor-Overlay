@@ -42,16 +42,18 @@ public:
 		alphabackground = 0x0;
 		tsl::hlp::requestForeground(false);
 		FullMode = false;
-		refreshrate = TeslaFPS = settings.refreshRate;
+		TeslaFPS = settings.refreshRate;
+		deactivateOriginalFooter = true;
 	}
 	~com_FPS() {
-		refreshrate = TeslaFPS = 60;
+		TeslaFPS = 60;
 		EndFPSCounterThread();
 		if (settings.setPos)
 			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
+		deactivateOriginalFooter = false;
 	}
 
     virtual tsl::elm::Element* createUI() override {
@@ -151,7 +153,8 @@ public:
 		alphabackground = 0x0;
 		tsl::hlp::requestForeground(false);
 		FullMode = false;
-		refreshrate = TeslaFPS = settings.refreshRate;
+		TeslaFPS = settings.refreshRate;
+		deactivateOriginalFooter = true;
 	}
 
 	~com_FPSGraph() {
@@ -161,6 +164,7 @@ public:
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
+		deactivateOriginalFooter = false;
 	}
 
 	struct stats {
@@ -317,7 +321,7 @@ public:
 
 		if (allButtonsHeld) {
 			returningFromSelection = true;
-			refreshrate = TeslaFPS = 60;
+			TeslaFPS = 60;
 			tsl::goBack();
 			return true;
 		}
@@ -360,11 +364,12 @@ public:
 		GetConfigSettings(&settings);
 		StartThreads();
 		tsl::hlp::requestForeground(false);
-		refreshrate = TeslaFPS = settings.refreshRate;
+		TeslaFPS = settings.refreshRate;
 		systemtickfrequency /= settings.refreshRate;
 		if (settings.setPosRight) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 		}
+		deactivateOriginalFooter = true;
 	}
 	~FullOverlay() {
 		CloseThreads();
@@ -375,6 +380,7 @@ public:
 		if (settings.setPosRight) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
 		}
+		deactivateOriginalFooter = false;
 	}
 
     virtual tsl::elm::Element* createUI() override {
@@ -450,15 +456,15 @@ public:
 					}
 				}
 				if (R_SUCCEEDED(Hinted)) {
-					auto dimensions = renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, 0, height_offset + 30, 15, renderer->a(0x0000));
-					renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, COMMON_MARGIN, height_offset + 30, 15, renderer->a(0xFFFF));
-					renderer->drawString(RAM_var_compressed_c, false, COMMON_MARGIN + dimensions.first, height_offset + 30, 15, renderer->a(0xFFFF));
+					auto dimensions = renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, 0, height_offset + 40, 15, renderer->a(0x0000));
+					renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, COMMON_MARGIN, height_offset + 40, 15, renderer->a(0xFFFF));
+					renderer->drawString(RAM_var_compressed_c, false, COMMON_MARGIN + dimensions.first, height_offset + 40, 15, renderer->a(0xFFFF));
 				}
 			}
 			
 			///Thermal
 			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
-				renderer->drawString("Board:", false, 20, 540, 20, renderer->a(0xFFFF));
+				renderer->drawString("Board:", false, 20, 550, 20, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(tsCheck)) renderer->drawString(BatteryDraw_c, false, COMMON_MARGIN, 575, 15, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(tsCheck)) {
 					auto dimensions1 = renderer->drawString("Temperatures: ", false, 0, 590, 15, renderer->a(0x0000));
@@ -502,11 +508,11 @@ public:
 		
 		//Make stuff ready to print
 		///CPU
-		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "%d.%d MHz", CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
+		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "%u.%u MHz", CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
 		if (realCPU_Hz) {
-			snprintf(RealCPU_Hz_c, sizeof(RealCPU_Hz_c), "%d.%d MHz", realCPU_Hz / 1000000, (realCPU_Hz / 100000) % 10);
+			snprintf(RealCPU_Hz_c, sizeof(RealCPU_Hz_c), "%u.%u MHz", realCPU_Hz / 1000000, (realCPU_Hz / 100000) % 10);
 			int32_t deltaCPU = realCPU_Hz - CPU_Hz;
-			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %d.%d", deltaCPU / 1000000, abs(deltaCPU / 100000) % 10);
+			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %d.%u", deltaCPU / 1000000, abs(deltaCPU / 100000) % 10);
 		}
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
 		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
@@ -515,20 +521,20 @@ public:
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 		
 		///GPU
-		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "%d.%d MHz", GPU_Hz / 1000000, (GPU_Hz / 100000) % 10);
+		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "%u.%u MHz", GPU_Hz / 1000000, (GPU_Hz / 100000) % 10);
 		if (realGPU_Hz) {
-			snprintf(RealGPU_Hz_c, sizeof(RealGPU_Hz_c), "%d.%d MHz", realGPU_Hz / 1000000, (realGPU_Hz / 100000) % 10);
+			snprintf(RealGPU_Hz_c, sizeof(RealGPU_Hz_c), "%u.%u MHz", realGPU_Hz / 1000000, (realGPU_Hz / 100000) % 10);
 			int32_t deltaGPU = realGPU_Hz - GPU_Hz;
-			snprintf(DeltaGPU_c, sizeof(DeltaGPU_c), "Δ %u.%u", deltaGPU / 1000000, abs(deltaGPU / 100000) % 10);
+			snprintf(DeltaGPU_c, sizeof(DeltaGPU_c), "Δ %d.%u", deltaGPU / 1000000, abs(deltaGPU / 100000) % 10);
 		}
-		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %d.%d%%", GPU_Load_u / 10, GPU_Load_u % 10);
+		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %u.%u%%", GPU_Load_u / 10, GPU_Load_u % 10);
 		
 		///RAM
-		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "%d.%d MHz", RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
+		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "%u.%u MHz", RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
 		if (realRAM_Hz) {
-			snprintf(RealRAM_Hz_c, sizeof(RealRAM_Hz_c), "%d.%d MHz", realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
+			snprintf(RealRAM_Hz_c, sizeof(RealRAM_Hz_c), "%u.%u MHz", realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
 			int32_t deltaRAM = realRAM_Hz - RAM_Hz;
-			snprintf(DeltaRAM_c, sizeof(DeltaRAM_c), "Δ %d.%d", deltaRAM / 1000000, abs(deltaRAM / 100000) % 10);
+			snprintf(DeltaRAM_c, sizeof(DeltaRAM_c), "Δ %d.%u", deltaRAM / 1000000, abs(deltaRAM / 100000) % 10);
 		}
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
@@ -555,7 +561,7 @@ public:
 		if (R_SUCCEEDED(sysclkCheck)) {
 			int RAM_GPU_Load = ramLoad[SysClkRamLoad_All] - ramLoad[SysClkRamLoad_Cpu];
 			snprintf(RAM_load_c, sizeof RAM_load_c, 
-				"Load: %d.%d%% (CPU %d.%d | GPU %d.%d)",
+				"Load: %u.%u%% (CPU %u.%u | GPU %u.%u)",
 				ramLoad[SysClkRamLoad_All] / 10, ramLoad[SysClkRamLoad_All] % 10,
 				ramLoad[SysClkRamLoad_Cpu] / 10, ramLoad[SysClkRamLoad_Cpu] % 10,
 				RAM_GPU_Load / 10, RAM_GPU_Load % 10);
@@ -597,7 +603,7 @@ public:
 
 		if (allButtonsHeld) {
 			returningFromSelection = true;
-			refreshrate = TeslaFPS = 60;
+			TeslaFPS = 60;
 			tsl::goBack();
 			return true;
 		}
@@ -650,8 +656,9 @@ public:
 		alphabackground = 0x0;
 		tsl::hlp::requestForeground(false);
 		FullMode = false;
-		refreshrate = TeslaFPS = settings.refreshRate;
+		TeslaFPS = settings.refreshRate;
 		systemtickfrequency /= settings.refreshRate;
+		deactivateOriginalFooter = true;
 	}
 	~MiniOverlay() {
 		CloseThreads();
@@ -659,6 +666,7 @@ public:
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
 		systemtickfrequency = 19200000;
+		deactivateOriginalFooter = false;
 	}
 
     virtual tsl::elm::Element* createUI() override {
@@ -995,7 +1003,7 @@ public:
 
 		if (allButtonsHeld) {
 			returningFromSelection = true;
-			refreshrate = TeslaFPS = 60;
+			TeslaFPS = 60;
 			tsl::goBack();
 			return true;
 		}
@@ -1051,9 +1059,10 @@ public:
 			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 1038);
 		}
 		StartThreads();
-		refreshrate = TeslaFPS = settings.refreshRate;
+		TeslaFPS = settings.refreshRate;
 		systemtickfrequency /= settings.refreshRate;
 		alphabackground = 0x0;
+		deactivateOriginalFooter = true;
 	}
 	~MicroOverlay() {
 		CloseThreads();
@@ -1364,7 +1373,7 @@ public:
 
 		if (allButtonsHeld) {
 			returningFromSelection = true;
-			refreshrate = TeslaFPS = 60;
+			TeslaFPS = 60;
             if (skipMain)
                 tsl::goBack();
             else {

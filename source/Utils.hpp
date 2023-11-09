@@ -36,7 +36,6 @@ Thread t7;
 uint64_t systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
-uint64_t refreshrate = 1;
 FanController g_ICon;
 std::string folderpath = "sdmc:/switch/.overlays/";
 std::string filename = "";
@@ -485,7 +484,7 @@ void CheckCore0(void*) {
 		static uint64_t idletick_a0 = 0;
 		static uint64_t idletick_b0 = 0;
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
-		svcSleepThread(1'000'000'000 / refreshrate);
+		svcSleepThread(1'000'000'000 / TeslaFPS);
 		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
 		idletick0 = idletick_a0 - idletick_b0;
 	}
@@ -496,7 +495,7 @@ void CheckCore1(void*) {
 		static uint64_t idletick_a1 = 0;
 		static uint64_t idletick_b1 = 0;
 		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-		svcSleepThread(1'000'000'000 / refreshrate);
+		svcSleepThread(1'000'000'000 / TeslaFPS);
 		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
 		idletick1 = idletick_a1 - idletick_b1;
 	}
@@ -507,7 +506,7 @@ void CheckCore2(void*) {
 		static uint64_t idletick_a2 = 0;
 		static uint64_t idletick_b2 = 0;
 		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-		svcSleepThread(1'000'000'000 / refreshrate);
+		svcSleepThread(1'000'000'000 / TeslaFPS);
 		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
 		idletick2 = idletick_a2 - idletick_b2;
 	}
@@ -518,7 +517,7 @@ void CheckCore3(void*) {
 		static uint64_t idletick_a3 = 0;
 		static uint64_t idletick_b3 = 0;
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		svcSleepThread(1'000'000'000 / refreshrate);
+		svcSleepThread(1'000'000'000 / TeslaFPS);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		idletick3 = idletick_a3 - idletick_b3;
 		
@@ -581,7 +580,7 @@ void FPSCounter(void*) {
 			}
 		}
 		else FPSavg = 254;
-		svcSleepThread(1'000'000'000 / refreshrate);
+		svcSleepThread(1'000'000'000 / TeslaFPS);
 	}
 }
 
