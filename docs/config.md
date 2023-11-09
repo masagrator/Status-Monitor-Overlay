@@ -1,33 +1,36 @@
 # Configuration file
 
-Explanation of what each settings does.
+Configuration file is in `sdmc:/config/status-monitor/`. By default it's named `config.ini.template`. To be detected by overlay it must be renamed to `config.ini`.
 
-Colors are provided in RGBA4444 format, which means that each character represent different channel: red, green, blue, alpha.
+---
+
+Explanation of what each settings does.<br>
+Colors are provided in RGBA4444 format, which means that each character represents different channel: red, green, blue, alpha.
 
 > [status-monitor]
 
 | Key | Explanation | Possible values | Default Value |
 |-----|-------------|-----------------|---------------|
-| `key_combo` | Buttons combination that allows exiting Full, Mini and Micro modes, max 4 buttons, otherwise next buttons will be ignored. You combine different buttons with `+` | `A`, `B`, `X`, `Y`, `L`, `R`, `ZL`, `ZR`, `PLUS`, `MINUS`, `DUP`, `DDOWN`, `DLEFT`, `DRIGHT`, `SL`, `SR`, `LSTICK`, `RSTICK`, `UP`, `DOWN`, `LEFT`, `RIGHT` | `L+DDOWN+RSTICK` |
+| `key_combo` | Buttons combination that allows exiting Full, Mini and Micro modes; max 4 buttons, otherwise next buttons will be ignored. Combine different buttons with `+` | `A`, `B`, `X`, `Y`, `L`, `R`, `ZL`, `ZR`, `PLUS`, `MINUS`, `DUP`, `DDOWN`, `DLEFT`, `DRIGHT`, `SL`, `SR`, `LSTICK`, `RSTICK`, `UP`, `DOWN`, `LEFT`, `RIGHT` | `L+DDOWN+RSTICK` |
 
 > [full]
 
 | Key | Explanation | Possible values | Default Value |
 |-----|-------------|-----------------|---------------|
-| `refresh_rate` | How many frames per second should be this mode refreshed. Higher value means higher CPU Core #3 usage, that's why it is recommended to stay at 1. | From `1` to `60` | `1` |
+| `refresh_rate` | How often per second this mode should be refreshed. Higher value means higher CPU Core #3 usage, that's why it is recommended to stay at 1. | From `1` to `60` | `1` |
 | `layer_width_align` | On which side of the screen X axis you want this mode | `left`, `right` | `left` |
 
 > [mini]
 
 | Key | Explanation | Possible values | Default Value |
 |-----|-------------|-----------------|---------------|
-| `refresh_rate` | How many frames per second should be this mode refreshed. Higher value means higher CPU Core #3 usage, that's why it is recommended to stay at 1. | From `1` to `60` | `1` |
+| `refresh_rate` | How often per second this mode should be refreshed. Higher value means higher CPU Core #3 usage, that's why it is recommended to stay at 1. | From `1` to `60` | `1` |
 | `layer_width_align` | On which side of the screen X axis you want this mode | `left`, `center`, `right` | `left` |
 | `layer_height_align` | On which side of the screen Y axis you want this mode | `top`, `center`, `bottom` | `top` |
 | `handheld_font_size` | How big should be rendered text in handheld mode | From `8` to `22` | `15` |
 | `docked_font_size` | How big should be rendered text in docked mode | From `8` to `22` | `15` |
 | `real_freqs` | This works only if you have sys-clk 2.0.0+ installed. It shows real frequencies for CPU, GPU and RAM instead of target frequencies | `true`, `false` | `false` |
-| `show` | Which data should be rendered. You are connecting different stats with `+` in any order you want. | `CPU`, `GPU`, `RAM`, `TEMP`, `FAN`, `DRAW`, `FPS` | `CPU+GPU+RAM+TEMP+FAN+DRAW+FPS` |
+| `show` | Which data should be rendered. Connect different stats with `+` in any order. | `CPU`, `GPU`, `RAM`, `TEMP`, `FAN`, `DRAW`, `FPS` | `CPU+GPU+RAM+TEMP+FAN+DRAW+FPS` |
 | `replace_MB_with_RAM_load` | This works only if you have sys-clk 2.0.0+ installed. Instead of RAM total usage it shows RAM load. | `true`, `false` | `true` |
 | `background_color` | Background color in RGBA4444 format | From `#0000` to `#FFFF` | `#1117` |
 | `cat_color` | Category text color (left side) in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |
@@ -37,12 +40,12 @@ Colors are provided in RGBA4444 format, which means that each character represen
 
 | Key | Explanation | Possible values | Default Value |
 |-----|-------------|-----------------|---------------|
-| `refresh_rate` | How many frames per second should be this mode refreshed. Higher value means higher CPU Core #3 usage, that's why it is recommended to stay at 1. | From `1` to `60` | `1` |
+| `refresh_rate` | How often per second this mode should be refreshed. Higher value means higher CPU Core #3 usage, that's why it is recommended to stay at 1. | From `1` to `60` | `1` |
 | `layer_height_align` | On which side of the screen Y axis you want this mode | `top`, `bottom` | `top` |
 | `handheld_font_size` | How big should be rendered text in handheld mode | From `8` to `18` | `18` |
 | `docked_font_size` | How big should be rendered text in docked mode | From `8` to `18` | `18` |
 | `real_freqs` | This works only if you have sys-clk 2.0.0+ installed. It shows real frequencies for CPU, GPU and RAM instead of target frequencies | `true`, `false` | `false` |
-| `show` | Which data should be rendered. You are connecting different stats with `+` in any order you want. | `CPU`, `GPU`, `RAM`, `BRD`, `FAN`, `FPS` | `CPU+GPU+RAM+BRD+FAN+FPS` |
+| `show` | Which data should be rendered. Connect different stats with `+` in any order. | `CPU`, `GPU`, `RAM`, `BRD`, `FAN`, `FPS` | `CPU+GPU+RAM+BRD+FAN+FPS` |
 | `replace_GB_with_RAM_load` | This works only if you have sys-clk 2.0.0+ installed. Instead of RAM total usage it shows RAM load. | `true`, `false` | `true` |
 | `background_color` | Background color in RGBA4444 format | From `#0000` to `#FFFF` | `#1117` |
 | `cat_color` | Category text color (left side) in RGBA4444 format | From `#0000` to `#FFFF` | `#FCCF` |
@@ -55,8 +58,8 @@ Colors are provided in RGBA4444 format, which means that each character represen
 |-----|-------------|-----------------|---------------|
 | `layer_width_align` | On which side of the screen X axis you want this mode | `left`, `center`, `right` | `left` |
 | `layer_height_align` | On which side of the screen Y axis you want this mode | `top`, `center`, `bottom` | `top` |
-| `handheld_font_size` | How big should be rendered text in handheld mode | From `8` to `18` | `18` |
-| `docked_font_size` | How big should be rendered text in docked mode | From `8` to `18` | `18` |
+| `handheld_font_size` | How big should be rendered text in handheld mode | From `8` to `150` | `40` |
+| `docked_font_size` | How big should be rendered text in docked mode | From `8` to `150` | `40` |
 | `background_color` | Background color in RGBA4444 format | From `#0000` to `#FFFF` | `#1117` |
 | `text_color` | Text color in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |
 
@@ -73,5 +76,5 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `border_color` | Color of rectangle in RGBA4444 format | From `#0000` to `#FFFF` | `#F77F` |
 | `dashed_line_color` | Color of dashed line at the center of rectangle in RGBA4444 format | From `#0000` to `#FFFF` | `#8888` |
 | `main_line_color` | Color of line representing FPS value on graph in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |
-| `rounded_line_color` | Color of line representing FPS value on graph if it's divisble by 10 (except 30 and 60) in RGBA4444 format | From `#0000` to `#FFFF` | `#0C0F` |
+| `rounded_line_color` | Color of line representing FPS value on graph if it's divisble by 10 in RGBA4444 format | From `#0000` to `#FFFF` | `#0C0F` |
 | `perfect_line_color` | Color of line representing FPS value on graph if it's divisble by 30 in RGBA4444 format | From `#0000` to `#FFFF` | `#F0FF` |
