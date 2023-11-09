@@ -38,12 +38,13 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	Status Monitor
-APP_VERSION	:=	0.9.3
+APP_VERSION	:=	1.0.0
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
 INCLUDES	:=	include lib/Atmosphere-libs/libstratosphere/source/dmnt lib/Atmosphere-libs/libstratosphere/source lib/libtesla/include
 NO_ICON		:=  1
+#ROMFS       :=  romfs
 
 #---------------------------------------------------------------------------------
 # options for code generation
