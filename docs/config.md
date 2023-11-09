@@ -4,7 +4,7 @@ Configuration file is in `sdmc:/config/status-monitor/`. By default it's named `
 
 ---
 
-Explanation of what each settings does.<br>
+Explanation of what each setting does.<br>
 Colors are provided in RGBA4444 format, which means that each character represents different channel: red, green, blue, alpha.
 
 > [status-monitor]
