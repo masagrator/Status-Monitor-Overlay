@@ -619,6 +619,26 @@ void convertToLower(std::string& str) {
 }
 
 void formatButtonCombination(std::string& line) {
+	std::map<std::string, std::string> replaces{
+		{"A", "\uE0E0"},
+		{"B", "\uE0E1"},
+		{"X", "\uE0E2"},
+		{"Y", "\uE0E3"},
+		{"L", "\uE0E4"},
+		{"R", "\uE0E5"},
+		{"ZL", "\uE0E6"},
+		{"ZR", "\uE0E7"},
+		{"SL", "\uE0E8"},
+		{"SR", "\uE0E9"},
+		{"DUP", "\uE0EB"},
+		{"DDOWN", "\uE0EC"},
+		{"DLEFT", "\uE0ED"},
+		{"DRIGHT", "\uE0EE"},
+		{"PLUS", "\uE0EF"},
+		{"MINUS", "\uE0F0"},
+		{"LSTICK", "\uE104"},
+		{"RSTICK", "\uE105"}
+	};
 	// Remove all spaces from the line
 	line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
 
@@ -639,6 +659,23 @@ void formatButtonCombination(std::string& line) {
 		++pos;
 		max_pluses--;
 	}
+	pos = 0;
+	size_t old_pos = 0;
+	while ((pos = line.find(" + ", pos)) != std::string::npos) {
+
+		std::string button = line.substr(old_pos, pos - old_pos);
+		if (replaces.find(button) != replaces.end()) {
+			line.replace(old_pos, button.length(), replaces[button]);
+			pos = 0;
+			old_pos = 0;
+		}
+		else pos += 3;
+		old_pos = pos;
+	}
+	std::string button = line.substr(old_pos);
+	if (replaces.find(button) != replaces.end()) {
+		line.replace(old_pos, button.length(), replaces[button]);
+	}	
 }
 
 

@@ -52,7 +52,6 @@ public:
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
-		systemtickfrequency = 19200000;
 	}
 
     virtual tsl::elm::Element* createUI() override {
@@ -162,7 +161,6 @@ public:
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
-		systemtickfrequency = 19200000;
 	}
 
 	struct stats {
@@ -359,10 +357,11 @@ private:
 	FullSettings settings;
 public:
     FullOverlay() { 
-		GetConfigSettings(&settinfgs);
+		GetConfigSettings(&settings);
 		StartThreads();
 		tsl::hlp::requestForeground(false);
 		refreshrate = TeslaFPS = settings.refreshRate;
+		systemtickfrequency /= settings.refreshRate;
 		if (settings.setPosRight) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 		}
@@ -484,7 +483,7 @@ public:
 			
 			std::string message = "Hold " + formattedKeyCombo + " to Exit";
 			
-			renderer->drawString(message.c_str(), false, COMMON_MARGIN, 683, 15, renderer->a(0xFFFF));
+			renderer->drawString(message.c_str(), false, COMMON_MARGIN, 693, 23, renderer->a(0xFFFF));
 			
 		});
 
@@ -652,6 +651,7 @@ public:
 		tsl::hlp::requestForeground(false);
 		FullMode = false;
 		refreshrate = TeslaFPS = settings.refreshRate;
+		systemtickfrequency /= settings.refreshRate;
 	}
 	~MiniOverlay() {
 		CloseThreads();
@@ -1051,8 +1051,8 @@ public:
 			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 1038);
 		}
 		StartThreads();
-		tsl::hlp::requestForeground(false);
 		refreshrate = TeslaFPS = settings.refreshRate;
+		systemtickfrequency /= settings.refreshRate;
 		alphabackground = 0x0;
 	}
 	~MicroOverlay() {
@@ -1112,6 +1112,7 @@ public:
 				}
 				text_width += (margin * entry_count);
 				Initialized = true;
+				tsl::hlp::requestForeground(false);
 			}
 
 			u32 base_y = 0;
