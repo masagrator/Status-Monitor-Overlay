@@ -1,203 +1,56 @@
-# Modes
+# Status Monitor Overlay
+Monitor Your hardware in real time!
 
-Status Monitor Overlay from 0.8 release contains six modes to choose from Main Menu.<br>
-For additional functions you need to install:
-- [SaltyNX](https://github.com/masagrator/SaltyNX/releases)
-- [sys-clk 2.0.0+](https://github.com/retronx-team/sys-clk/releases) (using closed source forks of sys-clk can result in retrieving wrong real clockrates and ram load)
+This is an overlay homebrew dedicated to Nintendo Switch.
+You need to have installed Tesla environment to use it.
 
-# Full
+Tool contains six modes to choose, each one is explained [here](https://github.com/masagrator/Status-Monitor-Overlay/blob/master/docs/modes.md).
 
-This mode you can know from older releases of Status Monitor. It contains all informations properly described and supported with high precision.
+If it's not working in dock, you need to first start Status Monitor, then put Nintendo Switch to dock.
 
-| Category  | Format                                                                              | Explanation                                                                                                                                                                                                                                                                                                               |
-|-----------|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| CPU Usage | Frequency: %.1f (Δ%+.1f)<br>Core #0: %.2f<br>Core #1: %.2f<br>Core #2: %.2f<br>Core #3: %.2f | Targete clockrate of all CPU cores in MHz (^1)<br>Load of CPU Core #0 calculated from IdleTickCount to percent value<br>Load of CPU Core #1 calculated from IdleTickCount to percent value<br>Load of CPU Core #2 calculated from IdleTickCount to percent value<br>Load of CPU Core #3 calculated from IdleTickCount to percent value |
-| GPU Usage | Frequency: %.1f (Δ%+.1f)<br>Load: %.1f                                                       | Target clockrate of GPU in MHz (^1)<br>GPU Load provided by PMU in percent                                                                                                                                                                                                                                                            |
-| RAM Usage | - Real Frequency: %.1f (Δ%+.1f)<br>- Target Frequency: %.1f<br>- Load: %.1f (CPU %.1f \| GPU %.1f)`^1`<br>- %s: %.2f/%.2f                                                    | - Real clockrate of EMC in MHz `(^1)`<br>- Target clockrate of EMC in MHz<br>- RAM Load in % (Which part of that are CPU and GPU (with other hardware, but their impact on GPU readings is negligible) `(^1)`<br>- %s memory used/%s memory available in MB (not working with FW <5.0.0)                                                                                                                                                                                                                          |
-| Board | Battery Power Flow: %+.2f[h:mm]<br>Temperatures:<br>- SoC: %.1f <br>- PCB: %.1f <br>- Skin: %.1f<br>Fan Rotation Level: %.1f                                   | How much power in watts is discharged from or charged to the battery [time left before shutdown]<br>SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees (^2)<br>Fan rotation level in percent                                                                                                                                                                         |
+# What is currently supported:
+- CPU Usage for each core (Cores `#0`-`#2` are used by apps/games, Core `#3` is used by OS, background processes and also Tesla overlays)
+- GPU Load
+- CPU, GPU & RAM target frequencies (also real frequencies + RAM Load if [sys-clk 2.0.0+](https://github.com/retronx-team/sys-clk/releases) is installed, use only official RetroNX release for reliable results)
+- Used RAM categorized to: (not supported by FWs <5.0.0)
+  - Total
+  - Application
+  - Applet
+  - System
+  - System Unsafe
+- SoC, PCB & Skin temperatures (Skin temperature not supported by FWs <5.0.0)
+- Fan Rotation Level
+- PFPS and FPS (they don't work for 32-bit games, shows only if [my fork of SaltyNX](https://github.com/masagrator/SaltyNX/releases) is installed)
+- Battery temperature, raw charge, age, average voltage, average current flow and average power flow
+- Charger type, max voltage, and max current
+- DSP usage (only for FW older than 17.0.0)
+- NVDEC, NVENC and NVJPG clock rates
+- Network type + Wi-fi password
 
-- ^1 - This shows only when sys-clk 2.0.0+ is installed.
-- ^2 - Explanation provided at the end of file
+# Requirements:
+- From 0.4.1 you need Tesla Menu >=1.0.2
 
-```Optional (shows only when SaltyNX is installed and game is running)```
+How to setup everything: [HERE](https://gist.github.com/masagrator/65fcbd5ad09243399268d145aaab899b)
 
-| Category | Format            | Explanation                                                              |
-|----------|-------------------|--------------------------------------------------------------------------|
-| PFPS     | %u                | Pushed Frames Per Second - how many frames were displayed in last second |
-| FPS      | %.2f              | Frames Per Second - value calculated by averaging frametime              |
+---
 
-# Mini
+# Thanks to:
+- RetroNX channel for helping with coding stuff
+- SunTheCourier for sys-clk-Overlay from which I learned how to make my own Tesla homebrew
+- Herbaciarz for providing screenshots from HDMI Grabber
+- KazushiMe for writing code to read registers from max17050 chip
+- CTCaer for Hekate from which I took max17050.h and calculation formulas for reading battery stats from max17050 chip
 
-Contains most of supported informations with lower precision.
+# FAQ:
+Q: This homebrew has any impact on games?
 
-| Category | Format                                           | Explanation                                                               |
-|----------|--------------------------------------------------|---------------------------------------------------------------------------|
-| CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f                       | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU Target/Real frequency`(^1)`  |
-| GPU      | %.1f@%.1f                                        | Load@GPU Target/Real Frequency`(^1)`                                                 |
-| RAM      | %.0f/%.0f@%.1f `or` %.1f@%.1f                    | Total RAM used/Total RAM available in MB@EMC Target/Real frequency `or` RAM load@EMC Target frequency `(^1)`  |
-| TEMP     | %2.1f/%2.1f/%2.1f                                | SoC temperature/PCB temperature/Skin temperature `(^2)`                     |
-| FAN      | %2.1f                                            | Fan rotation level                                                        |
-| DRAW     | %+.2f[h:mm]                                      | How much power in watts is discharged from or charged to the battery [Time left before shutdown]      |
+A: Negligible, you won't see any difference. Almost everything is done on Core `#3`, other cores usage is below 0.001%.
 
-- ^1 - Real Frequency + RAM Load available only with sys-clk 2.0.0+
-- ^2 - Explanation provided at the end of file
+# Troubleshooting:
 
-```Optional```
+Q: When opening Full or Mini mode, overlay is showing that Core #3 usage is at 100% while everything else is showing 0, eventually leading to crash. Why this happens?
 
-> shows only when SaltyNX is installed and game is running
-> 
-| Category | Format            | Explanation                                                              |
-|----------|-------------------|--------------------------------------------------------------------------|
-| FPS      | %.2f              | Frames Per Second                                                        |
-
-# Micro
-
-Contains most of supported informations with lower precision in one line.
-
-| Category | Format                                                     | Explanation                                                               |
-|----------|------------------------------------------------------------|---------------------------------------------------------------------------|
-| CPU      | [%.0f,%.0f,%.0f,%.0f]%s%.1f                                 | [Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage] `(^1)` CPU Target/Real Frequency `(^3)`  |
-| GPU      | %.1f%s%.1f                                                  | Load (^1) GPU Target/Real Frequency                                      |
-| RAM      | %.1f/%.1f%s%.1f `or` %.1f%s%.1f                             | Total RAM used/Total RAM available in GB `(^1)` EMC Target frequency `or` RAM Load in % `(^1)` EMC Target frequency      |
-| BRD      | %2.1f/%2.1f/%2.1f@+.1f[h:mm]                                | SoC temperature/PCB temperature/Skin temperature(^2)/Battery Power Flow[Time left before shutdown]      |
-| FAN      | %2.2f                                                       | Fan rotation level                                                               |
-
-- ^1 - by default it's `@`, but if you have sys-clk 2.0.0+ installed, this changes depending on difference between real clocks and targeted clocks. <br>
-  - `△` - real clocks are higher by at least 20 MHz than expected
-  - `▽` - real clocks are lower  by at least 20 MHz than expected
-  - `≠` - real clocks are lower by at least 50 MHz than expected (If this shows constantly for longer than few seconds, this is a sign of throttling, usually caused by bad overclocking configuration)
-- ^2 - Explanation provided at the end of file
-- ^3 - Real frequencies + RAM Load available only with sys-clk 2.0.0+
-
-```Optional```
-
-> shows only when SaltyNX is installed and game is running
-
-| Category | Format             | Explanation                                                              |
-|----------|--------------------|--------------------------------------------------------------------------|
-| FPS      | %.1f               | Frames Per Second                                                        |
-
-
-# FPS Counter
-
-It shows only FPS value in 31Hz + vsync signal. <br>
-If game is not launched, it will show always 254.0 value.<br>
-
-Mode available only with SaltyNX installed.
-
-# Graphs
-
-> FPS
-
-It shows average FPS graph in 31Hz + vsync signal. In background of graph you can see rendered actual average FPS.<br>
-If game is not launched, it will show always 254.0 value and graph will be empty.<br>
-If game is not rendering any new frame, graph is not updated.
-
-If line is within rounding error of graph line, it's colored. Average FPS must be between -0.05 and +0.04 of graph line target FPS. So for 30 FPS it's between 29.95 - 30.04 FPS. For 43 FPS it's 42.95 - 43.04 FPS.
-If it's in 30 or 60 FPS rounding error range, it's green. Any other FPS graph target is purple.
-
-Mode available only with SaltyNX installed.
-
-# Other
-
-> Battery
-
-| Category                        | Format    | Explanation                                                                                   |
-|---------------------------------|-----------|-----------------------------------------------------------------------------------------------|
-| Battery Temperature             | %.2f      | Battery temperature in Celsius                                                                |
-| Battery Raw Charge              | %.2f      | Raw battery charged capacity in percent                                                       |
-| Battery Voltage (AVG of 5)      | %.2f      | Battery average voltage in mV taken from 5 readings in period of 5 seconds                    |
-| Battery Current Flow (AVG of 5) | %+.2f     | Battery average current flow in mA taken from 5 readings in period of 5 seconds               |
-| Battery Power Flow (AVG of 5)   | %+.3f     | Battery average power flow in W calciulated from Battery Voltage and Battery Current Flow     |
-| Battery Remaining Time          | h:mm      | How much time is left before shutdown                                                         |
-
-Shows only if charger is connected:
-| Category                  | Format       | Explanation                                                                      |
-|---------------------------|--------------|----------------------------------------------------------------------------------|
-| Charger Type              | %u           | Connected charger type, more in Battery.hpp "BatteryChargeInfoFieldsChargerType" |
-| Charger Max Voltage       | %u           | Charger and external device voltage limit in mV                                  |
-| Charger Max Current       | %u           | Charger and external device current limit in mA                                  |
-
-> Miscellaneous
-
-| Category               | Format            | Explanation                                                                      |
-|------------------------|-------------------|----------------------------------------------------------------------------------|
-| DSP Usage              | %u                | In percent (not available on 17.0.0+)                                            |
-| NVDEC                  | %.2f              | Target frequency in MHz (shows 0 if chip is not active)                          |
-| NVENC                  | %.2f              | Target frequency in MHz (shows 0 if chip is not active)                          |
-| NVJPG                  | %.2f              | Target frequency in MHz (shows 0 if chip is not active)                          |
-| Network Type           | %s                | It shows if Switch is connected to internet, and if it's using Ethernet or Wi-Fi |
-
-If Network Type is "Wi-Fi", you can press Y to show password. Since max password length is 64 characters, it may show in up to 3 lines.
-
-# Additional info
-
-> How Battery Remaining Time is calculated
-
-It is calculated from the last 3 minutes of power draw readings. In the first minute of running any mode, it is updated every 0.5s, after one minute it's updated every minute. When exiting the currently used mode, calculations are reset. When connecting or disconnecting the charger, calculations are reset. When Battery Power Draw is positive instead of negative, time is shown as [-:--] and calculations are reset.
-
-> What is Skin temperature ($\mathbf{T}skin$)?
-
-This is temperature calculated from SoC and PCB temperatures that is mainly used to prevent Switch from overheating. Reading it is not supported on FWs <5.0.0.
-
-Explanation provided by CTCaer
->Temperature ($\mathbf{T}skin$) calculation.
->
->
->Console and Handheld:
->
->$\mathbf{T}soc >= 84°C$ - Immediate sleep. No questions asked.
->
->$\mathbf{T}pcb >= 84°C$ - Immediate sleep. No questions asked.
->
->
->Console only:
->
->$\mathbf{T}skin < 63°C$ - Clears both timers.
->
->$\mathbf{T}skin >= 63°C$ - Immediate sleep. No questions asked.
->
->
->Handheld only:
->
->$\mathbf{T}skin < 58°C$ - Clears both timers.
->
->$58°C <= \mathbf{T}skin < 61°C$ - Starts 60s timer and clears 10s timer.
->
->$61°C <= \mathbf{T}skin < 63°C$ - Starts 10s timer.
->
->$\mathbf{T}skin >= 63°C$ - Immediate sleep. No questions asked.
->
->
->The two timers are separate. If 61°C is reached, the 10s timer is immediatly started.
->
->If a timer ends and the temperature is not dropped, goes into sleep.
->
->
->tskin is the specific calculation below:
-```
-soc_adj = (temps.iir_filter_gain_soc * (temps.soc - temps.soc_adj_prev)) + temps.soc_adj_prev;
-pcb_adj = (temps.iir_filter_gain_pcb * (temps.pcb - temps.pcb_adj_prev)) + temps.pcb_adj_prev;
-temps.soc_adj_prev = soc_adj;
-temps.pcb_adj_prev = pcb_adj;
-
-if (soc_adj >= 38000)
-{
-    if (temps.handheld)
-        soc_adj = (temps.tskin_soc_coeff_handheld[0] * soc_adj) + (1000 * temps.tskin_soc_coeff_handheld[1]);
-    else
-        soc_adj = (temps.tskin_soc_coeff_console[0] * soc_adj) + (1000 * temps.tskin_soc_coeff_console[1]);
-    soc_adj = (soc_adj / 10000) + 500;
-}
-
-if (pcb_adj >= 38000)
-{
-    if (temps.handheld)
-        pcb_adj = (temps.tskin_pcb_coeff_handheld[0] * pcb_adj) + (1000 * temps.tskin_pcb_coeff_handheld[1]);
-    else
-        pcb_adj = (temps.tskin_pcb_coeff_console[0] * soc_adj) + (1000 * temps.tskin_pcb_coeff_console[1]);
-    pcb_adj = (pcb_adj / 10000) + 500;
-}
-
-skin_adj = MAX(soc_adj, pcb_adj); //tskin
-```
+A: There are few possible explanations: 
+1. You're using nifm services connection test patches (in short `nifm ctest patches`) that are included in various packs. Those patches allow to connect to network that has no internet connection. But they cause nifm to randomly rampage when connected to network. Find any folder in `atmosphere/exefs_patches` that has in folder name `nifm`, `nfim` and/or `ctest`, delete this folder and restart Switch. If you must use it, only solution is to use this overlay only in airplane mode.
+2. You're using some untested custom sysmodule that has no proper thread sleeping implemented. Find out in atmosphere/contents any sysmodule that you don't need, delete it and restart Switch.
+3. Your Switch is using sigpatches, is not a primary device, is using linked account, and is connected to network. Delete sigpatches, change your Switch to primary device, unlink account, or disable Wi-Fi. 
