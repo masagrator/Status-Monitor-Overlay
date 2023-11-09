@@ -13,7 +13,7 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
 # What is currently supported:
 - CPU Usage for each core (Cores `#0`-`#2` are used by apps/games, Core `#3` is used by OS, background processes and also Tesla overlays)
 - GPU Load
-- CPU, GPU & RAM target frequencies (also real frequencies + RAM Load if [sys-clk 2.0.0+](https://github.com/retronx-team/sys-clk/releases) is installed, use only official retronx release for reliable results)
+- CPU, GPU & RAM target frequencies (also real frequencies + RAM Load if [sys-clk 2.0.0+](https://github.com/retronx-team/sys-clk/releases) is installed, use only official RetroNX release for reliable results)
 - Used RAM categorized to: (not supported by FWs <5.0.0)
   - Total
   - Application
