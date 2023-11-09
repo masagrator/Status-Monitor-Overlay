@@ -821,6 +821,11 @@ bool convertStrToRGBA4444(std::string hexColor, uint16_t* returnValue) {
 	return false;
 }
 
+struct FullSettings {
+	uint8_t refreshRate;
+	bool setPosRight;
+};
+
 struct MiniSettings {
 	uint8_t refreshRate;
 	bool realFrequencies;
@@ -1282,5 +1287,45 @@ void GetConfigSettings(FpsGraphSettings* settings) {
 		uint16_t temp = 0;
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> perfectLineColor = temp;
+	}
+}
+
+void GetConfigSettings(FullSettings* settings) {
+	settings -> setPosRight = false;
+	settings -> refreshRate = 1;
+
+	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
+	if (!configFileIn)
+		return;
+	fseek(configFileIn, 0, SEEK_END);
+	long fileSize = ftell(configFileIn);
+	rewind(configFileIn);
+
+	std::string fileDataString(fileSize, '\0');
+	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
+	fclose(configFileIn);
+	
+	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+
+	std::string key;
+	if (parsedData.find("full") == parsedData.end())
+		return;
+	if (parsedData["full"].find("refresh_rate") != parsedData["full"].end()) {
+		long maxFPS = 60;
+		long minFPS = 1;
+		
+		key = parsedData["full"]["refresh_rate"];
+		long rate = atol(key.c_str());
+		if (rate < minFPS) {
+			settings -> refreshRate = minFPS;
+		}
+		else if (rate > maxFPS)
+			settings -> refreshRate = maxFPS;
+		else settings -> refreshRate = rate;	
+	}
+	if (parsedData["full"].find("layer_width_align") != parsedData["full"].end()) {
+		key = parsedData["full"]["layer_width_align"];
+		convertToUpper(key);
+		settings -> setPosRight = !key.compare("RIGHT");
 	}
 }

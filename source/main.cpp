@@ -356,11 +356,16 @@ private:
 	char RAM_load_c[64];
 
 	uint8_t COMMON_MARGIN = 20;
+	FullSettings settings;
 public:
     FullOverlay() { 
+		GetConfigSettings(&settinfgs);
 		StartThreads();
 		tsl::hlp::requestForeground(false);
-		refreshrate = TeslaFPS = 1;
+		refreshrate = TeslaFPS = settings.refreshRate;
+		if (settings.setPosRight) {
+			tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+		}
 	}
 	~FullOverlay() {
 		CloseThreads();
@@ -368,6 +373,9 @@ public:
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
 		systemtickfrequency = 19200000;
+		if (settings.setPosRight) {
+			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
+		}
 	}
 
     virtual tsl::elm::Element* createUI() override {
@@ -476,7 +484,7 @@ public:
 			
 			std::string message = "Hold " + formattedKeyCombo + " to Exit";
 			
-			renderer->drawString(message.c_str(), false, COMMON_MARGIN, 675, 15, renderer->a(0xFFFF));
+			renderer->drawString(message.c_str(), false, COMMON_MARGIN, 683, 15, renderer->a(0xFFFF));
 			
 		});
 
