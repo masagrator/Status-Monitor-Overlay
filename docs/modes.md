@@ -60,7 +60,7 @@ Contains most of supported informations with lower precision in one line.
 | GPU      | %.1f%s%.1f                                                  | Load (^1) GPU Target/Real Frequency                                      |
 | RAM      | %.1f/%.1f%s%.1f `or` %.1f%s%.1f                             | Total RAM used/Total RAM available in GB `(^1)` EMC Target frequency `or` RAM Load in % `(^1)` EMC Target frequency      |
 | BRD      | %2.1f/%2.1f/%2.1f@+.1f[h:mm]                                | SoC temperature/PCB temperature/Skin temperature(^2)/Battery Power Flow[Time left before shutdown]      |
-| FAN      | %2.2f                                                       | Fan rotation level                                                               |
+| FAN      | %2.1f                                                       | Fan rotation level                                                               |
 
 - ^1 - by default it's `@`, but if you have sys-clk 2.0.0+ installed, this changes depending on difference between real clocks and targeted clocks. <br>
   - `△` - real clocks are higher by at least 20 MHz than expected
