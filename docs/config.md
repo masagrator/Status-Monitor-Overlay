@@ -29,9 +29,9 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `layer_height_align` | On which side of the screen Y axis you want this mode | `top`, `center`, `bottom` | `top` |
 | `handheld_font_size` | How big should be rendered text in handheld mode | From `8` to `22` | `15` |
 | `docked_font_size` | How big should be rendered text in docked mode | From `8` to `22` | `15` |
-| `real_freqs` | This works only if you have sys-clk 2.0.0+ installed. It shows real frequencies for CPU, GPU and RAM instead of target frequencies | `true`, `false` | `false` |
+| `real_freqs` | This works only if you have sys-clk 2.0.0_rc4+ installed. It shows real frequencies for CPU, GPU and RAM instead of target frequencies | `true`, `false` | `false` |
 | `show` | Which data should be rendered. Connect different stats with `+` in any order. | `CPU`, `GPU`, `RAM`, `TEMP`, `FAN`, `DRAW`, `FPS` | `CPU+GPU+RAM+TEMP+FAN+DRAW+FPS` |
-| `replace_MB_with_RAM_load` | This works only if you have sys-clk 2.0.0+ installed. Instead of RAM total usage it shows RAM load. | `true`, `false` | `true` |
+| `replace_MB_with_RAM_load` | This works only if you have sys-clk 2.0.0_rc4+ installed. Instead of RAM total usage it shows RAM load. | `true`, `false` | `true` |
 | `background_color` | Background color in RGBA4444 format | From `#0000` to `#FFFF` | `#1117` |
 | `cat_color` | Category text color (left side) in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |
 | `text_color` | Stats text color (right side) in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |
@@ -44,9 +44,9 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `layer_height_align` | On which side of the screen Y axis you want this mode | `top`, `bottom` | `top` |
 | `handheld_font_size` | How big should be rendered text in handheld mode | From `8` to `18` | `18` |
 | `docked_font_size` | How big should be rendered text in docked mode | From `8` to `18` | `18` |
-| `real_freqs` | This works only if you have sys-clk 2.0.0+ installed. It shows real frequencies for CPU, GPU and RAM instead of target frequencies | `true`, `false` | `false` |
+| `real_freqs` | This works only if you have sys-clk 2.0.0_rc4+ installed. It shows real frequencies for CPU, GPU and RAM instead of target frequencies | `true`, `false` | `false` |
 | `show` | Which data should be rendered. Connect different stats with `+` in any order. | `CPU`, `GPU`, `RAM`, `BRD`, `FAN`, `FPS` | `CPU+GPU+RAM+BRD+FAN+FPS` |
-| `replace_GB_with_RAM_load` | This works only if you have sys-clk 2.0.0+ installed. Instead of RAM total usage it shows RAM load. | `true`, `false` | `true` |
+| `replace_GB_with_RAM_load` | This works only if you have sys-clk 2.0.0_rc4+ installed. Instead of RAM total usage it shows RAM load. | `true`, `false` | `true` |
 | `background_color` | Background color in RGBA4444 format | From `#0000` to `#FFFF` | `#1117` |
 | `cat_color` | Category text color (left side) in RGBA4444 format | From `#0000` to `#FFFF` | `#FCCF` |
 | `text_color` | Stats text color (right side) in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |
