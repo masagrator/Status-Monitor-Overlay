@@ -684,12 +684,12 @@ public:
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
 					}
-					else if (!key.compare("GPU") || (!key.compare("RAM") && settings.showRAMLoad)) {
+					else if (!key.compare("GPU") || (!key.compare("RAM") && settings.showRAMLoad && R_SUCCEEDED(sysclkCheck))) {
 						dimensions = renderer->drawString("100.0%@4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
 					}
-					else if (!key.compare("RAM") && !settings.showRAMLoad) {
+					else if (!key.compare("RAM") && (!settings.showRAMLoad || R_FAILED(sysclkCheck))) {
 						dimensions = renderer->drawString("4444/4444MB@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
@@ -1083,8 +1083,8 @@ public:
 			if (!Initialized) {
 				CPU_dimensions = renderer->drawString("CPU [100%,100%,100%,100%]△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				GPU_dimensions = renderer->drawString("GPU 100.0%△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
-				if (!settings.showRAMLoad) {
-					RAM_dimensions = renderer->drawString("RAM 44.4/44.4GB△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+				if (R_FAILED(sysclkCheck) || !settings.showRAMLoad) {
+					RAM_dimensions = renderer->drawString("RAM 4.4/44.4GB△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				}
 				else RAM_dimensions = renderer->drawString("RAM 100.0%△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				BRD_dimensions = renderer->drawString("BRD 88.8/88.8/88.8\u00B0C@-15.5W[99:99]", false, 0, fontsize, fontsize, renderer->a(0x0000));
