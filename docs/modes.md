@@ -3,7 +3,7 @@
 Status Monitor Overlay from 0.8 release contains six modes to choose from Main Menu.<br>
 For additional functions you need to install:
 - [SaltyNX](https://github.com/masagrator/SaltyNX/releases)
-- [sys-clk 2.0.0+](https://github.com/retronx-team/sys-clk/releases) (using closed source forks of sys-clk can result in retrieving wrong real clockrates and ram load)
+- [sys-clk 2.0.0_rc4+](https://github.com/retronx-team/sys-clk/releases) (using closed source forks of sys-clk can result in retrieving wrong real clockrates and ram load)
 
 # Full
 
@@ -16,7 +16,7 @@ This mode you can know from older releases of Status Monitor. It contains all in
 | RAM Usage | - Real Frequency: %.1f (Δ%+.1f)<br>- Target Frequency: %.1f<br>- Load: %.1f (CPU %.1f \| GPU %.1f)`^1`<br>- %s: %.2f/%.2f                                                    | - Real clockrate of EMC in MHz `(^1)`<br>- Target clockrate of EMC in MHz<br>- RAM Load in % (Which part of that are CPU and GPU (with other hardware, but their impact on GPU readings is negligible) `(^1)`<br>- %s memory used/%s memory available in MB (not working with FW <5.0.0)                                                                                                                                                                                                                          |
 | Board | Battery Power Flow: %+.2f[h:mm]<br>Temperatures:<br>- SoC: %.1f <br>- PCB: %.1f <br>- Skin: %.1f<br>Fan Rotation Level: %.1f                                   | How much power in watts is discharged from or charged to the battery [time left before shutdown]<br>SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees (^2)<br>Fan rotation level in percent                                                                                                                                                                         |
 
-- ^1 - This shows only when sys-clk 2.0.0+ is installed.
+- ^1 - This shows only when sys-clk 2.0.0_rc4+ is installed.
 - ^2 - Explanation provided at the end of file
 
 ```Optional (shows only when SaltyNX is installed and game is running)```
@@ -39,7 +39,7 @@ Contains most of supported informations with lower precision.
 | FAN      | %2.1f                                            | Fan rotation level                                                        |
 | DRAW     | %+.2f[h:mm]                                      | How much power in watts is discharged from or charged to the battery [Time left before shutdown]      |
 
-- ^1 - Real Frequency + RAM Load available only with sys-clk 2.0.0+
+- ^1 - Real Frequency + RAM Load available only with sys-clk 2.0.0_rc4+
 - ^2 - Explanation provided at the end of file
 
 ```Optional```
@@ -62,12 +62,12 @@ Contains most of supported informations with lower precision in one line.
 | BRD      | %2.1f/%2.1f/%2.1f@+.1f[h:mm]                                | SoC temperature/PCB temperature/Skin temperature(^2)/Battery Power Flow[Time left before shutdown]      |
 | FAN      | %2.1f                                                       | Fan rotation level                                                               |
 
-- ^1 - by default it's `@`, but if you have sys-clk 2.0.0+ installed, this changes depending on difference between real clocks and targeted clocks. <br>
+- ^1 - by default it's `@`, but if you have sys-clk 2.0.0_rc4+ installed, this changes depending on difference between real clocks and targeted clocks. <br>
   - `△` - real clocks are higher by at least 20 MHz than expected
   - `▽` - real clocks are lower  by at least 20 MHz than expected
   - `≠` - real clocks are lower by at least 50 MHz than expected (If this shows constantly for longer than few seconds, this is a sign of throttling, usually caused by bad overclocking configuration)
 - ^2 - Explanation provided at the end of file
-- ^3 - Real frequencies + RAM Load available only with sys-clk 2.0.0+
+- ^3 - Real frequencies + RAM Load available only with sys-clk 2.0.0_rc4+
 
 ```Optional```
 
