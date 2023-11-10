@@ -677,7 +677,7 @@ public:
 			
 			if (!Initialized) {
 				std::pair<u32, u32> dimensions;
-				recrangleWidth = 0;
+				rectangleWidth = 0;
 				for (std::string key : tsl::hlp::split(settings.show, '+')) {
 					if (!key.compare("CPU")) {
 						dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
