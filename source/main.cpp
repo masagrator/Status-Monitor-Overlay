@@ -677,6 +677,7 @@ public:
 			
 			if (!Initialized) {
 				std::pair<u32, u32> dimensions;
+				recrangleWidth = 0;
 				for (std::string key : tsl::hlp::split(settings.show, '+')) {
 					if (!key.compare("CPU")) {
 						dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
@@ -817,10 +818,16 @@ public:
 	virtual void update() override {
 		apmGetPerformanceMode(&performanceMode);
 		if (performanceMode == ApmPerformanceMode_Normal) {
-			fontsize = settings.handheldFontSize;
+			if (fontsize != settings.handheldFontSize) {
+				Initialized = false;
+				fontsize = settings.handheldFontSize;
+			}
 		}
 		else if (performanceMode == ApmPerformanceMode_Boost) {
-			fontsize = settings.dockedFontSize;
+			if (fontsize != settings.dockedFontSize) {
+				Initialized = false;
+				fontsize = settings.dockedFontSize;
+			}
 		}
 		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
 		//This is because making each loop also takes time, which is not considered because this will take also additional time
@@ -1085,6 +1092,7 @@ public:
 				FPS_dimensions = renderer->drawString("FPS 44.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				auto spacesize = renderer->drawString(" ", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				margin = spacesize.first;
+				text_width = 0;
 				int8_t entry_count = -1;
 				uint8_t flags = 0;
 				for (std::string key : tsl::hlp::split(settings.show, '+')) {
@@ -1199,10 +1207,16 @@ public:
 	virtual void update() override {
 		apmGetPerformanceMode(&performanceMode);
 		if (performanceMode == ApmPerformanceMode_Normal) {
-			fontsize = settings.handheldFontSize;
+			if (fontsize != settings.handheldFontSize) {
+				Initialized = false;
+				fontsize = settings.handheldFontSize;
+			}
 		}
 		else if (performanceMode == ApmPerformanceMode_Boost) {
-			fontsize = settings.dockedFontSize;
+			if (fontsize != settings.dockedFontSize) {
+				Initialized = false;
+				fontsize = settings.dockedFontSize;
+			}
 		}
 		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
 		//This is because making each loop also takes time, which is not considered because this will take also additional time
