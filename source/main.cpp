@@ -413,7 +413,7 @@ public:
 						renderer->drawString(DeltaCPU_c, false, COMMON_MARGIN + 230, height_offset - 15, 15, renderer->a(0xFFFF));
 					}
 				}
-				else if (realCPU_Hz && settings.showDeltas) {
+				else if (realCPU_Hz && settings.showDeltas && (settings.showRealFreqs || settings.showTargetFreqs)) {
 					renderer->drawString(DeltaCPU_c, false, COMMON_MARGIN + 230, height_offset, 15, renderer->a(0xFFFF));
 				}
 				renderer->drawString(CPU_compressed_c, false, COMMON_MARGIN, height_offset + 30, 15, renderer->a(0xFFFF));
@@ -446,7 +446,7 @@ public:
 							renderer->drawString(DeltaGPU_c, false, COMMON_MARGIN + 230, height_offset - 15, 15, renderer->a(0xFFFF));
 						}
 					}
-					else if (realGPU_Hz && settings.showDeltas) {
+					else if (realGPU_Hz && settings.showDeltas && (settings.showRealFreqs || settings.showTargetFreqs)) {
 						renderer->drawString(DeltaGPU_c, false, COMMON_MARGIN + 230, height_offset, 15, renderer->a(0xFFFF));
 					}
 				}
@@ -479,10 +479,10 @@ public:
 							renderer->drawString(DeltaRAM_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
 						}
 						else if (settings.showDeltas && !settings.showTargetFreqs) {
-							renderer->drawString(DeltaRAM_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
+							renderer->drawString(DeltaRAM_c, false, COMMON_MARGIN + 230, height_offset - 15, 15, renderer->a(0xFFFF));
 						}
 					}
-					else if (realRAM_Hz && settings.showDeltas) {
+					else if (realRAM_Hz && settings.showDeltas && (settings.showRealFreqs || settings.showTargetFreqs)) {
 						renderer->drawString(DeltaRAM_c, false, COMMON_MARGIN + 230, height_offset, 15, renderer->a(0xFFFF));
 					}
 					if (R_SUCCEEDED(sysclkCheck)) {
