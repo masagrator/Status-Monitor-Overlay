@@ -146,9 +146,9 @@ uint32_t* FPSticks_shared = 0;
 Handle remoteSharedMemory = 1;
 
 //Read real freqs from sys-clk sysmodule
-int32_t realCPU_Hz = 0;
-int32_t realGPU_Hz = 0;
-int32_t realRAM_Hz = 0;
+uint32_t realCPU_Hz = 0;
+uint32_t realGPU_Hz = 0;
+uint32_t realRAM_Hz = 0;
 uint32_t ramLoad[SysClkRamLoad_EnumMax];
 
 void LoadSharedMemory() {
