@@ -1383,6 +1383,6 @@ void GetConfigSettings(FullSettings* settings) {
 	if (parsedData["full"].find("show_target_freqs") != parsedData["full"].end()) {
 		key = parsedData["full"]["show_target_freqs"];
 		convertToUpper(key);
-		settings -> showRealFreqs = key.compare("FALSE");
+		settings -> showTargetFreqs = key.compare("FALSE");
 	}
 }
