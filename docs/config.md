@@ -19,6 +19,9 @@ Colors are provided in RGBA4444 format, which means that each character represen
 |-----|-------------|-----------------|---------------|
 | `refresh_rate` | How often per second this mode should be refreshed. Higher value means higher CPU Core #3 usage, that's why it is recommended to stay at 1. | From `1` to `60` | `1` |
 | `layer_width_align` | On which side of the screen X axis you want this mode | `left`, `right` | `left` |
+| `show_real_freqs` | This works only if you have sys-clk 2.0.0_rc4+ installed. Show real frequencies for CPU, GPU and RAM | `false`, `true` | `true` |
+| `show_deltas` | This works only if you have sys-clk 2.0.0_rc4+ installed. Show difference for CPU, GPU and RAM between target frequencies and real frequencies. They are not showed if both keys `show_real_freqs` and `show_target_freqs` are set to `false` | `false`, `true` | `true` |
+| `show_target_freqs` | Show target frequencies for CPU, GPU and RAM | `false`, `true` | `true` |
 
 > [mini]
 
