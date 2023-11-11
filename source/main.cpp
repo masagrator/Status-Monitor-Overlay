@@ -575,12 +575,12 @@ public:
 		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW[%s]", PowerConsumption, remainingBatteryLife);
 		if (hosversionAtLeast(10,0,0)) {
 			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, 
-				"%2.1f \u00B0C\n%2.1f \u00B0C\n%2d.%d \u00B0C", 
+				"%2.1f\u00B0C\n%2.1f\u00B0C\n%2d.%d\u00B0C", 
 				SOC_temperatureF, PCB_temperatureF, skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
 		}
 		else {
 			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, 
-				"%2d.%d \u00B0C\n%2d.%d\u00B0C\n%2d.%d \u00B0C", 
+				"%2d.%d\u00B0C\n%2d.%d\u00B0C\n%2d.%d\u00B0C", 
 				SOC_temperatureC / 1000, (SOC_temperatureC / 100) % 10, 
 				PCB_temperatureC / 1000, (PCB_temperatureC % 100) % 10,
 				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
