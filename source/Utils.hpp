@@ -860,6 +860,9 @@ bool convertStrToRGBA4444(std::string hexColor, uint16_t* returnValue) {
 struct FullSettings {
 	uint8_t refreshRate;
 	bool setPosRight;
+	bool showRealFreqs;
+	bool showDeltas;
+	bool showTargetFreqs;
 };
 
 struct MiniSettings {
@@ -1329,6 +1332,9 @@ void GetConfigSettings(FpsGraphSettings* settings) {
 void GetConfigSettings(FullSettings* settings) {
 	settings -> setPosRight = false;
 	settings -> refreshRate = 1;
+	settings -> showRealFreqs = true;
+	settings -> showDeltas = true;
+	settings -> showTargetFreqs = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1363,5 +1369,20 @@ void GetConfigSettings(FullSettings* settings) {
 		key = parsedData["full"]["layer_width_align"];
 		convertToUpper(key);
 		settings -> setPosRight = !key.compare("RIGHT");
+	}
+	if (parsedData["full"].find("show_real_freqs") != parsedData["full"].end()) {
+		key = parsedData["full"]["show_real_freqs"];
+		convertToUpper(key);
+		settings -> showRealFreqs = key.compare("FALSE");
+	}
+	if (parsedData["full"].find("show_deltas") != parsedData["full"].end()) {
+		key = parsedData["full"]["show_deltas"];
+		convertToUpper(key);
+		settings -> showDeltas = key.compare("FALSE");
+	}
+	if (parsedData["full"].find("show_target_freqs") != parsedData["full"].end()) {
+		key = parsedData["full"]["show_target_freqs"];
+		convertToUpper(key);
+		settings -> showTargetFreqs = key.compare("FALSE");
 	}
 }

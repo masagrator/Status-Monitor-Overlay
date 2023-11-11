@@ -3,6 +3,9 @@ key_combo=LSTICK+RSTICK
 [full]
 refresh_rate=1
 layer_width_align=left
+show_real_freqs=true
+show_deltas=true
+show_target_freqs=true
 [mini]
 refresh_rate=1
 layer_width_align=left
