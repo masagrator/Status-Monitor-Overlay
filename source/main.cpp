@@ -511,8 +511,8 @@ public:
 		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "%u.%u MHz", CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
 		if (realCPU_Hz) {
 			snprintf(RealCPU_Hz_c, sizeof(RealCPU_Hz_c), "%u.%u MHz", realCPU_Hz / 1000000, (realCPU_Hz / 100000) % 10);
-			int32_t deltaCPU = (int64_t)(realCPU_Hz) - CPU_Hz;
-			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %d.%u", deltaCPU / 1000000, abs(deltaCPU / 100000) % 10);
+			int32_t deltaCPU = (int32_t)(realCPU_Hz / 1000) - (CPU_Hz / 1000);
+			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %d.%u", deltaCPU / 1000, abs(deltaCPU / 100) % 10);
 		}
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
 		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
@@ -524,8 +524,8 @@ public:
 		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "%u.%u MHz", GPU_Hz / 1000000, (GPU_Hz / 100000) % 10);
 		if (realGPU_Hz) {
 			snprintf(RealGPU_Hz_c, sizeof(RealGPU_Hz_c), "%u.%u MHz", realGPU_Hz / 1000000, (realGPU_Hz / 100000) % 10);
-			int32_t deltaGPU = (int64_t)(realGPU_Hz) - GPU_Hz;
-			snprintf(DeltaGPU_c, sizeof(DeltaGPU_c), "Δ %d.%u", deltaGPU / 1000000, abs(deltaGPU / 100000) % 10);
+			int32_t deltaGPU = (int32_t)(realGPU_Hz / 1000) - (GPU_Hz / 1000);
+			snprintf(DeltaGPU_c, sizeof(DeltaGPU_c), "Δ %d.%u", deltaGPU / 1000, abs(deltaGPU / 100) % 10);
 		}
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %u.%u%%", GPU_Load_u / 10, GPU_Load_u % 10);
 		
@@ -533,8 +533,8 @@ public:
 		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "%u.%u MHz", RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
 		if (realRAM_Hz) {
 			snprintf(RealRAM_Hz_c, sizeof(RealRAM_Hz_c), "%u.%u MHz", realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
-			int32_t deltaRAM = (int64_t)(realRAM_Hz) - RAM_Hz;
-			snprintf(DeltaRAM_c, sizeof(DeltaRAM_c), "Δ %d.%u", deltaRAM / 1000000, abs(deltaRAM / 100000) % 10);
+			int32_t deltaRAM = (int32_t)(realRAM_Hz / 1000) - (RAM_Hz / 1000);
+			snprintf(DeltaRAM_c, sizeof(DeltaRAM_c), "Δ %d.%u", deltaRAM / 1000, abs(deltaRAM / 100) % 10);
 		}
 		float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 		float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
@@ -1234,14 +1234,14 @@ public:
 
 		char difference[5] = "@";
 		if (realCPU_Hz) {
-			int32_t deltaCPU = (int64_t)(realCPU_Hz) - CPU_Hz;
-			if (deltaCPU > 20000000) {
+			int32_t deltaCPU = (int32_t)(realCPU_Hz / 1000) - (CPU_Hz / 1000);
+			if (deltaCPU > 20000) {
 				strcpy(difference, "△");
 			}
-			else if (deltaCPU < -50000000) {
+			else if (deltaCPU < -50000) {
 				strcpy(difference, "≠");
 			}
-			else if (deltaCPU < -20000000) {
+			else if (deltaCPU < -20000) {
 				strcpy(difference, "▽");
 			}
 		}
@@ -1262,17 +1262,17 @@ public:
 		
 		///GPU
 		if (realGPU_Hz) {
-			int32_t deltaGPU = (int64_t)(realGPU_Hz) - GPU_Hz;
-			if (deltaGPU >= 20000000) {
+			int32_t deltaGPU = (int32_t)(realGPU_Hz / 1000) - (GPU_Hz / 1000);
+			if (deltaGPU >= 20000) {
 				strcpy(difference, "△");
 			}
-			else if (deltaGPU > -20000000) {
+			else if (deltaGPU > -20000) {
 				strcpy(difference, "@");
 			}
-			else if (deltaGPU < -50000000) {
+			else if (deltaGPU < -50000) {
 				strcpy(difference, "≠");
 			}
-			else if (deltaGPU < -20000000) {
+			else if (deltaGPU < -20000) {
 				strcpy(difference, "▽");
 			}
 		}
@@ -1314,17 +1314,17 @@ public:
 		}
 
 		if (realRAM_Hz) {
-			int32_t deltaRAM = (int64_t)(realRAM_Hz) - RAM_Hz;
-			if (deltaRAM >= 20000000) {
+			int32_t deltaRAM = (int32_t)(realRAM_Hz / 1000) - (RAM_Hz / 1000);
+			if (deltaRAM >= 20000) {
 				strcpy(difference, "△");
 			}
-			else if (deltaRAM > -20000000) {
+			else if (deltaRAM > -20000) {
 				strcpy(difference, "@");
 			}
-			else if (deltaRAM < -50000000) {
+			else if (deltaRAM < -50000) {
 				strcpy(difference, "≠");
 			}
-			else if (deltaRAM < -20000000) {
+			else if (deltaRAM < -20000) {
 				strcpy(difference, "▽");
 			}
 		}
