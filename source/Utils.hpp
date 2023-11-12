@@ -674,65 +674,58 @@ void formatButtonCombination(std::string& line) {
 	}	
 }
 
+uint64_t MapButtons(const std::string& buttonCombo) {
+	std::map<std::string, uint64_t> buttonMap = {
+		{"A", HidNpadButton_A},
+		{"B", HidNpadButton_B},
+		{"X", HidNpadButton_X},
+		{"Y", HidNpadButton_Y},
+		{"L", HidNpadButton_L},
+		{"R", HidNpadButton_R},
+		{"ZL", HidNpadButton_ZL},
+		{"ZR", HidNpadButton_ZR},
+		{"PLUS", HidNpadButton_Plus},
+		{"MINUS", HidNpadButton_Minus},
+		{"DUP", HidNpadButton_Up},
+		{"DDOWN", HidNpadButton_Down},
+		{"DLEFT", HidNpadButton_Left},
+		{"DRIGHT", HidNpadButton_Right},
+		{"SL", HidNpadButton_AnySL},
+		{"SR", HidNpadButton_AnySR},
+		{"LSTICK", HidNpadButton_StickL},
+		{"RSTICK", HidNpadButton_StickR},
+		{"UP", HidNpadButton_Up},
+		{"DOWN", HidNpadButton_Down},
+		{"LEFT", HidNpadButton_Left},
+		{"RIGHT", HidNpadButton_Right}
+	};
 
-// Base class with virtual function
-class ButtonMapper {
-public:
-	virtual std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) = 0;
-};
+	uint64_t comboBitmask = 0;
+	std::string comboCopy = buttonCombo;  // Make a copy of buttonCombo
 
-// Derived class implementing the virtual function
-class ButtonMapperImpl : public ButtonMapper {
-public:
-	std::list<HidNpadButton> MapButtons(const std::string& buttonCombo) override {
-		std::map<std::string, HidNpadButton> buttonMap = {
-			{"A", static_cast<HidNpadButton>(HidNpadButton_A)},
-			{"B", static_cast<HidNpadButton>(HidNpadButton_B)},
-			{"X", static_cast<HidNpadButton>(HidNpadButton_X)},
-			{"Y", static_cast<HidNpadButton>(HidNpadButton_Y)},
-			{"L", static_cast<HidNpadButton>(HidNpadButton_L)},
-			{"R", static_cast<HidNpadButton>(HidNpadButton_R)},
-			{"ZL", static_cast<HidNpadButton>(HidNpadButton_ZL)},
-			{"ZR", static_cast<HidNpadButton>(HidNpadButton_ZR)},
-			{"PLUS", static_cast<HidNpadButton>(HidNpadButton_Plus)},
-			{"MINUS", static_cast<HidNpadButton>(HidNpadButton_Minus)},
-			{"DUP", static_cast<HidNpadButton>(HidNpadButton_Up)},
-			{"DDOWN", static_cast<HidNpadButton>(HidNpadButton_Down)},
-			{"DLEFT", static_cast<HidNpadButton>(HidNpadButton_Left)},
-			{"DRIGHT", static_cast<HidNpadButton>(HidNpadButton_Right)},
-			{"SL", static_cast<HidNpadButton>(HidNpadButton_AnySL)},
-			{"SR", static_cast<HidNpadButton>(HidNpadButton_AnySR)},
-			{"LSTICK", static_cast<HidNpadButton>(HidNpadButton_StickL)},
-			{"RSTICK", static_cast<HidNpadButton>(HidNpadButton_StickR)},
-			{"UP", static_cast<HidNpadButton>(HidNpadButton_Up | HidNpadButton_StickLUp | HidNpadButton_StickRUp)},
-			{"DOWN", static_cast<HidNpadButton>(HidNpadButton_Down | HidNpadButton_StickLDown | HidNpadButton_StickRDown)},
-			{"LEFT", static_cast<HidNpadButton>(HidNpadButton_Left | HidNpadButton_StickLLeft | HidNpadButton_StickRLeft)},
-			{"RIGHT", static_cast<HidNpadButton>(HidNpadButton_Right | HidNpadButton_StickLRight | HidNpadButton_StickRRight)}
-		};
-
-		std::list<HidNpadButton> mappedButtons;
-		std::string comboCopy = buttonCombo;  // Make a copy of buttonCombo
-
-		std::string delimiter = "+";
-		size_t pos = 0;
-		std::string button;
-		size_t max_delimiters = 4;
-		while ((pos = comboCopy.find(delimiter)) != std::string::npos) {
-			button = comboCopy.substr(0, pos);
-			if (buttonMap.find(button) != buttonMap.end()) {
-				mappedButtons.push_back(buttonMap[button]);
-			}
-			comboCopy.erase(0, pos + delimiter.length());
-			if(!--max_delimiters) {
-				return mappedButtons;
-			}
+	std::string delimiter = "+";
+	size_t pos = 0;
+	std::string button;
+	size_t max_delimiters = 4;
+	while ((pos = comboCopy.find(delimiter)) != std::string::npos) {
+		button = comboCopy.substr(0, pos);
+		if (buttonMap.find(button) != buttonMap.end()) {
+			comboBitmask |= buttonMap[button];
 		}
-		if (buttonMap.find(comboCopy) != buttonMap.end()) {
-			mappedButtons.push_back(buttonMap[comboCopy]);
+		comboCopy.erase(0, pos + delimiter.length());
+		if (!--max_delimiters) {
+			return comboBitmask;
 		}
-		return mappedButtons;
 	}
-};
+	if (buttonMap.find(comboCopy) != buttonMap.end()) {
+		comboBitmask |= buttonMap[comboCopy];
+	}
+	return comboBitmask;
+}
+
+static inline bool isKeyComboPressed(uint64_t keysHeld, uint64_t keysDown, uint64_t comboBitmask) {
+	return (keysDown == comboBitmask) || (keysHeld == comboBitmask);
+}
 
 // Custom utility function for parsing an ini file
 void ParseIniFile() {

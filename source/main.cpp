@@ -2,8 +2,6 @@
 #include <tesla.hpp>
 #include "Utils.hpp"
 
-ButtonMapperImpl buttonMapper; // Custom button mapper implementation
-static bool returningFromSelection = false; // for removing the necessity of svcSleepThread
 static tsl::elm::OverlayFrame* rootFrame = nullptr;
 static bool skipMain = false;
 
@@ -11,7 +9,7 @@ static bool skipMain = false;
 //FPS Counter mode
 class com_FPS : public tsl::Gui {
 private:
-	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char FPSavg_c[8];
 	FpsCounterSettings settings;
 	size_t fontsize = 0;
@@ -110,17 +108,7 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-
-		bool allButtonsHeld = true;
-		for (const HidNpadButton& button : mappedButtons) {
-			if (!(keysHeld & static_cast<uint64_t>(button))) {
-				allButtonsHeld = false;
-				break;
-			}
-		}
-
-		if (allButtonsHeld) {
-			returningFromSelection = true;
+		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
 			tsl::goBack();
 			return true;
 		}
@@ -131,7 +119,7 @@ public:
 //FPS Graph mode
 class com_FPSGraph : public tsl::Gui {
 private:
-	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char FPSavg_c[8];
 	FpsGraphSettings settings;
 public:
@@ -310,17 +298,7 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-
-		bool allButtonsHeld = true;
-		for (const HidNpadButton& button : mappedButtons) {
-			if (!(keysHeld & static_cast<uint64_t>(button))) {
-				allButtonsHeld = false;
-				break;
-			}
-		}
-
-		if (allButtonsHeld) {
-			returningFromSelection = true;
+		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
 			TeslaFPS = 60;
 			tsl::goBack();
 			return true;
@@ -332,7 +310,7 @@ public:
 //Full mode
 class FullOverlay : public tsl::Gui {
 private:
-	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char RealCPU_Hz_c[32];
 	char DeltaCPU_c[12];
 	char DeltaGPU_c[12];
@@ -638,23 +616,10 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-
-		bool allButtonsHeld = true;
-		for (const HidNpadButton& button : mappedButtons) {
-			if (!(keysHeld & static_cast<uint64_t>(button))) {
-				allButtonsHeld = false;
-				break;
-			}
-		}
-
-		if (allButtonsHeld) {
-			returningFromSelection = true;
+		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
 			TeslaFPS = 60;
 			tsl::goBack();
 			return true;
-		}
-		if (keysHeld & KEY_B) {
-			return false;
 		}
 		return false;
 	}
@@ -663,7 +628,7 @@ public:
 //Mini mode
 class MiniOverlay : public tsl::Gui {
 private:
-	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char GPU_Load_c[32];
 	char Rotation_SpeedLevel_c[64];
 	char RAM_var_compressed_c[128];
@@ -1055,23 +1020,10 @@ public:
 
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		
-		bool allButtonsHeld = true;
-		for (const HidNpadButton& button : mappedButtons) {
-			if (!(keysHeld & static_cast<uint64_t>(button))) {
-				allButtonsHeld = false;
-				break;
-			}
-		}
-
-		if (allButtonsHeld) {
-			returningFromSelection = true;
+		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
 			TeslaFPS = 60;
 			tsl::goBack();
 			return true;
-		}
-		if (keysHeld & KEY_B) {
-			return false;
 		}
 		return false;
 	}
@@ -1080,7 +1032,7 @@ public:
 //Micro mode
 class MicroOverlay : public tsl::Gui {
 private:
-	std::list<HidNpadButton> mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
+	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char GPU_Load_c[32];
 	char Rotation_SpeedLevel_c[64];
 	char RAM_var_compressed_c[128];
@@ -1439,20 +1391,7 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		//std::list<HidNpadButton> mappedButtons;
-		//ButtonMapperImpl buttonMapper; // Create an instance of the ButtonMapperImpl class
-		//mappedButtons = buttonMapper.MapButtons(keyCombo); // map buttons
-		
-		bool allButtonsHeld = true;
-		for (const HidNpadButton& button : mappedButtons) {
-			if (!(keysHeld & static_cast<uint64_t>(button))) {
-				allButtonsHeld = false;
-				break;
-			}
-		}
-
-		if (allButtonsHeld) {
-			returningFromSelection = true;
+		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
 			TeslaFPS = 60;
             if (skipMain)
                 tsl::goBack();
@@ -1461,9 +1400,6 @@ public:
 			    tsl::Overlay::get()->close();
             }
 			return true;
-		}
-		if (keysHeld & KEY_B) {
-			return false;
 		}
 		return false;
 	}
@@ -1567,8 +1503,7 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (keysHeld & KEY_B) {
-			returningFromSelection = true;
+		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;
 		}
@@ -1702,13 +1637,9 @@ public:
 		}
 		else Nifm_showpass = false;
 
-		if (keysHeld & KEY_B) {
-			returningFromSelection = true;
+		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;
-		}
-		if (keysHeld & KEY_B) {
-			return false;
 		}
 		return false;
 	}
@@ -1751,8 +1682,7 @@ public:
 	virtual void update() override {}
 
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (keysHeld & KEY_B) {
-			returningFromSelection = true;
+		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;
 		}
@@ -1797,16 +1727,9 @@ public:
 	virtual void update() override {}
 
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (!returningFromSelection && (keysHeld & KEY_B)) {
-			returningFromSelection = true;
+		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;
-		}
-		if (returningFromSelection && !(keysHeld & KEY_B)) {
-			returningFromSelection = false;
-		}
-		if (keysHeld & KEY_B) {
-			return false;
 		}
 		return false;
 	}
@@ -1900,15 +1823,9 @@ public:
 	}
 
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (!returningFromSelection && (keysHeld & KEY_B)) {
+		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;
-		}
-		if (returningFromSelection && !(keysHeld & KEY_B)) {
-			returningFromSelection = false;
-		}
-		if (keysHeld & KEY_B) {
-			return false;
 		}
 		return false;
 	}
