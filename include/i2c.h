@@ -40,17 +40,16 @@ Result I2cReadRegHandler(u8 reg, I2cDevice dev, u16 *out)
 	return 0;
 }
 
-bool Max17050ReadReg(u8 reg, u16 *out)
+Result Max17050ReadReg(u8 reg, u16 *out)
 {
 	u16 data = 0;
 	Result res = I2cReadRegHandler(reg, I2cDevice_Max17050, &data);
 
-	if (res)
+	if (R_FAILED(res))
 	{
-		*out = res;
-		return false;
+		return res;
 	}
 
 	*out = data;
-	return true;
+	return res;
 }
