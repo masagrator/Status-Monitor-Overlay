@@ -283,6 +283,7 @@ void BatteryChecker(void*) {
 		uint64_t oldTick_TTE = svcGetSystemTick();
 
 		while (!threadexit) {
+			uint64_t startTick = svcGetSystemTick();
 			if (mutexIsLockedByCurrentThread(&mutex_BatteryChecker)) {
 				svcSleepThread(5'000'000);
 			}
@@ -355,7 +356,7 @@ void BatteryChecker(void*) {
 				if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
 					batteryTimeEstimateInMinutes = (99.0*60.0)+59.0;
 				}
-				internalBatTimeEstimate = ((int32_t)internalBatTimeEstimate * 179 + (int16_t)(batteryTimeEstimateInMinutes)) / 180;
+				internalBatTimeEstimate = ((int32_t)internalBatTimeEstimate * (batteryFiltered ? 179 : 119) + (int16_t)(batteryTimeEstimateInMinutes)) / (batteryFiltered ? 180 : 120);
 				uint64_t tick_TTE = svcGetSystemTick();
 				if ((armTicksToNs(tick_TTE - oldTick_TTE) / 1'000'000'000) >= batteryTimeLeftRefreshRate) {
 					batTimeEstimate = internalBatTimeEstimate;
@@ -364,8 +365,12 @@ void BatteryChecker(void*) {
 			}
 
 			mutexUnlock(&mutex_BatteryChecker);
-			svcSleepThread(1'000'000'000 / 3);
+			uint64_t nanosecondsPassed = armTicksToNs(svcGetSystemTick() - startTick);
+			if (nanosecondsPassed < 1'000'000'000 / (batteryFiltered ? 3 : 2)) {
+				svcSleepThread((1'000'000'000 / (batteryFiltered ? 3 : 2)) - nanosecondsPassed);
+			}
 		}
+		batTimeEstimate = -1;
 		_batteryChargeInfoFields = {0};
 		delete[] readingsAmp;
 		delete[] readingsVolt;
