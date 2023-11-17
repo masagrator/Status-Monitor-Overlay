@@ -342,22 +342,23 @@ void BatteryChecker(void*) {
 			if (batCurrentAvg >= 0) {
 				batTimeEstimate = -1;
 			}
+			else {
+				uint64_t tick_TTE = svcGetSystemTick();
+				if ((armTicksToNs(tick_TTE - oldTick_TTE) / 1000000000) > batteryTimeLeftRefreshRate) {
+					if (R_FAILED(Max17050ReadReg(MAX17050_TTE, &data)) || !data)
+						continue;
+					uint16_t tempdata = data;
+					svcSleepThread(10'000'000);
+					if (R_FAILED(Max17050ReadReg(MAX17050_TTE, &data)) || !data || tempdata != data)
+						continue;
+					float batteryTimeEstimateInMinutes = (5.625 * data) / 60;
 
-			uint64_t tick_TTE = svcGetSystemTick();
-			if ((armTicksToNs(tick_TTE - oldTick_TTE) / 1000000000) > batteryTimeLeftRefreshRate) {
-				if (R_FAILED(Max17050ReadReg(MAX17050_TTE, &data)) || !data)
-					continue;
-				uint16_t tempdata = data;
-				svcSleepThread(10'000'000);
-				if (R_FAILED(Max17050ReadReg(MAX17050_TTE, &data)) || !data || tempdata != data)
-					continue;
-				float batteryTimeEstimateInMinutes = (5.625 * data) / 60;
-
-				if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
-					batTimeEstimate = (99*60)+59;
+					if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
+						batTimeEstimate = (99*60)+59;
+					}
+					else batTimeEstimate = (int16_t)batteryTimeEstimateInMinutes;
+					oldTick_TTE = tick_TTE;
 				}
-				else batTimeEstimate = (int16_t)batteryTimeEstimateInMinutes;
-				oldTick_TTE = tick_TTE;
 			}
 
 			mutexUnlock(&mutex_BatteryChecker);
