@@ -9,15 +9,27 @@ For additional functions you need to install:
 
 This mode you can know from older releases of Status Monitor. It contains all informations properly described and supported with high precision.
 
-| Category  | Format                                                                              | Explanation                                                                                                                                                                                                                                                                                                               |
-|-----------|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| CPU Usage | Frequency: %.1f (Δ%+.1f)<br>Core #0: %.2f<br>Core #1: %.2f<br>Core #2: %.2f<br>Core #3: %.2f | Targete clockrate of all CPU cores in MHz (^1)<br>Load of CPU Core #0 calculated from IdleTickCount to percent value<br>Load of CPU Core #1 calculated from IdleTickCount to percent value<br>Load of CPU Core #2 calculated from IdleTickCount to percent value<br>Load of CPU Core #3 calculated from IdleTickCount to percent value |
-| GPU Usage | Frequency: %.1f (Δ%+.1f)<br>Load: %.1f                                                       | Target clockrate of GPU in MHz (^1)<br>GPU Load provided by PMU in percent                                                                                                                                                                                                                                                            |
-| RAM Usage | - Real Frequency: %.1f (Δ%+.1f)<br>- Target Frequency: %.1f<br>- Load: %.1f (CPU %.1f \| GPU %.1f)`^1`<br>- %s: %.2f/%.2f                                                    | - Real clockrate of EMC in MHz `(^1)`<br>- Target clockrate of EMC in MHz<br>- RAM Load in % (Which part of that are CPU and GPU (with other hardware, but their impact on GPU readings is negligible) `(^1)`<br>- %s memory used/%s memory available in MB (not working with FW <5.0.0)                                                                                                                                                                                                                          |
-| Board | Battery Power Flow: %+.2f[h:mm]<br>Temperatures:<br>- SoC: %.1f <br>- PCB: %.1f <br>- Skin: %.1f<br>Fan Rotation Level: %.1f                                   | How much power in watts is discharged from or charged to the battery [time left before shutdown]<br>SoC temperature in Celsius degrees<br>PCB temperature in Celsius degrees<br>Skin temperature in Celsius degrees (^2)<br>Fan rotation level in percent                                                                                                                                                                         |
+- CPU Usage 
+  - Real Frequency: `%.1f` = Real clockrate of all CPU cores in MHz (This shows only when sys-clk 2.0.0_4c+ is installed)
+  - Target Frequency: `%.1f` = Target clockrate of all CPU cores in MHz
+  - Core #0-#3: `%.2f` = Load of CPU Cores calculated from IdleTickCount to percent value
 
-- ^1 - This shows only when sys-clk 2.0.0_rc4+ is installed.
-- ^2 - Explanation provided at the end of file
+- GPU Usage
+  - Real Frequency: `%.1f` = Real clockrate of GPU in MHz (This shows only when sys-clk 2.0.0_rc4+ is installed)
+  - Target Frequency: `%.1f` = Target clockrate of GPU in MHz
+  - Load: `%.1f` = GPU Load provided by PMU in percent
+
+- RAM Usage
+  - Real Frequency: `%.1f` = Real clockrate of EMC in MHz (This shows only when sys-clk 2.0.0_rc4+ is installed)
+  - Target Frequency: `%.1f` = Target clockrate of EMC in MHz
+  - Load: `%.1f` (CPU `%.1f` | GPU `%.1f`) = RAM Load in % (Which part of that are CPU and GPU (with other hardware, but their impact on GPU readings is negligible))
+  - `%s`: `%.2f`/`%.2f` = %s memory used/%s memory available in MB (not working with FW <5.0.0)
+
+- Board
+  - Battery Power Flow: `%+.2f`[h:mm] = How much power in watts is discharged from or charged to the battery [time left before shutdown]
+  - Temperatures:  SoC: `%.1f` / PCB: `%.1f` / Skin: `%.1f` = SoC / PCB / Skin temperature in Celsius degrees (Explanation provided at the end of file)
+  - Fan Rotation Level: `%.1f` = Fan rotation level in percent
+
 
 ```Optional (shows only when SaltyNX is installed and game is running)```
 
@@ -102,14 +114,15 @@ Mode available only with SaltyNX installed.
 
 > Battery
 
-| Category                        | Format    | Explanation                                                                                   |
-|---------------------------------|-----------|-----------------------------------------------------------------------------------------------|
-| Battery Temperature             | %.2f      | Battery temperature in Celsius                                                                |
-| Battery Raw Charge              | %.2f      | Raw battery charged capacity in percent                                                       |
-| Battery Voltage (AVG of 5)      | %.2f      | Battery average voltage in mV taken from 5 readings in period of 5 seconds                    |
-| Battery Current Flow (AVG of 5) | %+.2f     | Battery average current flow in mA taken from 5 readings in period of 5 seconds               |
-| Battery Power Flow (AVG of 5)   | %+.3f     | Battery average power flow in W calciulated from Battery Voltage and Battery Current Flow     |
-| Battery Remaining Time          | h:mm      | How much time is left before shutdown                                                         |
+- Battery Actual Capacity: `%d` = Battery Designed Capacity multiplied by Battery Age in mAh
+- Battery Designed Capacity: `%d` = Battery capacity targeted by manufacturer in mAh
+- Battery Temperature: `%.1f` = Battery temperature in Celsius
+- Battery Raw Charge: `%.1f` = Raw battery charged capacity in percent
+- Battery Age: `%.1f` = How much of designed capacity was charged last time battery was charged completely in percent
+- Battery Voltage: `%.0f` = Battery average voltage in mV (time period: 5s, or with `battery_avg_iir_filter` enabled: 45s)
+- Battery Current Flow: `%+.0f` = Battery average current flow in mA (time period: 5s, or with `battery_avg_iir_filter` enabled: 11.25s)
+- Battery Power Flow: `%+.3f` = Battery average power flow in W calculated from Battery Voltage and Battery Current Flow
+- Battery Remaining Time: h:mm - How much time is left before shutdown
 
 Shows only if charger is connected:
 | Category                  | Format       | Explanation                                                                      |
