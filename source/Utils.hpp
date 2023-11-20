@@ -324,11 +324,6 @@ void BatteryChecker(void*) {
 		batPowerAvg /= ArraySize * 1000;
 		PowerConsumption = batPowerAvg;
 
-		if (batVoltageAvg < 3000 || batVoltage > 4300) {
-			mutexUnlock(&mutex_BatteryChecker);
-			break;
-		}
-
 		if (batCurrentAvg >= 0) {
 			batTimeEstimate = -1;
 		} else {
