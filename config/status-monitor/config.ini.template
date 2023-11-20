@@ -1,7 +1,7 @@
 [status-monitor]
 key_combo=LSTICK+RSTICK
 battery_avg_iir_filter=false
-battery_time_left_refreshrate=10
+battery_time_left_refreshrate=60
 [full]
 refresh_rate=1
 layer_width_align=left
