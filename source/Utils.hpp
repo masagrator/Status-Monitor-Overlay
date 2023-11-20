@@ -56,13 +56,13 @@ Result fanCheck = 1;
 Result tcCheck = 1;
 Result Hinted = 1;
 Result pmdmntCheck = 1;
+Result psmCheck = 1;
 Result audsnoopCheck = 1;
 Result nvdecCheck = 1;
 Result nvencCheck = 1;
 Result nvjpgCheck = 1;
 Result nifmCheck = 1;
 Result sysclkCheck = 1;
-Result psmCheck = 1;
 
 //Wi-Fi
 NifmInternetConnectionType NifmConnectionType = (NifmInternetConnectionType)-1;
@@ -85,7 +85,6 @@ Service* psmService = 0;
 BatteryChargeInfoFields _batteryChargeInfoFields = {0};
 float batCurrentAvg = 0;
 float batVoltageAvg = 0;
-uint16_t data_error = 0;
 float PowerConsumption = 0;
 int16_t batTimeEstimate = -1;
 float actualFullBatCapacity = 0;
@@ -238,6 +237,9 @@ void CheckIfGameRunning(void*) {
 
 Mutex mutex_BatteryChecker = {0};
 void BatteryChecker(void*) {
+	if (R_FAILED(psmCheck)){
+		return;
+	}
 	uint16_t data = 0;
 	float tempV = 0.0;
 	float tempA = 0.0;
@@ -254,27 +256,22 @@ void BatteryChecker(void*) {
 	for (size_t i = 0; i < ArraySize; i++) {
 		readingsAmp[i] = tempA;
 	}
-	data = 0;
 	if (R_SUCCEEDED(Max17050ReadReg(MAX17050_AvgVCELL, &data))) {
 		tempV = 0.625 * (data >> 3);
 	}
 	for (size_t i = 0; i < ArraySize; i++) {
 		readingsVolt[i] = tempV;
 	}
-	data = 0;
-	if (!actualFullBatCapacity && R_SUCCEEDED(Max17050ReadReg(MAX17050_FullCAP, &data)) && data) {
+	if (!actualFullBatCapacity && R_SUCCEEDED(Max17050ReadReg(MAX17050_FullCAP, &data))) {
 		actualFullBatCapacity = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
 	}
-	data = 0;
-	if (!designedFullBatCapacity && R_SUCCEEDED(Max17050ReadReg(MAX17050_DesignCap, &data)) && data) {
+	if (!designedFullBatCapacity && R_SUCCEEDED(Max17050ReadReg(MAX17050_DesignCap, &data))) {
 		designedFullBatCapacity = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
 	}
-
-	data = 0;
 	if (readingsAmp[0] >= 0) {
 		batTimeEstimate = -1;
 	}
-	else if (R_SUCCEEDED(Max17050ReadReg(MAX17050_TTE, &data)) && data) {
+	else if (R_SUCCEEDED(Max17050ReadReg(MAX17050_TTE, &data))) {
 		float batteryTimeEstimateInMinutes = (5.625 * data) / 60;
 
 		if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
@@ -283,16 +280,13 @@ void BatteryChecker(void*) {
 		else batTimeEstimate = (int16_t)batteryTimeEstimateInMinutes;
 	}
 
-	if (R_SUCCEEDED(psmCheck)) {
-		psmGetBatteryChargeInfoFields(psmService, &_batteryChargeInfoFields);
-	}
-
 	size_t counter = 0;
-	int16_t batteryTimeEstimateInternal = batTimeEstimate;
 	uint64_t tick_TTE = svcGetSystemTick();
 	while (!threadexit) {
 		mutexLock(&mutex_BatteryChecker);
 		uint64_t startTick = svcGetSystemTick();
+
+		psmGetBatteryChargeInfoFields(psmService, &_batteryChargeInfoFields);
 
 		// Calculation is based on Hekate's max17050.c
 		// Source: https://github.com/CTCaer/hekate/blob/master/bdk/power/max17050.c
@@ -308,7 +302,6 @@ void BatteryChecker(void*) {
 			if (R_SUCCEEDED(Max17050ReadReg(MAX17050_AvgVCELL, &data)))
 				tempV = 0.625 * (data >> 3);
 		}
-		data_error = data;
 
 		if (tempA && tempV) {
 			readingsAmp[counter % ArraySize] = tempA;
@@ -331,45 +324,36 @@ void BatteryChecker(void*) {
 		batPowerAvg /= ArraySize * 1000;
 		PowerConsumption = batPowerAvg;
 
-		if (batVoltageAvg > 4000 || batVoltageAvg < 3200) {
-			mutexUnlock(&mutex_BatteryChecker);
-			break;
-		}
 		if (batCurrentAvg >= 0) {
 			batTimeEstimate = -1;
-		}
+		} else {
+			static uint16_t prev_tte = 0;
+			if (R_FAILED(Max17050ReadReg(MAX17050_TTE, &data)))
+				data = prev_tte;
+			else
+				prev_tte = data;
+			float batteryTimeEstimateInMinutes = (5.625 * data) / 60;
 
-		static uint16_t prev_tte = 0;
-		if (R_FAILED(Max17050ReadReg(MAX17050_TTE, &data)) || !data) {
-			data = prev_tte;
-		}
-		else
-			prev_tte = data;
-		float batteryTimeEstimateInMinutes = (5.625 * data) / 60;
-
-		if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
-			batteryTimeEstimateInMinutes = (99.0*60.0)+59.0;
-		}
-		batteryTimeEstimateInternal = (((int32_t)(batteryTimeEstimateInternal) * 59) + (int16_t)(batteryTimeEstimateInMinutes)) / 60;
-		uint64_t new_tick_TTE = svcGetSystemTick();
-		if (armTicksToNs(new_tick_TTE - tick_TTE) / 1'000'000'000 >= batteryTimeLeftRefreshRate) {
-			batTimeEstimate = batteryTimeEstimateInternal;
-			tick_TTE = new_tick_TTE;
-		}
-
-		if (R_SUCCEEDED(psmCheck)) {
-			psmGetBatteryChargeInfoFields(psmService, &_batteryChargeInfoFields);
+			if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
+				batteryTimeEstimateInMinutes = (99.0*60.0)+59.0;
+			}
+			uint64_t new_tick_TTE = svcGetSystemTick();
+			if (armTicksToNs(new_tick_TTE - tick_TTE) / 1'000'000'000 >= batteryTimeLeftRefreshRate) {
+				batTimeEstimate = (int16_t)batteryTimeEstimateInMinutes;
+				tick_TTE = new_tick_TTE;
+			}
 		}
 
 		mutexUnlock(&mutex_BatteryChecker);
 		uint64_t nanosecondsPassed = armTicksToNs(svcGetSystemTick() - startTick);
-		if (nanosecondsPassed < 1'000'000'000 / 2) {
-			svcSleepThread((1'000'000'000 / 2) - nanosecondsPassed);
+		if (nanosecondsPassed < 1'000'000'000 / (batteryFiltered ? 3 : 2)) {
+			svcSleepThread((1'000'000'000 / (batteryFiltered ? 3 : 2)) - nanosecondsPassed);
 		} else {
 			svcSleepThread(1'000);
 		}
 	}
 	batTimeEstimate = -1;
+	_batteryChargeInfoFields = {0};
 	delete[] readingsAmp;
 	delete[] readingsVolt;
 }
