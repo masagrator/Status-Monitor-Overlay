@@ -324,18 +324,21 @@ void BatteryChecker(void*) {
 		batPowerAvg /= ArraySize * 1000;
 		PowerConsumption = batPowerAvg;
 
+		if (batVoltageAvg < 3000 || batVoltage > 4300) {
+			mutexUnlock(&mutex_BatteryChecker);
+			break;
+		}
+
 		if (batCurrentAvg >= 0) {
 			batTimeEstimate = -1;
 		} else {
-			static uint16_t prev_tte = 0;
-			if (R_FAILED(Max17050ReadReg(MAX17050_TTE, &data)))
-				data = prev_tte;
-			else
-				prev_tte = data;
-			float batteryTimeEstimateInMinutes = (5.625 * data) / 60;
+			static float batteryTimeEstimateInMinutes = 0;
+			if (R_SUCCEEDED(Max17050ReadReg(MAX17050_TTE, &data))) {
+				batteryTimeEstimateInMinutes = (5.625 * data) / 60;
 
-			if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
-				batteryTimeEstimateInMinutes = (99.0*60.0)+59.0;
+				if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
+					batteryTimeEstimateInMinutes = (99.0*60.0)+59.0;
+				}
 			}
 			uint64_t new_tick_TTE = svcGetSystemTick();
 			if (armTicksToNs(new_tick_TTE - tick_TTE) / 1'000'000'000 >= batteryTimeLeftRefreshRate) {
