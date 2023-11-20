@@ -346,8 +346,8 @@ void BatteryChecker(void*) {
 
 		mutexUnlock(&mutex_BatteryChecker);
 		uint64_t nanosecondsPassed = armTicksToNs(svcGetSystemTick() - startTick);
-		if (nanosecondsPassed < 1'000'000'000 / (batteryFiltered ? 3 : 2)) {
-			svcSleepThread((1'000'000'000 / (batteryFiltered ? 3 : 2)) - nanosecondsPassed);
+		if (nanosecondsPassed < 1'000'000'000 / 2) {
+			svcSleepThread((1'000'000'000 / 2) - nanosecondsPassed);
 		} else {
 			svcSleepThread(1'000);
 		}
