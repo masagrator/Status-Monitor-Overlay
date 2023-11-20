@@ -10,9 +10,13 @@ constexpr float max17050CGain = 1.99993;
 
 Result I2cReadRegHandler(u8 reg, I2cDevice dev, u16 *out)
 {
-	// I2C Bus Communication Reference: https://www.ti.com/lit/an/slva704/slva704.pdf
-	struct { u8 reg;  } __attribute__((packed)) cmd;
-	struct { u16 val; } __attribute__((packed)) rec;
+	struct readReg {
+        u8 send;
+        u8 sendLength;
+        u8 sendData;
+        u8 receive;
+        u8 receiveLength;
+    };
 
 	I2cSession _session;
 
@@ -20,22 +24,24 @@ Result I2cReadRegHandler(u8 reg, I2cDevice dev, u16 *out)
 	if (res)
 		return res;
 
-	cmd.reg = reg;
-	res = i2csessionSendAuto(&_session, &cmd, sizeof(cmd), I2cTransactionOption_All);
+	u16 val;
+
+    struct readReg readRegister = {
+        .send = 0 | (I2cTransactionOption_Start << 6),
+        .sendLength = sizeof(reg),
+        .sendData = reg,
+        .receive = 1 | (I2cTransactionOption_All << 6),
+        .receiveLength = sizeof(val),
+    };
+
+	res = i2csessionExecuteCommandList(&_session, &val, sizeof(val), &readRegister, sizeof(readRegister));
 	if (res)
 	{
 		i2csessionClose(&_session);
 		return res;
 	}
 
-	res = i2csessionReceiveAuto(&_session, &rec, sizeof(rec), I2cTransactionOption_All);
-	if (res)
-	{
-		i2csessionClose(&_session);
-		return res;
-	}
-
-	*out = rec.val;
+	*out = val;
 	i2csessionClose(&_session);
 	return 0;
 }
