@@ -90,7 +90,7 @@ int16_t batTimeEstimate = -1;
 float actualFullBatCapacity = 0;
 float designedFullBatCapacity = 0;
 bool batteryFiltered = false;
-uint8_t batteryTimeLeftRefreshRate = 10;
+uint8_t batteryTimeLeftRefreshRate = 60;
 
 //Temperatures
 float SOC_temperatureF = 0;
