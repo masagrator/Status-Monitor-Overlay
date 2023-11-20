@@ -364,10 +364,6 @@ public:
 		GetConfigSettings(&settings);
 		mutexInit(&mutex_BatteryChecker);
 		mutexInit(&mutex_Misc);
-		mutexInit(&mutex_core0);
-		mutexInit(&mutex_core1);
-		mutexInit(&mutex_core2);
-		mutexInit(&mutex_core3);
 		StartThreads();
 		tsl::hlp::requestForeground(false);
 		TeslaFPS = settings.refreshRate;
@@ -539,31 +535,12 @@ public:
 	}
 
 	virtual void update() override {
-		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
-		//This is because making each loop also takes time, which is not considered because this will take also additional time
-
-		mutexLock(&mutex_core0);
-		mutexLock(&mutex_core1);
-		mutexLock(&mutex_core2);
-		mutexLock(&mutex_core3);
-
-		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
-		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
-		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
-		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
-		
 		//Make stuff ready to print
 		///CPU
-
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
 		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
-
-		mutexUnlock(&mutex_core0);
-		mutexUnlock(&mutex_core1);
-		mutexUnlock(&mutex_core2);
-		mutexUnlock(&mutex_core3);
 
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 
@@ -715,10 +692,6 @@ public:
 		}
 		mutexInit(&mutex_BatteryChecker);
 		mutexInit(&mutex_Misc);
-		mutexInit(&mutex_core0);
-		mutexInit(&mutex_core1);
-		mutexInit(&mutex_core2);
-		mutexInit(&mutex_core3);
 		StartThreads();
 		alphabackground = 0x0;
 		tsl::hlp::requestForeground(false);
@@ -896,19 +869,7 @@ public:
 				fontsize = settings.dockedFontSize;
 			}
 		}
-		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
-		//This is because making each loop also takes time, which is not considered because this will take also additional time
 
-		mutexLock(&mutex_core0);
-		mutexLock(&mutex_core1);
-		mutexLock(&mutex_core2);
-		mutexLock(&mutex_core3);
-
-		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
-		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
-		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
-		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
-		
 		//Make stuff ready to print
 		///CPU
 		char MINI_CPU_Usage0[7] = "";
@@ -920,11 +881,6 @@ public:
 		snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
 		snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
 		snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
-
-		mutexUnlock(&mutex_core0);
-		mutexUnlock(&mutex_core1);
-		mutexUnlock(&mutex_core2);
-		mutexUnlock(&mutex_core3);
 
 		mutexLock(&mutex_Misc);
 		
@@ -1151,10 +1107,6 @@ public:
 		}
 		mutexInit(&mutex_BatteryChecker);
 		mutexInit(&mutex_Misc);
-		mutexInit(&mutex_core0);
-		mutexInit(&mutex_core1);
-		mutexInit(&mutex_core2);
-		mutexInit(&mutex_core3);
 		StartThreads();
 		TeslaFPS = settings.refreshRate;
 		systemtickfrequency /= settings.refreshRate;
@@ -1308,30 +1260,13 @@ public:
 				fontsize = settings.dockedFontSize;
 			}
 		}
-		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
-		//This is because making each loop also takes time, which is not considered because this will take also additional time
 
-		mutexLock(&mutex_core0);
-		mutexLock(&mutex_core1);
-		mutexLock(&mutex_core2);
-		mutexLock(&mutex_core3);
-
-		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
-		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
-		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
-		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
-		
 		//Make stuff ready to print
 		///CPU
 		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
 		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
 		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
 		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
-
-		mutexUnlock(&mutex_core0);
-		mutexUnlock(&mutex_core1);
-		mutexUnlock(&mutex_core2);
-		mutexUnlock(&mutex_core3);
 
 		mutexLock(&mutex_Misc);
 		char difference[5] = "@";
@@ -1526,13 +1461,8 @@ public:
 		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
-			
-			if (R_SUCCEEDED(psmCheck)) {
-				
-				renderer->drawString("Battery/Charger Stats:", false, 20, 120, 20, renderer->a(0xFFFF));
-				renderer->drawString(Battery_c, false, 20, 155, 18, renderer->a(0xFFFF));
-			}
-
+			renderer->drawString("Battery/Charger Stats:", false, 20, 120, 20, renderer->a(0xFFFF));
+			renderer->drawString(Battery_c, false, 20, 155, 18, renderer->a(0xFFFF));
 		});
 
 		rootFrame->setContent(Status);
@@ -1553,6 +1483,7 @@ public:
 		BatteryChargeInfoFieldsChargerType ChargerConnected = _batteryChargeInfoFields.ChargerType;
 		int32_t ChargerVoltageLimit = _batteryChargeInfoFields.ChargerVoltageLimit;
 		int32_t ChargerCurrentLimit = _batteryChargeInfoFields.ChargerCurrentLimit;
+
 		if (hosversionAtLeast(17,0,0)) {
 			ChargerConnected = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerType;
 			ChargerVoltageLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerVoltageLimit;
@@ -1567,6 +1498,7 @@ public:
 				"Battery Raw Charge: %.1f%%\n"
 				"Battery Age: %.1f%%\n"
 				"Battery Voltage (%ds AVG): %.0f mV\n"
+				"Battery Voltage (%ds AVG): 0x%x units\n"
 				"Battery Current Flow (%ss AVG): %+.0f mA\n"
 				"Battery Power Flow%s: %+.3f W\n"
 				"Battery Remaining Time: %s\n"
@@ -1578,7 +1510,8 @@ public:
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000,
 				(float)_batteryChargeInfoFields.BatteryAge / 1000,
-				batteryFiltered ? 45 : 5, batVoltageAvg, 
+				batteryFiltered ? 45 : 5, batVoltageAvg,
+				batteryFiltered ? 45 : 5, data_error,
 				batteryFiltered ? "11.25" : "5", batCurrentAvg,
 				batteryFiltered ? "" : " (5s AVG)", PowerConsumption, 
 				tempBatTimeEstimate,
@@ -1594,6 +1527,7 @@ public:
 				"Battery Raw Charge: %.1f%%\n"
 				"Battery Age: %.1f%%\n"
 				"Battery Voltage (%ds AVG): %.0f mV\n"
+				"Battery Voltage (%ds AVG): 0x%x units\n"
 				"Battery Current Flow (%ss AVG): %+.0f mA\n"
 				"Battery Power Flow%s: %+.3f W\n"
 				"Battery Remaining Time: %s",
@@ -1602,7 +1536,8 @@ public:
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000,
 				(float)_batteryChargeInfoFields.BatteryAge / 1000,
-				batteryFiltered ? 45 : 5, batVoltageAvg, 
+				batteryFiltered ? 45 : 5, batVoltageAvg,
+				batteryFiltered ? 45 : 5, data_error,
 				batteryFiltered ? "11.25" : "5", batCurrentAvg,
 				batteryFiltered ? "" : " (5s AVG)", PowerConsumption, 
 				tempBatTimeEstimate
@@ -1963,11 +1898,11 @@ public:
 	virtual void initServices() override {
 		//Initialize services
 		tsl::hlp::doWithSmSession([this]{
-			
+
 			apmInitialize();
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
-			
+
 			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
@@ -1981,11 +1916,11 @@ public:
 			psmCheck = psmInitialize();
 			if (R_SUCCEEDED(psmCheck)) {
 				psmService = psmGetServiceSession();
-				i2cInitialize();
 			}
-			
+			i2cInitialize();
+
 			SaltySD = CheckPort();
-			
+
 			if (SaltySD) {
 				LoadSharedMemory();
 			}
@@ -2017,8 +1952,8 @@ public:
 		nvMapExit();
 		nvClose(fd);
 		nvExit();
-		i2cExit();
 		psmExit();
+		i2cExit();
 		apmExit();
 	}
 
@@ -2036,11 +1971,10 @@ public:
 	virtual void initServices() override {
 		//Initialize services
 		tsl::hlp::doWithSmSession([this]{
-			
 			apmInitialize();
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
-			
+
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 
 			tsCheck = tsInitialize();
@@ -2051,14 +1985,10 @@ public:
 				else fanCheck = fanOpenController(&g_ICon, 1);
 			}
 
-			psmCheck = psmInitialize();
-			if (R_SUCCEEDED(psmCheck)) {
-				psmService = psmGetServiceSession();
-				i2cInitialize();
-			}
-			
+			i2cInitialize();
+
 			SaltySD = CheckPort();
-			
+
 			if (SaltySD) {
 				LoadSharedMemory();
 			}
@@ -2085,7 +2015,6 @@ public:
 		fanControllerClose(&g_ICon);
 		fanExit();
 		i2cExit();
-		psmExit();
 		nvClose(fd);
 		nvExit();
 		apmExit();
