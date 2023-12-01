@@ -1233,8 +1233,8 @@ void GetConfigSettings(FpsGraphSettings* settings) {
 	convertStrToRGBA4444("#FFFF", &(settings -> maxFPSTextColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> minFPSTextColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> mainLineColor));
-	convertStrToRGBA4444("#0C0F", &(settings -> roundedLineColor));
-	convertStrToRGBA4444("#F0FF", &(settings -> perfectLineColor));
+	convertStrToRGBA4444("#F0FF", &(settings -> roundedLineColor));
+	convertStrToRGBA4444("#0C0F", &(settings -> perfectLineColor));
 	settings -> refreshRate = 31;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
