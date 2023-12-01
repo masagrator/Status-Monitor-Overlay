@@ -47,5 +47,5 @@ fps_counter_color=#4444
 border_color=#F77F
 dashed_line_color=#8888
 main_line_color=#FFFF
-rounded_line_color=#0C0F
-perfect_line_color=#F0FF
+rounded_line_color=#F0FF
+perfect_line_color=#0C0F
