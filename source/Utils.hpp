@@ -33,7 +33,7 @@ Thread t3;
 Thread t4;
 Thread t6;
 Thread t7;
-uint64_t systemtickfrequency = 19200000;
+const uint64_t systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
 FanController g_ICon;
@@ -479,49 +479,45 @@ void Misc2(void*) {
 //This is because making each loop also takes time, which is not considered because this will take also additional time
 void CheckCore0(void*) {
 	while (!threadexit) {
-		static uint64_t idletick_a0 = 0;
-		static uint64_t idletick_b0 = 0;
+		uint64_t idletick_a0 = 0;
+		uint64_t idletick_b0 = 0;
 		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
 		svcSleepThread(1'000'000'000 / TeslaFPS);
 		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
 		idletick0 = idletick_a0 - idletick_b0;
-		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
 	}
 }
 
 void CheckCore1(void*) {
 	while (!threadexit) {
-		static uint64_t idletick_a1 = 0;
-		static uint64_t idletick_b1 = 0;
+		uint64_t idletick_a1 = 0;
+		uint64_t idletick_b1 = 0;
 		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
 		svcSleepThread(1'000'000'000 / TeslaFPS);
 		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
 		idletick1 = idletick_a1 - idletick_b1;
-		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
 	}
 }
 
 void CheckCore2(void*) {
 	while (!threadexit) {
-		static uint64_t idletick_a2 = 0;
-		static uint64_t idletick_b2 = 0;
+		uint64_t idletick_a2 = 0;
+		uint64_t idletick_b2 = 0;
 		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
 		svcSleepThread(1'000'000'000 / TeslaFPS);
 		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
 		idletick2 = idletick_a2 - idletick_b2;
-		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
 	}
 }
 
 void CheckCore3(void*) {
 	while (!threadexit) {
-		static uint64_t idletick_a3 = 0;
-		static uint64_t idletick_b3 = 0;
+		uint64_t idletick_a3 = 0;
+		uint64_t idletick_b3 = 0;
 		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		svcSleepThread(1'000'000'000 / TeslaFPS);
 		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
 		idletick3 = idletick_a3 - idletick_b3;
-		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
 	}
 }
 

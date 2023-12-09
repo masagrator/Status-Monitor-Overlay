@@ -359,6 +359,7 @@ private:
 
 	uint8_t COMMON_MARGIN = 20;
 	FullSettings settings;
+	uint64_t systemtickfrequency_impl = systemtickfrequency;
 public:
     FullOverlay() { 
 		GetConfigSettings(&settings);
@@ -367,7 +368,7 @@ public:
 		StartThreads();
 		tsl::hlp::requestForeground(false);
 		TeslaFPS = settings.refreshRate;
-		systemtickfrequency /= settings.refreshRate;
+		systemtickfrequency_impl /= settings.refreshRate;
 		if (settings.setPosRight) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 		}
@@ -378,7 +379,6 @@ public:
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
-		systemtickfrequency = 19200000;
 		if (settings.setPosRight) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
 		}
@@ -537,10 +537,18 @@ public:
 	virtual void update() override {
 		//Make stuff ready to print
 		///CPU
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
+		if (idletick0 > systemtickfrequency_impl)
+			strcpy(CPU_Usage0, "Core #0: 0.00%");
+		else snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100);
+		if (idletick1 > systemtickfrequency_impl)
+			strcpy(CPU_Usage1, "Core #1: 0.00%");
+		else snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100);
+		if (idletick2 > systemtickfrequency_impl)
+			strcpy(CPU_Usage2, "Core #2: 0.00%");
+		else snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%%", (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100);
+		if (idletick3 > systemtickfrequency_impl)
+			strcpy(CPU_Usage3, "Core #3: 0.00%");
+		else snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%%", (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
 
 		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 
@@ -668,6 +676,7 @@ private:
 	MiniSettings settings;
 	bool Initialized = false;
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
+	uint64_t systemtickfrequency_impl = systemtickfrequency;
 public:
     MiniOverlay() { 
 		GetConfigSettings(&settings);
@@ -697,7 +706,7 @@ public:
 		tsl::hlp::requestForeground(false);
 		FullMode = false;
 		TeslaFPS = settings.refreshRate;
-		systemtickfrequency /= settings.refreshRate;
+		systemtickfrequency_impl /= settings.refreshRate;
 		deactivateOriginalFooter = true;
 	}
 	~MiniOverlay() {
@@ -705,7 +714,6 @@ public:
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
-		systemtickfrequency = 19200000;
 		deactivateOriginalFooter = false;
 	}
 
@@ -877,10 +885,18 @@ public:
 		char MINI_CPU_Usage2[7] = "";
 		char MINI_CPU_Usage3[7] = "";
 
-		snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
-		snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
-		snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
-		snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
+		if (idletick0 > systemtickfrequency_impl)
+			strcpy(MINI_CPU_Usage0, "0%");
+		else snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100);
+		if (idletick1 > systemtickfrequency_impl)
+			strcpy(MINI_CPU_Usage1, "0%");
+		else snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100);
+		if (idletick2 > systemtickfrequency_impl)
+			strcpy(MINI_CPU_Usage2, "0%");
+		else snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100);
+		if (idletick3 > systemtickfrequency_impl)
+			strcpy(MINI_CPU_Usage3, "0%");
+		else snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
 
 		mutexLock(&mutex_Misc);
 		
@@ -1092,6 +1108,7 @@ private:
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
 	size_t fontsize = 0;
 	bool showFPS = false;
+	uint64_t systemtickfrequency_impl = systemtickfrequency;
 public:
     MicroOverlay() { 
 		GetConfigSettings(&settings);
@@ -1109,7 +1126,7 @@ public:
 		mutexInit(&mutex_Misc);
 		StartThreads();
 		TeslaFPS = settings.refreshRate;
-		systemtickfrequency /= settings.refreshRate;
+		systemtickfrequency_impl /= settings.refreshRate;
 		alphabackground = 0x0;
 		deactivateOriginalFooter = true;
 	}
@@ -1263,10 +1280,18 @@ public:
 
 		//Make stuff ready to print
 		///CPU
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
+		if (idletick0 > systemtickfrequency_impl)
+			strcpy(CPU_Usage0, "0%");
+		else snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100);
+		if (idletick1 > systemtickfrequency_impl)
+			strcpy(CPU_Usage1, "0%");
+		else snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100);
+		if (idletick2 > systemtickfrequency_impl)
+			strcpy(CPU_Usage2, "0%");
+		else snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100);
+		if (idletick3 > systemtickfrequency_impl)
+			strcpy(CPU_Usage3, "0%");
+		else snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
 
 		mutexLock(&mutex_Misc);
 		char difference[5] = "@";
@@ -1498,7 +1523,6 @@ public:
 				"Battery Raw Charge: %.1f%%\n"
 				"Battery Age: %.1f%%\n"
 				"Battery Voltage (%ds AVG): %.0f mV\n"
-				"Battery Voltage (%ds AVG): 0x%x units\n"
 				"Battery Current Flow (%ss AVG): %+.0f mA\n"
 				"Battery Power Flow%s: %+.3f W\n"
 				"Battery Remaining Time: %s\n"
@@ -1511,7 +1535,6 @@ public:
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000,
 				(float)_batteryChargeInfoFields.BatteryAge / 1000,
 				batteryFiltered ? 45 : 5, batVoltageAvg,
-				batteryFiltered ? 45 : 5, data_error,
 				batteryFiltered ? "11.25" : "5", batCurrentAvg,
 				batteryFiltered ? "" : " (5s AVG)", PowerConsumption, 
 				tempBatTimeEstimate,
@@ -1527,7 +1550,6 @@ public:
 				"Battery Raw Charge: %.1f%%\n"
 				"Battery Age: %.1f%%\n"
 				"Battery Voltage (%ds AVG): %.0f mV\n"
-				"Battery Voltage (%ds AVG): 0x%x units\n"
 				"Battery Current Flow (%ss AVG): %+.0f mA\n"
 				"Battery Power Flow%s: %+.3f W\n"
 				"Battery Remaining Time: %s",
@@ -1537,7 +1559,6 @@ public:
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000,
 				(float)_batteryChargeInfoFields.BatteryAge / 1000,
 				batteryFiltered ? 45 : 5, batVoltageAvg,
-				batteryFiltered ? 45 : 5, data_error,
 				batteryFiltered ? "11.25" : "5", batCurrentAvg,
 				batteryFiltered ? "" : " (5s AVG)", PowerConsumption, 
 				tempBatTimeEstimate
@@ -1699,10 +1720,10 @@ public:
     GraphsMenu() {}
 
     virtual tsl::elm::Element* createUI() override {
-		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Graphs");
+		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "FPS");
 		auto list = new tsl::elm::List();
 
-		auto comFPSGraph = new tsl::elm::ListItem("FPS");
+		auto comFPSGraph = new tsl::elm::ListItem("Graph");
 		comFPSGraph->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				tsl::changeTo<com_FPSGraph>();
@@ -1711,6 +1732,16 @@ public:
 			return false;
 		});
 		list->addItem(comFPSGraph);
+
+		auto comFPSCounter = new tsl::elm::ListItem("Counter");
+		comFPSCounter->setClickListener([](uint64_t keys) {
+			if (keys & KEY_A) {
+				tsl::changeTo<com_FPS>();
+				return true;
+			}
+			return false;
+		});
+		list->addItem(comFPSCounter);
 
 		rootFrame->setContent(list);
 
@@ -1837,16 +1868,7 @@ public:
 			list->addItem(Micro);
 		}
 		if (SaltySD) {
-			auto comFPS = new tsl::elm::ListItem("FPS Counter");
-			comFPS->setClickListener([](uint64_t keys) {
-				if (keys & KEY_A) {
-					tsl::changeTo<com_FPS>();
-					return true;
-				}
-				return false;
-			});
-			list->addItem(comFPS);
-			auto Graphs = new tsl::elm::ListItem("Graphs");
+			auto Graphs = new tsl::elm::ListItem("FPS");
 			Graphs->setClickListener([](uint64_t keys) {
 				if (keys & KEY_A) {
 					tsl::changeTo<GraphsMenu>();
@@ -1986,6 +2008,11 @@ public:
 			}
 
 			i2cInitialize();
+
+			psmCheck = psmInitialize();
+			if (R_SUCCEEDED(psmCheck)) {
+				psmService = psmGetServiceSession();
+			}
 
 			SaltySD = CheckPort();
 
