@@ -359,13 +359,16 @@ private:
 
 	uint8_t COMMON_MARGIN = 20;
 	FullSettings settings;
+	uint64_t systemtickfrequency_impl = systemtickfrequency;
 public:
     FullOverlay() { 
 		GetConfigSettings(&settings);
+		mutexInit(&mutex_BatteryChecker);
+		mutexInit(&mutex_Misc);
 		StartThreads();
 		tsl::hlp::requestForeground(false);
 		TeslaFPS = settings.refreshRate;
-		systemtickfrequency /= settings.refreshRate;
+		systemtickfrequency_impl /= settings.refreshRate;
 		if (settings.setPosRight) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 		}
@@ -376,7 +379,6 @@ public:
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
-		systemtickfrequency = 19200000;
 		if (settings.setPosRight) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
 		}
@@ -533,26 +535,30 @@ public:
 	}
 
 	virtual void update() override {
-		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
-		//This is because making each loop also takes time, which is not considered because this will take also additional time
-		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
-		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
-		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
-		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
-		
 		//Make stuff ready to print
 		///CPU
+		if (idletick0 > systemtickfrequency_impl)
+			strcpy(CPU_Usage0, "Core #0: 0.00%");
+		else snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100);
+		if (idletick1 > systemtickfrequency_impl)
+			strcpy(CPU_Usage1, "Core #1: 0.00%");
+		else snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100);
+		if (idletick2 > systemtickfrequency_impl)
+			strcpy(CPU_Usage2, "Core #2: 0.00%");
+		else snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%%", (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100);
+		if (idletick3 > systemtickfrequency_impl)
+			strcpy(CPU_Usage3, "Core #3: 0.00%");
+		else snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%%", (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
+
+		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
+
+		mutexLock(&mutex_Misc);
 		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "%u.%u MHz", CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
 		if (realCPU_Hz) {
 			snprintf(RealCPU_Hz_c, sizeof(RealCPU_Hz_c), "%u.%u MHz", realCPU_Hz / 1000000, (realCPU_Hz / 100000) % 10);
 			int32_t deltaCPU = (int32_t)(realCPU_Hz / 1000) - (CPU_Hz / 1000);
 			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %d.%u", deltaCPU / 1000, abs(deltaCPU / 100) % 10);
 		}
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
-		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
 		
 		///GPU
 		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "%u.%u MHz", GPU_Hz / 1000000, (GPU_Hz / 100000) % 10);
@@ -601,12 +607,6 @@ public:
 				RAM_GPU_Load / 10, RAM_GPU_Load % 10);
 		}
 		///Thermal
-		char remainingBatteryLife[8];
-		if (batTimeEstimate >= 0) {
-			snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
-		}
-		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
-		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW[%s]", PowerConsumption, remainingBatteryLife);
 		if (hosversionAtLeast(10,0,0)) {
 			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, 
 				"%2.1f\u00B0C\n%2.1f\u00B0C\n%2d.%d\u00B0C", 
@@ -623,6 +623,18 @@ public:
 		
 		///FPS
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.1f", FPS, FPSavg);
+
+		mutexUnlock(&mutex_Misc);
+
+		//Battery Power Flow
+		char remainingBatteryLife[8];
+		mutexLock(&mutex_BatteryChecker);
+		if (batTimeEstimate >= 0) {
+			snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		}
+		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
+		snprintf(BatteryDraw_c, sizeof BatteryDraw_c, "Battery Power Flow: %+.2fW[%s]", PowerConsumption, remainingBatteryLife);
+		mutexUnlock(&mutex_BatteryChecker);
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
@@ -664,6 +676,7 @@ private:
 	MiniSettings settings;
 	bool Initialized = false;
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
+	uint64_t systemtickfrequency_impl = systemtickfrequency;
 public:
     MiniOverlay() { 
 		GetConfigSettings(&settings);
@@ -686,12 +699,14 @@ public:
 				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 				break;
 		}
+		mutexInit(&mutex_BatteryChecker);
+		mutexInit(&mutex_Misc);
 		StartThreads();
 		alphabackground = 0x0;
 		tsl::hlp::requestForeground(false);
 		FullMode = false;
 		TeslaFPS = settings.refreshRate;
-		systemtickfrequency /= settings.refreshRate;
+		systemtickfrequency_impl /= settings.refreshRate;
 		deactivateOriginalFooter = true;
 	}
 	~MiniOverlay() {
@@ -699,7 +714,6 @@ public:
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
-		systemtickfrequency = 19200000;
 		deactivateOriginalFooter = false;
 	}
 
@@ -863,13 +877,7 @@ public:
 				fontsize = settings.dockedFontSize;
 			}
 		}
-		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
-		//This is because making each loop also takes time, which is not considered because this will take also additional time
-		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
-		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
-		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
-		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
-		
+
 		//Make stuff ready to print
 		///CPU
 		char MINI_CPU_Usage0[7] = "";
@@ -877,10 +885,20 @@ public:
 		char MINI_CPU_Usage2[7] = "";
 		char MINI_CPU_Usage3[7] = "";
 
-		snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
-		snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
-		snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
-		snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
+		if (idletick0 > systemtickfrequency_impl)
+			strcpy(MINI_CPU_Usage0, "0%");
+		else snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100);
+		if (idletick1 > systemtickfrequency_impl)
+			strcpy(MINI_CPU_Usage1, "0%");
+		else snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100);
+		if (idletick2 > systemtickfrequency_impl)
+			strcpy(MINI_CPU_Usage2, "0%");
+		else snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100);
+		if (idletick3 > systemtickfrequency_impl)
+			strcpy(MINI_CPU_Usage3, "0%");
+		else snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
+
+		mutexLock(&mutex_Misc);
 		
 		char MINI_CPU_compressed_c[42] = "";
 		if (settings.realFrequencies && realCPU_Hz) {
@@ -951,13 +969,6 @@ public:
 		}
 		
 		///Thermal
-		char remainingBatteryLife[8];
-		if (batTimeEstimate >= 0) {
-			snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
-		}
-		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
-		
-		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW[%s]", PowerConsumption, remainingBatteryLife);
 		if (hosversionAtLeast(10,0,0)) {
 			snprintf(skin_temperature_c, sizeof skin_temperature_c, 
 				"%2.1f\u00B0C/%2.1f\u00B0C/%hu.%hhu\u00B0C", 
@@ -1029,7 +1040,18 @@ public:
 				flags |= 1 << 6;			
 			}
 		}
+		mutexUnlock(&mutex_Misc);
 		strcpy(Variables, Temp);
+
+		char remainingBatteryLife[8];
+		mutexLock(&mutex_BatteryChecker);
+		if (batTimeEstimate >= 0) {
+			snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
+		}
+		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
+		
+		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW[%s]", PowerConsumption, remainingBatteryLife);
+		mutexUnlock(&mutex_BatteryChecker);
 
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
@@ -1086,6 +1108,7 @@ private:
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
 	size_t fontsize = 0;
 	bool showFPS = false;
+	uint64_t systemtickfrequency_impl = systemtickfrequency;
 public:
     MicroOverlay() { 
 		GetConfigSettings(&settings);
@@ -1099,9 +1122,11 @@ public:
 		if (settings.setPosBottom) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 1038);
 		}
+		mutexInit(&mutex_BatteryChecker);
+		mutexInit(&mutex_Misc);
 		StartThreads();
 		TeslaFPS = settings.refreshRate;
-		systemtickfrequency /= settings.refreshRate;
+		systemtickfrequency_impl /= settings.refreshRate;
 		alphabackground = 0x0;
 		deactivateOriginalFooter = true;
 	}
@@ -1252,20 +1277,23 @@ public:
 				fontsize = settings.dockedFontSize;
 			}
 		}
-		//In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
-		//This is because making each loop also takes time, which is not considered because this will take also additional time
-		if (idletick0 > systemtickfrequency) idletick0 = systemtickfrequency;
-		if (idletick1 > systemtickfrequency) idletick1 = systemtickfrequency;
-		if (idletick2 > systemtickfrequency) idletick2 = systemtickfrequency;
-		if (idletick3 > systemtickfrequency) idletick3 = systemtickfrequency;
-		
+
 		//Make stuff ready to print
 		///CPU
-		snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency)) * 100);
-		snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency)) * 100);
+		if (idletick0 > systemtickfrequency_impl)
+			strcpy(CPU_Usage0, "0%");
+		else snprintf(CPU_Usage0, sizeof CPU_Usage0, "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100);
+		if (idletick1 > systemtickfrequency_impl)
+			strcpy(CPU_Usage1, "0%");
+		else snprintf(CPU_Usage1, sizeof CPU_Usage1, "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100);
+		if (idletick2 > systemtickfrequency_impl)
+			strcpy(CPU_Usage2, "0%");
+		else snprintf(CPU_Usage2, sizeof CPU_Usage2, "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100);
+		if (idletick3 > systemtickfrequency_impl)
+			strcpy(CPU_Usage3, "0%");
+		else snprintf(CPU_Usage3, sizeof CPU_Usage3, "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
 
+		mutexLock(&mutex_Misc);
 		char difference[5] = "@";
 		if (realCPU_Hz) {
 			int32_t deltaCPU = (int32_t)(realCPU_Hz / 1000) - (CPU_Hz / 1000);
@@ -1377,6 +1405,7 @@ public:
 		}
 		
 		char remainingBatteryLife[8];
+		mutexLock(&mutex_BatteryChecker);
 		if (batTimeEstimate >= 0) {
 			snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
 		}
@@ -1398,10 +1427,13 @@ public:
 				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10, 
 				PowerConsumption, remainingBatteryLife);
 		}
+		mutexUnlock(&mutex_BatteryChecker);
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%%", Rotation_SpeedLevel_f * 100);
 		
 		///FPS
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", FPSavg);
+
+		mutexUnlock(&mutex_Misc);
 		
 		
 		
@@ -1443,6 +1475,7 @@ private:
 	char Battery_c[512];
 public:
     BatteryOverlay() {
+		mutexInit(&mutex_BatteryChecker);
 		StartBatteryThread();
 	}
 	~BatteryOverlay() {
@@ -1453,13 +1486,8 @@ public:
 		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
-			
-			if (R_SUCCEEDED(psmCheck)) {
-				
-				renderer->drawString("Battery/Charger Stats:", false, 20, 120, 20, renderer->a(0xFFFF));
-				renderer->drawString(Battery_c, false, 20, 155, 18, renderer->a(0xFFFF));
-			}
-
+			renderer->drawString("Battery/Charger Stats:", false, 20, 120, 20, renderer->a(0xFFFF));
+			renderer->drawString(Battery_c, false, 20, 155, 18, renderer->a(0xFFFF));
 		});
 
 		rootFrame->setContent(Status);
@@ -1471,6 +1499,7 @@ public:
 
 		///Battery
 
+		mutexLock(&mutex_BatteryChecker);
 		char tempBatTimeEstimate[8] = "-:--";
 		if (batTimeEstimate >= 0) {
 			snprintf(&tempBatTimeEstimate[0], sizeof(tempBatTimeEstimate), "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
@@ -1479,11 +1508,13 @@ public:
 		BatteryChargeInfoFieldsChargerType ChargerConnected = _batteryChargeInfoFields.ChargerType;
 		int32_t ChargerVoltageLimit = _batteryChargeInfoFields.ChargerVoltageLimit;
 		int32_t ChargerCurrentLimit = _batteryChargeInfoFields.ChargerCurrentLimit;
+
 		if (hosversionAtLeast(17,0,0)) {
 			ChargerConnected = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerType;
 			ChargerVoltageLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerVoltageLimit;
 			ChargerCurrentLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerCurrentLimit;
 		}
+
 		if (ChargerConnected)
 			snprintf(Battery_c, sizeof Battery_c,
 				"Battery Actual Capacity: %.0f mAh\n"
@@ -1491,9 +1522,9 @@ public:
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%%\n"
 				"Battery Age: %.1f%%\n"
-				"Battery Voltage (5s AVG): %.0f mV\n"
-				"Battery Current Flow (5s AVG): %+.0f mA\n"
-				"Battery Power Flow (5s AVG): %+.3f W\n"
+				"Battery Voltage (%ds AVG): %.0f mV\n"
+				"Battery Current Flow (%ss AVG): %+.0f mA\n"
+				"Battery Power Flow%s: %+.3f W\n"
 				"Battery Remaining Time: %s\n"
 				"Charger Type: %u\n"
 				"Charger Max Voltage: %u mV\n"
@@ -1503,9 +1534,9 @@ public:
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000,
 				(float)_batteryChargeInfoFields.BatteryAge / 1000,
-				batVoltageAvg,
-				batCurrentAvg,
-				PowerConsumption, 
+				batteryFiltered ? 45 : 5, batVoltageAvg,
+				batteryFiltered ? "11.25" : "5", batCurrentAvg,
+				batteryFiltered ? "" : " (5s AVG)", PowerConsumption, 
 				tempBatTimeEstimate,
 				ChargerConnected,
 				ChargerVoltageLimit,
@@ -1518,20 +1549,21 @@ public:
 				"Battery Temperature: %.1f\u00B0C\n"
 				"Battery Raw Charge: %.1f%%\n"
 				"Battery Age: %.1f%%\n"
-				"Battery Voltage (5s AVG): %.0f mV\n"
-				"Battery Current Flow (5s AVG): %.0f mA\n"
-				"Battery Power Flow (5s AVG): %+.3f W\n"
+				"Battery Voltage (%ds AVG): %.0f mV\n"
+				"Battery Current Flow (%ss AVG): %+.0f mA\n"
+				"Battery Power Flow%s: %+.3f W\n"
 				"Battery Remaining Time: %s",
 				actualFullBatCapacity,
 				designedFullBatCapacity,
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
 				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000,
 				(float)_batteryChargeInfoFields.BatteryAge / 1000,
-				batVoltageAvg,
-				batCurrentAvg,
-				PowerConsumption, 
+				batteryFiltered ? 45 : 5, batVoltageAvg,
+				batteryFiltered ? "11.25" : "5", batCurrentAvg,
+				batteryFiltered ? "" : " (5s AVG)", PowerConsumption, 
 				tempBatTimeEstimate
 			);
+		mutexUnlock(&mutex_BatteryChecker);
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
@@ -1688,10 +1720,10 @@ public:
     GraphsMenu() {}
 
     virtual tsl::elm::Element* createUI() override {
-		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Graphs");
+		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "FPS");
 		auto list = new tsl::elm::List();
 
-		auto comFPSGraph = new tsl::elm::ListItem("FPS");
+		auto comFPSGraph = new tsl::elm::ListItem("Graph");
 		comFPSGraph->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				tsl::changeTo<com_FPSGraph>();
@@ -1700,6 +1732,16 @@ public:
 			return false;
 		});
 		list->addItem(comFPSGraph);
+
+		auto comFPSCounter = new tsl::elm::ListItem("Counter");
+		comFPSCounter->setClickListener([](uint64_t keys) {
+			if (keys & KEY_A) {
+				tsl::changeTo<com_FPS>();
+				return true;
+			}
+			return false;
+		});
+		list->addItem(comFPSCounter);
 
 		rootFrame->setContent(list);
 
@@ -1826,16 +1868,7 @@ public:
 			list->addItem(Micro);
 		}
 		if (SaltySD) {
-			auto comFPS = new tsl::elm::ListItem("FPS Counter");
-			comFPS->setClickListener([](uint64_t keys) {
-				if (keys & KEY_A) {
-					tsl::changeTo<com_FPS>();
-					return true;
-				}
-				return false;
-			});
-			list->addItem(comFPS);
-			auto Graphs = new tsl::elm::ListItem("Graphs");
+			auto Graphs = new tsl::elm::ListItem("FPS");
 			Graphs->setClickListener([](uint64_t keys) {
 				if (keys & KEY_A) {
 					tsl::changeTo<GraphsMenu>();
@@ -1887,11 +1920,11 @@ public:
 	virtual void initServices() override {
 		//Initialize services
 		tsl::hlp::doWithSmSession([this]{
-			
+
 			apmInitialize();
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
-			
+
 			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
@@ -1905,11 +1938,11 @@ public:
 			psmCheck = psmInitialize();
 			if (R_SUCCEEDED(psmCheck)) {
 				psmService = psmGetServiceSession();
-				i2cInitialize();
 			}
-			
+			i2cInitialize();
+
 			SaltySD = CheckPort();
-			
+
 			if (SaltySD) {
 				LoadSharedMemory();
 			}
@@ -1941,8 +1974,8 @@ public:
 		nvMapExit();
 		nvClose(fd);
 		nvExit();
-		i2cExit();
 		psmExit();
+		i2cExit();
 		apmExit();
 	}
 
@@ -1960,11 +1993,10 @@ public:
 	virtual void initServices() override {
 		//Initialize services
 		tsl::hlp::doWithSmSession([this]{
-			
 			apmInitialize();
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
-			
+
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 
 			tsCheck = tsInitialize();
@@ -1975,14 +2007,15 @@ public:
 				else fanCheck = fanOpenController(&g_ICon, 1);
 			}
 
+			i2cInitialize();
+
 			psmCheck = psmInitialize();
 			if (R_SUCCEEDED(psmCheck)) {
 				psmService = psmGetServiceSession();
-				i2cInitialize();
 			}
-			
+
 			SaltySD = CheckPort();
-			
+
 			if (SaltySD) {
 				LoadSharedMemory();
 			}
@@ -2009,7 +2042,6 @@ public:
 		fanControllerClose(&g_ICon);
 		fanExit();
 		i2cExit();
-		psmExit();
 		nvClose(fd);
 		nvExit();
 		apmExit();
