@@ -222,18 +222,10 @@ public:
 			}
 
 			renderer->drawRect(base_x, base_y, rectangle_width + 21, rectangle_height + 12, a(settings.backgroundColor));
-			if (FPSavg < 10) {
-				renderer->drawString(FPSavg_c, false, base_x + 55, base_y+60, 63, renderer->a(settings.fpsColor));
-			}
-			else if (FPSavg < 100) {
-				renderer->drawString(FPSavg_c, false, base_x + 35, base_y+60, 63, renderer->a(settings.fpsColor));
-			} 
-			else 
-				renderer->drawString(FPSavg_c, false, base_x + 15, base_y+60, 63, renderer->a(settings.fpsColor));
-			renderer->drawEmptyRect(base_x+(rectangle_x - 1), base_y+(rectangle_y - 1), rectangle_width + 2, rectangle_height + 4, renderer->a(settings.borderColor));
+			renderer->drawEmptyRect(base_x+(rectangle_x - 1), base_y+(rectangle_y - 1), rectangle_width + 2, rectangle_height +4, renderer->a(settings.borderColor));
 			renderer->drawDashedLine(base_x+rectangle_x, base_y+y_30FPS, base_x+rectangle_x+rectangle_width, base_y+y_30FPS, 6, renderer->a(settings.dashedLineColor));
 			renderer->drawString(&legend_max[0], false, base_x+(rectangle_x-15), base_y+(rectangle_y+7), 10, renderer->a(settings.maxFPSTextColor));
-			renderer->drawString(&legend_min[0], false, base_x+(rectangle_x-10), base_y+(rectangle_y+rectangle_height+3), 10, renderer->a(settings.minFPSTextColor));
+			renderer->drawString(&legend_min[0], false, base_x+(rectangle_x-10), base_y+(rectangle_y+rectangle_height)+3, 10, renderer->a(settings.minFPSTextColor));
 
 			size_t last_element = readings.size() - 1;
 
@@ -271,10 +263,24 @@ public:
 				*/
 
 				renderer->drawLine(base_x+x, base_y+y, base_x+x, base_y+y_old, colour);
+				if (settings.fillAlpha > 0) {
+					auto fill = colour;
+					fill.a = settings.fillAlpha;
+					renderer->drawLine(base_x+x, base_y+y_old, base_x+x, base_y+range+6, fill);
+				}
 				isAbove = false;
 				y_old = y;
 				last_element--;
 			}
+
+			if (strlen(FPSavg_c) == 3) {
+				renderer->drawString(FPSavg_c, false, base_x + 55, base_y+60, 63, renderer->a(settings.fpsColor));
+			}
+			else if (strlen(FPSavg_c) == 4) {
+				renderer->drawString(FPSavg_c, false, base_x + 35, base_y+60, 63, renderer->a(settings.fpsColor));
+			} 
+			else 
+				renderer->drawString(FPSavg_c, false, base_x + 15, base_y+60, 63, renderer->a(settings.fpsColor));
 
 		});
 

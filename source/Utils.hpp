@@ -928,6 +928,7 @@ struct FpsGraphSettings {
 	uint16_t maxFPSTextColor;
 	uint16_t minFPSTextColor;
 	int setPos;
+	uint8_t fillAlpha;
 };
 
 void GetConfigSettings(MiniSettings* settings) {
@@ -948,7 +949,7 @@ void GetConfigSettings(MiniSettings* settings) {
 	long fileSize = ftell(configFileIn);
 	rewind(configFileIn);
 
-	std::string fileDataString(fileSize, '\0');
+	std::string fileDataString(fileSize+1, '\0');
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
@@ -1066,7 +1067,7 @@ void GetConfigSettings(MicroSettings* settings) {
 	long fileSize = ftell(configFileIn);
 	rewind(configFileIn);
 
-	std::string fileDataString(fileSize, '\0');
+	std::string fileDataString(fileSize+1, '\0');
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
@@ -1176,7 +1177,7 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 	long fileSize = ftell(configFileIn);
 	rewind(configFileIn);
 
-	std::string fileDataString(fileSize, '\0');
+	std::string fileDataString(fileSize+1, '\0');
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
@@ -1248,8 +1249,9 @@ void GetConfigSettings(FpsGraphSettings* settings) {
 	convertStrToRGBA4444("#FFFF", &(settings -> maxFPSTextColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> minFPSTextColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> mainLineColor));
-	convertStrToRGBA4444("#F0FF", &(settings -> roundedLineColor));
-	convertStrToRGBA4444("#0C0F", &(settings -> perfectLineColor));
+	convertStrToRGBA4444("#0C0F", &(settings -> roundedLineColor));
+	convertStrToRGBA4444("#F0FF", &(settings -> perfectLineColor));
+	settings -> fillAlpha = 0;
 	settings -> refreshRate = 31;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
@@ -1259,7 +1261,7 @@ void GetConfigSettings(FpsGraphSettings* settings) {
 	long fileSize = ftell(configFileIn);
 	rewind(configFileIn);
 
-	std::string fileDataString(fileSize, '\0');
+	std::string fileDataString(fileSize+1, '\0');
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
@@ -1342,6 +1344,14 @@ void GetConfigSettings(FpsGraphSettings* settings) {
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> perfectLineColor = temp;
 	}
+	if (parsedData["fps-graph"].find("fill_opacity") != parsedData["fps-graph"].end()) {
+		key = parsedData["fps-graph"]["fill_opacity"];
+		long opacity = atol(key.c_str());
+		if (opacity > 15) {
+			opacity = 15;
+		}
+		settings -> fillAlpha = opacity;
+	}
 }
 
 void GetConfigSettings(FullSettings* settings) {
@@ -1358,7 +1368,7 @@ void GetConfigSettings(FullSettings* settings) {
 	long fileSize = ftell(configFileIn);
 	rewind(configFileIn);
 
-	std::string fileDataString(fileSize, '\0');
+	std::string fileDataString(fileSize+1, '\0');
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
