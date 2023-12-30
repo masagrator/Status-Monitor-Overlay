@@ -1949,7 +1949,7 @@ public:
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
 				uint32_t sysClkApiVer = 0;
 				sysclkIpcGetAPIVersion(&sysClkApiVer);
-				if (sysClkApiVer != 4) {
+				if (sysClkApiVer >= 4) {
 					sysclkIpcExit();
 				}
 				else sysclkCheck = 0;
@@ -2022,7 +2022,7 @@ public:
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
 				uint32_t sysClkApiVer = 0;
 				sysclkIpcGetAPIVersion(&sysClkApiVer);
-				if (sysClkApiVer != 4) {
+				if (sysClkApiVer >= 4) {
 					sysclkIpcExit();
 				}
 				else sysclkCheck = 0;
