@@ -250,30 +250,30 @@ void BatteryChecker(void*) {
 	float* readingsAmp = new float[ArraySize];
 	float* readingsVolt = new float[ArraySize];
 
-	if (R_SUCCEEDED(Max17050ReadReg(MAX17050_AvgCurrent, &data))) {
-		tempA = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
-	}
+	Max17050ReadReg(MAX17050_AvgCurrent, &data);
+	tempA = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
 	for (size_t i = 0; i < ArraySize; i++) {
 		readingsAmp[i] = tempA;
 	}
-	if (R_SUCCEEDED(Max17050ReadReg(MAX17050_AvgVCELL, &data))) {
-		tempV = 0.625 * (data >> 3);
-	}
+	Max17050ReadReg(MAX17050_AvgVCELL, &data);
+	tempV = 0.625 * (data >> 3);
 	for (size_t i = 0; i < ArraySize; i++) {
 		readingsVolt[i] = tempV;
 	}
-	if (!actualFullBatCapacity && R_SUCCEEDED(Max17050ReadReg(MAX17050_FullCAP, &data))) {
+	if (!actualFullBatCapacity) {
+		Max17050ReadReg(MAX17050_FullCAP, &data);
 		actualFullBatCapacity = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
 	}
-	if (!designedFullBatCapacity && R_SUCCEEDED(Max17050ReadReg(MAX17050_DesignCap, &data))) {
+	if (!designedFullBatCapacity) {
+		Max17050ReadReg(MAX17050_DesignCap, &data);
 		designedFullBatCapacity = data * (BASE_SNS_UOHM / MAX17050_BOARD_SNS_RESISTOR_UOHM) / MAX17050_BOARD_CGAIN;
 	}
 	if (readingsAmp[0] >= 0) {
 		batTimeEstimate = -1;
 	}
-	else if (R_SUCCEEDED(Max17050ReadReg(MAX17050_TTE, &data))) {
+	else {
+		Max17050ReadReg(MAX17050_TTE, &data);
 		float batteryTimeEstimateInMinutes = (5.625 * data) / 60;
-
 		if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
 			batTimeEstimate = (99*60)+59;
 		}
@@ -292,15 +292,15 @@ void BatteryChecker(void*) {
 		// Source: https://github.com/CTCaer/hekate/blob/master/bdk/power/max17050.c
 
 		if (!batteryFiltered) {
-			if (R_SUCCEEDED(Max17050ReadReg(MAX17050_Current, &data)))
-				tempA = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
-			if (R_SUCCEEDED(Max17050ReadReg(MAX17050_VCELL, &data)))
-				tempV = 0.625 * (data >> 3);
+			Max17050ReadReg(MAX17050_Current, &data);
+			tempA = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
+			Max17050ReadReg(MAX17050_VCELL, &data);
+			tempV = 0.625 * (data >> 3);
 		} else {
-			if (R_SUCCEEDED(Max17050ReadReg(MAX17050_AvgCurrent, &data)))
-				tempA = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
-			if (R_SUCCEEDED(Max17050ReadReg(MAX17050_AvgVCELL, &data)))
-				tempV = 0.625 * (data >> 3);
+			Max17050ReadReg(MAX17050_AvgCurrent, &data);
+			tempA = (1.5625 / (max17050SenseResistor * max17050CGain)) * (s16)data;
+			Max17050ReadReg(MAX17050_AvgVCELL, &data);
+			tempV = 0.625 * (data >> 3);
 		}
 
 		if (tempA && tempV) {
@@ -326,14 +326,13 @@ void BatteryChecker(void*) {
 
 		if (batCurrentAvg >= 0) {
 			batTimeEstimate = -1;
-		} else {
+		} 
+		else {
 			static float batteryTimeEstimateInMinutes = 0;
-			if (R_SUCCEEDED(Max17050ReadReg(MAX17050_TTE, &data))) {
-				batteryTimeEstimateInMinutes = (5.625 * data) / 60;
-
-				if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
-					batteryTimeEstimateInMinutes = (99.0*60.0)+59.0;
-				}
+			Max17050ReadReg(MAX17050_TTE, &data)
+			batteryTimeEstimateInMinutes = (5.625 * data) / 60;
+			if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
+				batteryTimeEstimateInMinutes = (99.0*60.0)+59.0;
 			}
 			uint64_t new_tick_TTE = svcGetSystemTick();
 			if (armTicksToNs(new_tick_TTE - tick_TTE) / 1'000'000'000 >= batteryTimeLeftRefreshRate) {
