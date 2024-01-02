@@ -329,7 +329,7 @@ void BatteryChecker(void*) {
 		} 
 		else {
 			static float batteryTimeEstimateInMinutes = 0;
-			Max17050ReadReg(MAX17050_TTE, &data)
+			Max17050ReadReg(MAX17050_TTE, &data);
 			batteryTimeEstimateInMinutes = (5.625 * data) / 60;
 			if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
 				batteryTimeEstimateInMinutes = (99.0*60.0)+59.0;
