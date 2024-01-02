@@ -1971,7 +1971,6 @@ public:
 		tcExit();
 		fanControllerClose(&g_ICon);
 		fanExit();
-		nvMapExit();
 		nvClose(fd);
 		nvExit();
 		psmExit();
@@ -2034,6 +2033,9 @@ public:
 	virtual void exitServices() override {
 		CloseThreads();
 		shmemClose(&_sharedmemory);
+		if (R_SUCCEEDED(sysclkCheck)) {
+			sysclkIpcExit();
+		}
 		//Exit services
 		clkrstExit();
 		pcvExit();
@@ -2042,6 +2044,7 @@ public:
 		fanControllerClose(&g_ICon);
 		fanExit();
 		i2cExit();
+		psmExit();
 		nvClose(fd);
 		nvExit();
 		apmExit();
