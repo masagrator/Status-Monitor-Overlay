@@ -1949,7 +1949,7 @@ public:
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
 				uint32_t sysClkApiVer = 0;
 				sysclkIpcGetAPIVersion(&sysClkApiVer);
-				if (sysClkApiVer != 4) {
+				if (sysClkApiVer >= 4) {
 					sysclkIpcExit();
 				}
 				else sysclkCheck = 0;
@@ -1971,7 +1971,6 @@ public:
 		tcExit();
 		fanControllerClose(&g_ICon);
 		fanExit();
-		nvMapExit();
 		nvClose(fd);
 		nvExit();
 		psmExit();
@@ -2022,7 +2021,7 @@ public:
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
 				uint32_t sysClkApiVer = 0;
 				sysclkIpcGetAPIVersion(&sysClkApiVer);
-				if (sysClkApiVer != 4) {
+				if (sysClkApiVer >= 4) {
 					sysclkIpcExit();
 				}
 				else sysclkCheck = 0;
@@ -2034,6 +2033,9 @@ public:
 	virtual void exitServices() override {
 		CloseThreads();
 		shmemClose(&_sharedmemory);
+		if (R_SUCCEEDED(sysclkCheck)) {
+			sysclkIpcExit();
+		}
 		//Exit services
 		clkrstExit();
 		pcvExit();
@@ -2042,6 +2044,7 @@ public:
 		fanControllerClose(&g_ICon);
 		fanExit();
 		i2cExit();
+		psmExit();
 		nvClose(fd);
 		nvExit();
 		apmExit();
