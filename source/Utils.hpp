@@ -693,10 +693,10 @@ uint64_t MapButtons(const std::string& buttonCombo) {
 		{"SR", HidNpadButton_AnySR},
 		{"LSTICK", HidNpadButton_StickL},
 		{"RSTICK", HidNpadButton_StickR},
-		{"UP", HidNpadButton_Up},
-		{"DOWN", HidNpadButton_Down},
-		{"LEFT", HidNpadButton_Left},
-		{"RIGHT", HidNpadButton_Right}
+		{"UP", HidNpadButton_AnyUp},
+		{"DOWN", HidNpadButton_AnyDown},
+		{"LEFT", HidNpadButton_AnyLeft},
+		{"RIGHT", HidNpadButton_AnyRight}
 	};
 
 	uint64_t comboBitmask = 0;
