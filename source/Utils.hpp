@@ -632,7 +632,9 @@ void formatButtonCombination(std::string& line) {
 		{"PLUS", "\uE0EF"},
 		{"MINUS", "\uE0F0"},
 		{"LSTICK", "\uE104"},
-		{"RSTICK", "\uE105"}
+		{"RSTICK", "\uE105"},
+		{"RS", "\uE105"},
+		{"LS", "\uE104"}
 	};
 	// Remove all spaces from the line
 	line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
@@ -693,6 +695,8 @@ uint64_t MapButtons(const std::string& buttonCombo) {
 		{"SR", HidNpadButton_AnySR},
 		{"LSTICK", HidNpadButton_StickL},
 		{"RSTICK", HidNpadButton_StickR},
+		{"LS", HidNpadButton_StickL},
+		{"RS", HidNpadButton_StickR},
 		{"UP", HidNpadButton_AnyUp},
 		{"DOWN", HidNpadButton_AnyDown},
 		{"LEFT", HidNpadButton_AnyLeft},
