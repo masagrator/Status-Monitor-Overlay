@@ -82,5 +82,5 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `border_color` | Color of rectangle in RGBA4444 format | From `#0000` to `#FFFF` | `#F77F` |
 | `dashed_line_color` | Color of dashed line at the center of rectangle in RGBA4444 format | From `#0000` to `#FFFF` | `#8888` |
 | `main_line_color` | Color of line representing FPS value on graph in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |
-| `rounded_line_color` | Color of line representing FPS value on graph if it's divisble by 10 in RGBA4444 format | From `#0000` to `#FFFF` | `#0C0F` |
-| `perfect_line_color` | Color of line representing FPS value on graph if it's divisble by 30 in RGBA4444 format | From `#0000` to `#FFFF` | `#F0FF` |
+| `rounded_line_color` | Color of line representing FPS value on graph if it's divisble by 10 in RGBA4444 format | From `#0000` to `#FFFF` | `#F0FF` |
+| `perfect_line_color` | Color of line representing FPS value on graph if it's divisble by 30 in RGBA4444 format | From `#0000` to `#FFFF` | `#0C0F` |
