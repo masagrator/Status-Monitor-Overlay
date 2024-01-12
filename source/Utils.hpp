@@ -448,7 +448,7 @@ void Misc(void*) {
 		
 		// Interval
 		mutexUnlock(&mutex_Misc);
-		svcSleepThread(100'000'000);
+		svcSleepThread(TeslaFPS < 10 ? (1'000'000'000 / TeslaFPS) : 100'000'000);
 	}
 }
 
