@@ -14,6 +14,7 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `key_combo` | Buttons combination that allows exiting Full, Mini and Micro modes; max 4 buttons, otherwise next buttons will be ignored. Combine different buttons with `+` | `A`, `B`, `X`, `Y`, `L`, `R`, `ZL`, `ZR`, `PLUS`, `MINUS`, `DUP`, `DDOWN`, `DLEFT`, `DRIGHT`, `SL`, `SR`, `LSTICK`, `RSTICK`, `UP`, `DOWN`, `LEFT`, `RIGHT` | `L+DDOWN+RSTICK` |
 | `battery_avg_iir_filter` | Read voltage + current averages directly from fuel gauge, that uses infinite impulse response filter | `true`, `false` | `false` |
 | `battery_time_left_refreshrate` | How many seconds must pass to refresh Battery Remaining Time | from `1` to `60` | `60` |
+| `gpu_load_samples` | How many samples should be averaged for reported GPU load, each sample measures passed 1/60 s | from `1` to `6` | `1` |
 
 
 > [full]
