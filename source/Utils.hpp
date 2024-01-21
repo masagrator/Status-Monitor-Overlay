@@ -128,6 +128,7 @@ float Rotation_SpeedLevel_f = 0;
 //GPU Usage
 FieldDescriptor fd = 0;
 uint32_t GPU_Load_u = 0;
+uint8_t GPU_load_samples = 1;
 
 //NX-FPS
 bool GameRunning = false;
@@ -435,7 +436,20 @@ void Misc(void*) {
 		if (R_SUCCEEDED(fanCheck)) fanControllerGetRotationSpeedLevel(&g_ICon, &Rotation_SpeedLevel_f);
 		
 		//GPU Load
-		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
+		if (R_SUCCEEDED(nvCheck)) {
+			uint32_t temp = 0;
+			nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &temp);
+			if (GPU_load_samples > 1) {
+				uint32_t temp2 = 0;
+				for (uint8_t i = 1; i < GPU_load_samples; i++) {
+					svcSleepThread(16'666'667);
+					nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &temp2);
+					temp += temp2;
+				}
+				temp /= GPU_load_samples;
+			}
+			GPU_Load_u = temp;
+		}
 		
 		//FPS
 		if (GameRunning) {
@@ -793,6 +807,19 @@ void ParseIniFile() {
 					rate = minSeconds;
 				}
 				batteryTimeLeftRefreshRate = rate;
+			}
+			if (parsedData["status-monitor"].find("gpu_load_samples") != parsedData["status-monitor"].end()) {
+				auto key = parsedData["status-monitor"]["gpu_load_samples"];
+		
+				long sample_count = atol(key.c_str());
+
+				if (sample_count > 6) {
+					sample_count = 6;
+				}
+				else if (sample_count < 1) {
+					sample_count = 1;
+				}
+				GPU_load_samples = sample_count;
 			}
 		}
 		
