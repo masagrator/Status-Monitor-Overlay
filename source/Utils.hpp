@@ -442,7 +442,7 @@ void Misc(void*) {
 			if (GPU_load_samples > 1) {
 				uint32_t temp2 = 0;
 				for (uint8_t i = 1; i < GPU_load_samples; i++) {
-					svcSleepThread(16'666'667);
+					svcSleepThread(16'668'000);
 					nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &temp2);
 					temp += temp2;
 				}
