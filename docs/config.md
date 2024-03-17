@@ -50,6 +50,7 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `layer_height_align` | On which side of the screen Y axis you want this mode | `top`, `bottom` | `top` |
 | `handheld_font_size` | How big should be rendered text in handheld mode | From `8` to `18` | `18` |
 | `docked_font_size` | How big should be rendered text in docked mode | From `8` to `18` | `18` |
+| `text_align` | How shown text should be aligned | `LEFT`, `CENTER`, `RIGHT` | `CENTER` |
 | `real_freqs` | This works only if you have sys-clk 2.0.0_rc4+ installed. It shows real frequencies for CPU, GPU and RAM instead of target frequencies | `true`, `false` | `false` |
 | `show` | Which data should be rendered. Connect different stats with `+` in any order. | `CPU`, `GPU`, `RAM`, `BRD`, `FAN`, `FPS` | `CPU+GPU+RAM+BRD+FAN+FPS` |
 | `replace_GB_with_RAM_load` | This works only if you have sys-clk 2.0.0_rc4+ installed. Instead of RAM total usage it shows RAM load. | `true`, `false` | `true` |
