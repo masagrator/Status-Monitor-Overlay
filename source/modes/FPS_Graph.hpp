@@ -1,6 +1,7 @@
 class com_FPSGraph : public tsl::Gui {
 private:
 	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
+	uint8_t refreshRate = 0;
 	char FPSavg_c[8];
 	FpsGraphSettings settings;
 public:
@@ -19,6 +20,11 @@ public:
 				break;
 		}
 		StartFPSCounterThread();
+		if (R_SUCCEEDED(SaltySD_Connect())) {
+			SaltySD_GetDisplayRefreshRate(&refreshRate);
+			svcSleepThread(100'000);
+			SaltySD_Term();
+		}
 		alphabackground = 0x0;
 		tsl::hlp::requestForeground(false);
 		FullMode = false;
@@ -27,6 +33,10 @@ public:
 	}
 
 	~com_FPSGraph() {
+		if (R_SUCCEEDED(SaltySD_Connect())) {
+			svcSleepThread(100'000);
+			SaltySD_Term();
+		}
 		EndFPSCounterThread();
 		if (settings.setPos)
 			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
@@ -64,6 +74,15 @@ public:
 		rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
+
+			if (refreshRate && refreshRate < 80) {
+				rectangle_height = refreshRate;
+				rectangle_range_max = refreshRate;
+				legend_max[0] = 0x30 + (refreshRate / 10);
+				legend_max[1] = 0x30 + (refreshRate % 10);
+				y_30FPS = rectangle_y+(rectangle_height / 2);
+				range = std::abs(rectangle_range_max - rectangle_range_min) + 1;
+			};
 			
 			switch(settings.setPos) {
 				case 1:
@@ -91,14 +110,12 @@ public:
 			}
 
 			renderer->drawRect(base_x, base_y, rectangle_width + 21, rectangle_height + 12, a(settings.backgroundColor));
-			if (FPSavg < 10) {
-				renderer->drawString(FPSavg_c, false, base_x + 55, base_y+60, 63, renderer->a(settings.fpsColor));
-			}
-			else if (FPSavg < 100) {
-				renderer->drawString(FPSavg_c, false, base_x + 35, base_y+60, 63, renderer->a(settings.fpsColor));
-			} 
-			else 
-				renderer->drawString(FPSavg_c, false, base_x + 15, base_y+60, 63, renderer->a(settings.fpsColor));
+			s16 size = (refreshRate > 60 || !refreshRate) ? 63 : (s32)(63.0/(60.0/refreshRate));
+			std::pair<u32, u32> dimensions = renderer->drawString(FPSavg_c, false, 0, 0, size, renderer->a(0x0000));
+			s16 pos_y = size + base_y + rectangle_y + ((rectangle_height - size) / 2);
+			s16 pos_x = base_x + rectangle_x + ((rectangle_width - dimensions.first) / 2);
+
+			renderer->drawString(FPSavg_c, false, pos_x, pos_y, size, renderer->a(settings.fpsColor));
 			renderer->drawEmptyRect(base_x+(rectangle_x - 1), base_y+(rectangle_y - 1), rectangle_width + 2, rectangle_height + 4, renderer->a(settings.borderColor));
 			renderer->drawDashedLine(base_x+rectangle_x, base_y+y_30FPS, base_x+rectangle_x+rectangle_width, base_y+y_30FPS, 6, renderer->a(settings.dashedLineColor));
 			renderer->drawString(&legend_max[0], false, base_x+(rectangle_x-15), base_y+(rectangle_y+7), 10, renderer->a(settings.maxFPSTextColor));

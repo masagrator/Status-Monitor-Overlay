@@ -1,6 +1,7 @@
 #define TESLA_INIT_IMPL
 #include <tesla.hpp>
 #include "Utils.hpp"
+#include <cstdlib>
 
 static tsl::elm::OverlayFrame* rootFrame = nullptr;
 static bool skipMain = false;
@@ -229,7 +230,7 @@ public:
 			SaltySD = CheckPort();
 
 			if (SaltySD) {
-				LoadSharedMemory();
+				LoadSharedMemoryAndRefreshRate();
 			}
 			if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
 				uint32_t sysClkApiVer = 0;

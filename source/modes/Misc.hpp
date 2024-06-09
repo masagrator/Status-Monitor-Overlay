@@ -17,6 +17,7 @@ private:
 	char NVENC_Hz_c[18];
 	char NVJPG_Hz_c[18];
 	char Nifm_pass[96];
+	char refreshRate_c[48];
 public:
     MiscOverlay() { 
 		smInitialize();
@@ -85,7 +86,9 @@ public:
 				}
 				else
 					renderer->drawString("Type: Not connected", false, 20, 280, 18, renderer->a(0xFFFF));
-		}
+			}
+			renderer->drawString(refreshRate_c, false, 20, 325, 20, renderer->a(0xFFFF));
+
 
 		});
 
@@ -100,6 +103,7 @@ public:
 		snprintf(NVDEC_Hz_c, sizeof NVDEC_Hz_c, "NVDEC: %.1f MHz", (float)NVDEC_Hz / 1000000);
 		snprintf(NVENC_Hz_c, sizeof NVENC_Hz_c, "NVENC: %.1f MHz", (float)NVENC_Hz / 1000000);
 		snprintf(NVJPG_Hz_c, sizeof NVJPG_Hz_c, "NVJPG: %.1f MHz", (float)NVJPG_Hz / 1000000);
+		snprintf(refreshRate_c, sizeof refreshRate_c, "LCD RefreshRate: %d Hz", refreshRate);
 		char pass_temp1[25] = "";
 		char pass_temp2[25] = "";
 		char pass_temp3[17] = "";
