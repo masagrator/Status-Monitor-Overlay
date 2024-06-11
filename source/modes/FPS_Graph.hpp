@@ -21,7 +21,8 @@ public:
 		}
 		StartFPSCounterThread();
 		if (R_SUCCEEDED(SaltySD_Connect())) {
-			SaltySD_GetDisplayRefreshRate(&refreshRate);
+			if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
+				refreshRate = 0;
 			svcSleepThread(100'000);
 			SaltySD_Term();
 		}
