@@ -5,6 +5,7 @@ private:
 	char FPSavg_c[8];
 	FpsGraphSettings settings;
 public:
+	bool isStarted = false;
     com_FPSGraph() { 
 		GetConfigSettings(&settings);
 		switch(settings.setPos) {
@@ -34,10 +35,6 @@ public:
 	}
 
 	~com_FPSGraph() {
-		if (R_SUCCEEDED(SaltySD_Connect())) {
-			svcSleepThread(100'000);
-			SaltySD_Term();
-		}
 		EndFPSCounterThread();
 		if (settings.setPos)
 			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
@@ -180,6 +177,15 @@ public:
 		FPSavg_old = FPSavg;
 		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f",  FPSavg);
 		if (FPSavg < 254) {
+			if (!isStarted) {
+				if (R_SUCCEEDED(SaltySD_Connect())) {
+					if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
+						refreshRate = 0;
+					svcSleepThread(100'000);
+					SaltySD_Term();
+					isStarted = true;
+				}
+			}
 			if ((s16)(readings.size()) >= rectangle_width) {
 				readings.erase(readings.begin());
 			}
@@ -193,6 +199,13 @@ public:
 		else {
 			readings.clear();
 			readings.shrink_to_fit();
+			if (R_SUCCEEDED(SaltySD_Connect())) {
+				if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
+					refreshRate = 0;
+				svcSleepThread(100'000);
+				SaltySD_Term();
+				isStarted = false;
+			}
 		}
 		
 	}
