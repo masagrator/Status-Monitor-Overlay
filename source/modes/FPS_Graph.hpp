@@ -4,10 +4,16 @@ private:
 	uint8_t refreshRate = 0;
 	char FPSavg_c[8];
 	FpsGraphSettings settings;
+	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
+	bool isDocked = false;
 public:
 	bool isStarted = false;
     com_FPSGraph() { 
 		GetConfigSettings(&settings);
+		apmGetPerformanceMode(&performanceMode);
+		if (performanceMode == ApmPerformanceMode_Boost) {
+			isDocked = true;
+		}
 		switch(settings.setPos) {
 			case 1:
 			case 4:
@@ -172,13 +178,30 @@ public:
 		static float FPSavg_old = 0;
 		stats temp = {0, false};
 
+		apmGetPerformanceMode(&performanceMode);
+		if (performanceMode == ApmPerformanceMode_Boost) {
+			isDocked = true;
+			refreshRate = 0;
+		}
+		else if (performanceMode == ApmPerformanceMode_Normal) {
+			isDocked = false;
+		}
+
+		if (!isDocked && isStarted && FPSavg_old != 0 && FPSavg_old == FPSavg) {
+			if (R_SUCCEEDED(SaltySD_Connect())) {
+				if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
+					refreshRate = 0;
+				svcSleepThread(100'000'000);
+				SaltySD_Term();
+			}			
+		}
 		if (FPSavg_old == FPSavg)
 			return;
 		FPSavg_old = FPSavg;
 		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f",  FPSavg);
 		if (FPSavg < 254) {
 			if (!isStarted) {
-				if (R_SUCCEEDED(SaltySD_Connect())) {
+				if (!isDocked && R_SUCCEEDED(SaltySD_Connect())) {
 					if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
 						refreshRate = 0;
 					svcSleepThread(100'000);
@@ -199,7 +222,7 @@ public:
 		else {
 			readings.clear();
 			readings.shrink_to_fit();
-			if (R_SUCCEEDED(SaltySD_Connect())) {
+			if (isStarted && !isDocked && R_SUCCEEDED(SaltySD_Connect())) {
 				if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
 					refreshRate = 0;
 				svcSleepThread(100'000);
