@@ -152,6 +152,21 @@ uint32_t realCPU_Hz = 0;
 uint32_t realGPU_Hz = 0;
 uint32_t realRAM_Hz = 0;
 uint32_t ramLoad[SysClkRamLoad_EnumMax];
+uint8_t refreshRate = 0;
+
+void LoadSharedMemoryAndRefreshRate() {
+	if (SaltySD_Connect())
+		return;
+
+	SaltySD_GetSharedMemoryHandle(&remoteSharedMemory);
+	SaltySD_GetDisplayRefreshRate(&refreshRate);
+	SaltySD_Term();
+
+	shmemLoadRemote(&_sharedmemory, remoteSharedMemory, 0x1000, Perm_Rw);
+	if (!shmemMap(&_sharedmemory))
+		SharedMemoryUsed = true;
+	else FPS = 1234;
+}
 
 void LoadSharedMemory() {
 	if (SaltySD_Connect())

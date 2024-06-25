@@ -85,7 +85,8 @@ public:
 				}
 				else
 					renderer->drawString("Type: Not connected", false, 20, 280, 18, renderer->a(0xFFFF));
-		}
+			}
+
 
 		});
 
