@@ -142,10 +142,19 @@ SharedMemory _sharedmemory = {};
 bool SharedMemoryUsed = false;
 uint32_t* MAGIC_shared = 0;
 uint8_t* FPS_shared = 0;
+uint8_t* API_shared = 0;
 float* FPSavg_shared = 0;
 bool* pluginActive = 0;
 uint32_t* FPSticks_shared = 0;
 Handle remoteSharedMemory = 1;
+
+struct resolutionCalls {
+	uint16_t width;
+	uint16_t height;
+	uint16_t calls;
+};
+resolutionCalls* renderCalls_shared = 0;
+resolutionCalls* viewportCalls_shared = 0;
 
 //Read real freqs from sys-clk sysmodule
 uint32_t realCPU_Hz = 0;
@@ -153,6 +162,11 @@ uint32_t realGPU_Hz = 0;
 uint32_t realRAM_Hz = 0;
 uint32_t ramLoad[SysClkRamLoad_EnumMax];
 uint8_t refreshRate = 0;
+
+int compare (const void* elem1, const void* elem2) {
+	if ((((resolutionCalls*)(elem1)) -> calls) > (((resolutionCalls*)(elem2)) -> calls)) return -1;
+	else return 1;
+}
 
 void LoadSharedMemoryAndRefreshRate() {
 	if (SaltySD_Connect())
@@ -237,7 +251,10 @@ void CheckIfGameRunning(void*) {
 					FPS_shared = (uint8_t*)(base + rel_offset + 4);
 					FPSavg_shared = (float*)(base + rel_offset + 5);
 					pluginActive = (bool*)(base + rel_offset + 9);
+					API_shared = (uint8_t*)(base + rel_offset + 14);
 					FPSticks_shared = (uint32_t*)(base + rel_offset + 15);
+					renderCalls_shared = (resolutionCalls*)(base + rel_offset + 60);
+					viewportCalls_shared = (resolutionCalls*)(base + rel_offset + 60 + (sizeof(resolutionCalls) * 8));
 					*pluginActive = false;
 					svcSleepThread(100'000'000);
 					if (*pluginActive) {
@@ -941,6 +958,14 @@ struct FpsGraphSettings {
 	int setPos;
 };
 
+struct ResolutionSettings {
+	uint8_t refreshRate;
+	uint16_t backgroundColor;
+	uint16_t catColor;
+	uint16_t textColor;
+	int setPos;
+};
+
 void GetConfigSettings(MiniSettings* settings) {
 	settings -> realFrequencies = false;
 	settings -> handheldFontSize = 15;
@@ -951,6 +976,7 @@ void GetConfigSettings(MiniSettings* settings) {
 	settings -> show = "CPU+GPU+RAM+TEMP+DRAW+FAN+FPS";
 	settings -> showRAMLoad = true;
 	settings -> refreshRate = 1;
+	settings -> setPos = 0;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1410,5 +1436,82 @@ void GetConfigSettings(FullSettings* settings) {
 		key = parsedData["full"]["show_target_freqs"];
 		convertToUpper(key);
 		settings -> showTargetFreqs = key.compare("FALSE");
+	}
+}
+
+void GetConfigSettings(ResolutionSettings* settings) {
+	convertStrToRGBA4444("#1117", &(settings -> backgroundColor));
+	convertStrToRGBA4444("#FFFF", &(settings -> catColor));
+	convertStrToRGBA4444("#FFFF", &(settings -> textColor));
+	settings -> refreshRate = 10;
+	settings -> setPos = 0;
+
+	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
+	if (!configFileIn)
+		return;
+	fseek(configFileIn, 0, SEEK_END);
+	long fileSize = ftell(configFileIn);
+	rewind(configFileIn);
+
+	std::string fileDataString(fileSize, '\0');
+	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
+	fclose(configFileIn);
+	
+	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+
+	std::string key;
+	if (parsedData.find("game_resolutions") == parsedData.end())
+		return;
+	if (parsedData["game_resolutions"].find("refresh_rate") != parsedData["game_resolutions"].end()) {
+		long maxFPS = 60;
+		long minFPS = 1;
+
+		key = parsedData["game_resolutions"]["refresh_rate"];
+		long rate = atol(key.c_str());
+		if (rate < minFPS) {
+			settings -> refreshRate = minFPS;
+		}
+		else if (rate > maxFPS)
+			settings -> refreshRate = maxFPS;
+		else settings -> refreshRate = rate;	
+	}
+
+	if (parsedData["game_resolutions"].find("background_color") != parsedData["game_resolutions"].end()) {
+		key = parsedData["game_resolutions"]["background_color"];
+		uint16_t temp = 0;
+		if (convertStrToRGBA4444(key, &temp))
+			settings -> backgroundColor = temp;
+	}
+	if (parsedData["game_resolutions"].find("cat_color") != parsedData["game_resolutions"].end()) {
+		key = parsedData["game_resolutions"]["cat_color"];
+		uint16_t temp = 0;
+		if (convertStrToRGBA4444(key, &temp))
+			settings -> catColor = temp;
+	}
+	if (parsedData["game_resolutions"].find("text_color") != parsedData["game_resolutions"].end()) {
+		key = parsedData["game_resolutions"]["text_color"];
+		uint16_t temp = 0;
+		if (convertStrToRGBA4444(key, &temp))
+			settings -> textColor = temp;
+	}
+	if (parsedData["game_resolutions"].find("layer_width_align") != parsedData["game_resolutions"].end()) {
+		key = parsedData["game_resolutions"]["layer_width_align"];
+		convertToUpper(key);
+		if (!key.compare("CENTER")) {
+			settings -> setPos = 1;
+		}
+		if (!key.compare("RIGHT")) {
+			settings -> setPos = 2;
+		}
+	}
+	if (parsedData["game_resolutions"].find("layer_height_align") != parsedData["game_resolutions"].end()) {
+		key = parsedData["game_resolutions"]["layer_height_align"];
+		convertToUpper(key);
+		if (!key.compare("CENTER")) {
+			settings -> setPos += 3;
+		}
+		if (!key.compare("BOTTOM")) {
+			settings -> setPos += 6;
+		}
 	}
 }
