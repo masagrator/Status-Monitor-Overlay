@@ -1,6 +1,6 @@
 # Modes
 
-Status Monitor Overlay from 0.8 release contains six modes to choose from Main Menu.<br>
+Status Monitor Overlay from 1.0.0 release contains five modes to choose from Main Menu.<br>
 For additional functions you need to install:
 - [SaltyNX](https://github.com/masagrator/SaltyNX/releases)
 - [sys-clk 2.0.0_rc4+](https://github.com/retronx-team/sys-clk/releases) (using closed source forks of sys-clk can result in retrieving wrong real clockrates and ram load)
@@ -90,16 +90,16 @@ Contains most of supported informations with lower precision in one line.
 | FPS      | %.1f               | Frames Per Second                                                        |
 
 
-# FPS Counter
+# FPS 
+
+> Counter
 
 It shows only FPS value in 31Hz + vsync signal. <br>
 If game is not launched, it will show always 254.0 value.<br>
 
 Mode available only with SaltyNX installed.
 
-# Graphs
-
-> FPS
+> Graph
 
 It shows average FPS graph in 31Hz + vsync signal. In background of graph you can see rendered actual average FPS.<br>
 If game is not launched, it will show always 254.0 value and graph will be empty.<br>
@@ -144,6 +144,26 @@ Shows only if charger is connected:
 | Network Type           | %s                | It shows if Switch is connected to internet, and if it's using Ethernet or Wi-Fi |
 
 If Network Type is "Wi-Fi", you can press Y to show password. Since max password length is 64 characters, it may show in up to 3 lines.
+
+> Game Resolutions
+
+For this mode to show and work properly you must have SaltyNX 0.9.0+ installed.
+
+When game runs, this menu shows what resolutions and how many times they were passed to GPU via two functions:
+- __Depth__ shows info from depth texture passed to `nvnCommandBufferSetRenderTargets`
+- __Viewport__ shows info from arguments passed to `nvnCommandBufferSetViewport` and `nvnCommandBufferSetViewports`
+
+This menu shows first 8 resolutions passed to those functions in last frame rendering loop, sorted in descending order of calls number.<br>
+Its main purpose is to catch game rendering resolution, but user must deduce which ones are correct.<br>
+I have limited catched resolutions only to ones that have ratio higher than 1.70 and lower than 1.90.<br>
+
+Remember that resolutions you can see in this mode may be used in different ways - for example Tokyo Xanadu Ex+ max dynamic resolution in handheld will show 1280x736, but it's not that game will squeeze this into 720p screen, it's just removing those additional 16 pixels from showing on screen.
+
+Those commands are used by all 3D games using NVN API (that's why it won't work with other APIs and may not work with games using 2D engines).<br>
+This mode is not 100% fullproof, so it can show that nothing is catched or it won't catch what is used for 3D rendering (if this happens for some 3D game, please report an issue).
+
+By default refresh rate of this menu is 10 FPS. You can change that in config.ini, more in config.md<br>
+Exiting is done by using the same combo buttons used in other main modes.
 
 # Additional info
 

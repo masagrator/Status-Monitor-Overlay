@@ -51,3 +51,10 @@ dashed_line_color=#8888
 main_line_color=#FFFF
 rounded_line_color=#F0FF
 perfect_line_color=#0C0F
+[game_resolutions]
+refresh_rate=10
+layer_width_align=left
+layer_height_align=top
+background_color=#1117
+cat_color=#FFFF
+text_color=#FFFF

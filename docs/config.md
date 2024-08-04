@@ -85,3 +85,14 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `main_line_color` | Color of line representing FPS value on graph in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |
 | `rounded_line_color` | Color of line representing FPS value on graph if it's divisble by 10 in RGBA4444 format | From `#0000` to `#FFFF` | `#F0FF` |
 | `perfect_line_color` | Color of line representing FPS value on graph if it's divisble by 30 in RGBA4444 format | From `#0000` to `#FFFF` | `#0C0F` |
+
+> [game_resolutions]
+
+| Key | Explanation | Possible values | Default Value |
+|-----|-------------|-----------------|---------------|
+| `refresh_rate` | How often per second this mode should be refreshed. Higher value means higher CPU Core #3 usage, that's why it is recommended to stay at 1. | From `1` to `60` | `10` |
+| `layer_width_align` | On which side of the screen X axis you want this mode | `left`, `center`, `right` | `left` |
+| `layer_height_align` | On which side of the screen Y axis you want this mode | `top`, `center`, `bottom` | `top` |
+| `background_color` | Background color in RGBA4444 format | From `#0000` to `#FFFF` | `#1117` |
+| `cat_color` | Category text color (left side) in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |
+| `text_color` | Stats text color (right side) in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |

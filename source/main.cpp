@@ -13,6 +13,7 @@ static bool skipMain = false;
 #include "modes/Micro.hpp"
 #include "modes/Battery.hpp"
 #include "modes/Misc.hpp"
+#include "modes/Resolutions.hpp"
 
 //Graphs
 class GraphsMenu : public tsl::Gui {
@@ -87,6 +88,18 @@ public:
 			return false;
 		});
 		list->addItem(Misc);
+
+		if (SaltySD) {
+			auto Res = new tsl::elm::ListItem("Game Resolutions");
+			Res->setClickListener([](uint64_t keys) {
+				if (keys & KEY_A) {
+					tsl::changeTo<ResolutionsOverlay>();
+					return true;
+				}
+				return false;
+			});
+			list->addItem(Res);
+		}
 
 		rootFrame->setContent(list);
 
