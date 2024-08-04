@@ -157,6 +157,7 @@ Those commands are used by all 3D games using NVN API (that's why it won't work 
 This menu shows first 8 resolutions passed to those functions in last frame rendering loop, sorted in descending order of calls number.<br>
 Its main purpose is to catch game rendering resolution, but user must deduce which ones are correct.<br>
 I have limited catched resolutions only to ones that have ratio higher than 1.70 and lower than 1.90.<br>
+This mode is not 100% fullproof, so it can show that nothing is catched or it doesn't catch what is used for 3D rendering (if this happens for some 3D game, please report an issue).
 
 By default refresh rate of this menu is 10 FPS. You can change that in config.ini, more in config.md<br>
 Exiting is done by using the same combo buttons used in other main modes.
