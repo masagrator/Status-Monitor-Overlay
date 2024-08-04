@@ -4,7 +4,7 @@ Monitor Your hardware in real time!
 This is an overlay homebrew dedicated to Nintendo Switch.
 You need to have installed Tesla environment to use it.
 
-Tool contains six modes to choose, each one is explained [here](/docs/modes.md).<br>
+Tool contains five menus to choose, each one is explained [here](/docs/modes.md).<br>
 Overlay supports customizations through config file, more [here](/docs/config.md).
 
 If it's not working in dock, you need to first start Status Monitor, then put Nintendo Switch to dock.
