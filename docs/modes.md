@@ -156,6 +156,7 @@ When game runs, this menu shows what resolutions and how many times they were pa
 This menu shows first 8 resolutions passed to those functions in last frame rendering loop, sorted in descending order of calls number.<br>
 Its main purpose is to catch game rendering resolution, but user must deduce which ones are correct.<br>
 I have limited catched resolutions only to ones that have ratio higher than 1.70 and lower than 1.90.<br>
+Remember that resolutions you can see in this mode may not be used fully - for example Tokyo Xanadu Ex+ max dynamic resolution will show 1280x736, but it's not that it's squeezing this into 720p screen, it's just removing those additional 16 pixels from showing on screen.
 
 Those commands are used by all 3D games using NVN API (that's why it won't work with other APIs and may not work with games using 2D engines).<br>
 This mode is not 100% fullproof, so it can show that nothing is catched or it doesn't catch what is used for 3D rendering (if this happens for some 3D game, please report an issue).
