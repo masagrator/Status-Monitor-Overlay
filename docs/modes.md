@@ -160,7 +160,7 @@ I have limited catched resolutions only to ones that have ratio higher than 1.70
 Remember that resolutions you can see in this mode may be used in different ways - for example Tokyo Xanadu Ex+ max dynamic resolution in handheld will show 1280x736, but it's not that game will squeeze this into 720p screen, it's just removing those additional 16 pixels from showing on screen.
 
 Those commands are used by all 3D games using NVN API (that's why it won't work with other APIs and may not work with games using 2D engines).<br>
-This mode is not 100% fullproof, so it can show that nothing is catched or it doesn't catch what is used for 3D rendering (if this happens for some 3D game, please report an issue).
+This mode is not 100% fullproof, so it can show that nothing is catched or it won't catch what is used for 3D rendering (if this happens for some 3D game, please report an issue).
 
 By default refresh rate of this menu is 10 FPS. You can change that in config.ini, more in config.md<br>
 Exiting is done by using the same combo buttons used in other main modes.
