@@ -1,6 +1,6 @@
 # Modes
 
-Status Monitor Overlay from 0.8 release contains six modes to choose from Main Menu.<br>
+Status Monitor Overlay from 0.8 release contains five modes to choose from Main Menu.<br>
 For additional functions you need to install:
 - [SaltyNX](https://github.com/masagrator/SaltyNX/releases)
 - [sys-clk 2.0.0_rc4+](https://github.com/retronx-team/sys-clk/releases) (using closed source forks of sys-clk can result in retrieving wrong real clockrates and ram load)
@@ -90,16 +90,16 @@ Contains most of supported informations with lower precision in one line.
 | FPS      | %.1f               | Frames Per Second                                                        |
 
 
-# FPS Counter
+# FPS 
+
+> Counter
 
 It shows only FPS value in 31Hz + vsync signal. <br>
 If game is not launched, it will show always 254.0 value.<br>
 
 Mode available only with SaltyNX installed.
 
-# Graphs
-
-> FPS
+> Graph
 
 It shows average FPS graph in 31Hz + vsync signal. In background of graph you can see rendered actual average FPS.<br>
 If game is not launched, it will show always 254.0 value and graph will be empty.<br>
