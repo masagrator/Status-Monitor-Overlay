@@ -145,6 +145,22 @@ Shows only if charger is connected:
 
 If Network Type is "Wi-Fi", you can press Y to show password. Since max password length is 64 characters, it may show in up to 3 lines.
 
+> Gama Resolutions
+
+For this mode to show and work properly you must have SaltyNX 0.9.0+ installed.
+
+When game runs, this menu shows what resolutions and how many times they were passed to GPU via two functions:
+- __Depth__ shows info from depth texture passed to `nvnCommandBufferSetRenderTargets`
+- __Viewport__ shows info from arguments passed to `nvnCommandBufferSetViewport` and `nvnCommandBufferSetViewports`
+
+Those commands are used by all 3D games using NVN API (that's why it won't work with other APIs and may not work with games using 2D engines).<br>
+This menu shows first 8 resolutions passed to those functions in last frame rendering loop, sorted in descending order of calls number.<br>
+Its main purpose is to catch game rendering resolution, but user must deduce which ones are correct.<br>
+I have limited catched resolutions only to ones that have ratio higher than 1.70 and lower than 1.90.<br>
+
+By default refresh rate of this menu is 10 FPS. You can change that in config.ini, more in config.md<br>
+Exiting is done by using the same combo buttons used in other main modes.
+
 # Additional info
 
 > How Battery Remaining Time is calculated
