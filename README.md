@@ -41,6 +41,7 @@ How to setup everything: [HERE](https://gist.github.com/masagrator/65fcbd5ad0924
 - Herbaciarz for providing screenshots from HDMI Grabber
 - KazushiMe for writing code to read registers from max17050 chip
 - CTCaer for Hekate from which I took max17050.h and calculation formulas for reading battery stats from max17050 chip
+- ChanseyIsTheBest for testing Game Resolutions menu
 
 # FAQ:
 Q: This homebrew has any impact on games?
