@@ -145,7 +145,7 @@ Shows only if charger is connected:
 
 If Network Type is "Wi-Fi", you can press Y to show password. Since max password length is 64 characters, it may show in up to 3 lines.
 
-> Gama Resolutions
+> Game Resolutions
 
 For this mode to show and work properly you must have SaltyNX 0.9.0+ installed.
 
