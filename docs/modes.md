@@ -155,7 +155,7 @@ When game runs, this menu shows what resolutions and how many times they were pa
 
 This menu shows first 8 resolutions passed to those functions in last frame rendering loop, sorted in descending order of calls number.<br>
 Its main purpose is to catch game rendering resolution, but user must deduce which ones are correct.<br>
-I have limited catched resolutions only to ones that have ratio higher than 1.70 and lower than 1.90.<br>
+I have limited catched resolutions only to ones that have ratio in range `<1.3, 1.9)`.<br>
 
 Remember that resolutions you can see in this mode may be used in different ways - for example Tokyo Xanadu Ex+ max dynamic resolution in handheld will show 1280x736, but it's not that game will squeeze this into 720p screen, it's just removing those additional 16 pixels from showing on screen.
 
