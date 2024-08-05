@@ -52,6 +52,12 @@ public:
 		deactivateOriginalFooter = false;
 	}
 
+	resolutionCalls m_resolutionRenderCalls[8] = {0};
+	resolutionCalls m_resolutionViewportCalls[8] = {0};
+	resolutionCalls m_resolutionOutput[8] = {0};
+	uint8_t resolutionLookup = 0;
+	bool resolutionShow = false;
+
     virtual tsl::elm::Element* createUI() override {
 
 		rootFrame = new tsl::elm::OverlayFrame("", "");
@@ -97,11 +103,16 @@ public:
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
 					}
+					else if (!key.compare("RES")) {
+						dimensions = renderer->drawString("3840x2160 || 3840x2160", false, 0, fontsize, fontsize, renderer->a(0x0000));
+						if (rectangleWidth < dimensions.first)
+							rectangleWidth = dimensions.first;
+					}
 				}
 				Initialized = true;
 			}
 			
-			char print_text[24] = "";
+			char print_text[36] = "";
 			size_t entry_count = 0;
 			uint8_t flags = 0;
 			for (std::string key : tsl::hlp::split(settings.show, '+')) {
@@ -153,6 +164,14 @@ public:
 					strcat(print_text, "FPS");
 					entry_count++;
 					flags |= (1 << 6);
+				}
+				else if (!key.compare("RES") && !(flags & 1 << 7) && GameRunning) {
+					if (print_text[0])
+						strcat(print_text, "\n");
+					strcat(print_text, "RES");
+					entry_count++;
+					resolutionShow = true;
+					flags |= (1 << 7);
 				}
 			}
 
@@ -318,6 +337,75 @@ public:
 				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
 		}
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%%", Rotation_SpeedLevel_f * 100);
+
+		if (GameRunning && renderCalls_shared && resolutionShow) {
+			if (!resolutionLookup) {
+				renderCalls_shared[0].calls = 0xFFFF;
+				resolutionLookup = 1;
+			}
+			else if (resolutionLookup == 1) {
+				if (renderCalls_shared[0].calls != 0xFFFF) resolutionLookup = 2;
+			}
+			else {
+				memcpy(&m_resolutionRenderCalls, renderCalls_shared, sizeof(m_resolutionRenderCalls));
+				memcpy(&m_resolutionViewportCalls, viewportCalls_shared, sizeof(m_resolutionViewportCalls));
+				qsort(m_resolutionRenderCalls, 8, sizeof(resolutionCalls), compare);
+				qsort(m_resolutionViewportCalls, 8, sizeof(resolutionCalls), compare);
+				memset(&m_resolutionOutput, 0, sizeof(m_resolutionOutput));
+				size_t out_iter = 0;
+				bool found = false;
+				for (size_t i = 0; i < 8; i++) {
+					for (size_t x = 0; x < 8; x++) {
+						if (m_resolutionRenderCalls[i].width == 0) {
+							break;
+						}
+						if ((m_resolutionRenderCalls[i].width == m_resolutionViewportCalls[x].width) && (m_resolutionRenderCalls[i].height == m_resolutionViewportCalls[x].height)) {
+							m_resolutionOutput[out_iter].width = m_resolutionRenderCalls[i].width;
+							m_resolutionOutput[out_iter].height = m_resolutionRenderCalls[i].height;
+							m_resolutionOutput[out_iter].calls = (m_resolutionRenderCalls[i].calls > m_resolutionViewportCalls[x].calls) ? m_resolutionRenderCalls[i].calls : m_resolutionViewportCalls[x].calls;
+							out_iter++;
+							found = true;
+							break;
+						}
+					}
+					if (!found && m_resolutionRenderCalls[i].width != 0) {
+						m_resolutionOutput[out_iter].width = m_resolutionRenderCalls[i].width;
+						m_resolutionOutput[out_iter].height = m_resolutionRenderCalls[i].height;
+						m_resolutionOutput[out_iter].calls = m_resolutionRenderCalls[i].calls;
+						out_iter++;
+					}
+					found = false;
+					if (out_iter == 8) break;
+				}
+				if (out_iter < 8) {
+					size_t out_iter_s = out_iter;
+					for (size_t x = 0; x < 8; x++) {
+						for (size_t y = 0; y < out_iter_s; y++) {
+							if (m_resolutionViewportCalls[x].width == 0) {
+								break;
+							}
+							if ((m_resolutionViewportCalls[x].width == m_resolutionOutput[y].width) && (m_resolutionViewportCalls[x].height == m_resolutionOutput[y].height)) {
+								found = true;
+								break;
+							}
+						}
+						if (!found && m_resolutionViewportCalls[x].width != 0) {
+							m_resolutionOutput[out_iter].width = m_resolutionViewportCalls[x].width;
+							m_resolutionOutput[out_iter].height = m_resolutionViewportCalls[x].height;
+							m_resolutionOutput[out_iter].calls = m_resolutionViewportCalls[x].calls;
+							out_iter++;			
+						}
+						found = false;
+						if (out_iter == 8) break;
+					}
+				}
+				qsort(m_resolutionOutput, 8, sizeof(resolutionCalls), compare);
+
+			}
+		}
+		else if (!GameRunning && resolutionLookup != 0) {
+			resolutionLookup = 0;
+		}
 		
 		///FPS
 		char Temp[256] = "";
@@ -373,6 +461,21 @@ public:
 				snprintf(Temp_s, sizeof(Temp_s), "%2.1f", FPSavg);
 				strcat(Temp, Temp_s);
 				flags |= 1 << 6;			
+			}
+			else if (!key.compare("RES") && !(flags & 1 << 7) && GameRunning) {
+				if (Temp[0]) {
+					strcat(Temp, "\n");
+				}
+				char Temp_s[32] = "";
+				if (*API_shared == 2) {
+					snprintf(Temp_s, sizeof(Temp_s), "EGL");
+				}
+				else if (*API_shared == 3) {
+					snprintf(Temp_s, sizeof(Temp_s), "Vulkan");
+				}
+				else snprintf(Temp_s, sizeof(Temp_s), "%dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
+				strcat(Temp, Temp_s);
+				flags |= 1 << 7;			
 			}
 		}
 		mutexUnlock(&mutex_Misc);

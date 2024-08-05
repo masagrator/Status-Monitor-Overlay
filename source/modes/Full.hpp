@@ -24,6 +24,7 @@ private:
 	char BatteryDraw_c[64] = "";
 	char FPS_var_compressed_c[64] = "";
 	char RAM_load_c[64] = "";
+	char Resolutions_c[64] = "";
 
 	uint8_t COMMON_MARGIN = 20;
 	FullSettings settings;
@@ -52,6 +53,11 @@ public:
 		}
 		deactivateOriginalFooter = false;
 	}
+
+	resolutionCalls m_resolutionRenderCalls[8] = {0};
+	resolutionCalls m_resolutionViewportCalls[8] = {0};
+	resolutionCalls m_resolutionOutput[8] = {0};
+	uint8_t resolutionLookup = 0;
 
     virtual tsl::elm::Element* createUI() override {
 		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
@@ -183,9 +189,16 @@ public:
 			///FPS
 			if (GameRunning) {
 				uint32_t width_offset = 230;
-				auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
-				uint32_t offset = COMMON_MARGIN + width_offset + dimensions.first;
-				renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
+				if (settings.showFPS == true) {
+					auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
+					uint32_t offset = COMMON_MARGIN + width_offset + dimensions.first;
+					renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
+				}
+				if ((settings.showRES == true) && *API_shared == 1) {
+					width_offset = 200;
+					renderer->drawString("Resolution:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
+					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, 205, 20, renderer->a(0xFFFF));
+				}
 			}
 			
 			std::string formattedKeyCombo = keyCombo;
@@ -290,7 +303,78 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level: %2.1f%%", Rotation_SpeedLevel_f * 100);
 		
 		///FPS
-		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.1f", FPS, FPSavg);
+		if (settings.showFPS == true) 
+			snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.1f", FPS, FPSavg);
+
+		//Resolutions
+		if ((settings.showRES == true) && GameRunning && renderCalls_shared) {
+			if (!resolutionLookup) {
+				renderCalls_shared[0].calls = 0xFFFF;
+				resolutionLookup = 1;
+			}
+			else if (resolutionLookup == 1) {
+				if (renderCalls_shared[0].calls != 0xFFFF) resolutionLookup = 2;
+			}
+			else {
+				memcpy(&m_resolutionRenderCalls, renderCalls_shared, sizeof(m_resolutionRenderCalls));
+				memcpy(&m_resolutionViewportCalls, viewportCalls_shared, sizeof(m_resolutionViewportCalls));
+				qsort(m_resolutionRenderCalls, 8, sizeof(resolutionCalls), compare);
+				qsort(m_resolutionViewportCalls, 8, sizeof(resolutionCalls), compare);
+				memset(&m_resolutionOutput, 0, sizeof(m_resolutionOutput));
+				size_t out_iter = 0;
+				bool found = false;
+				for (size_t i = 0; i < 8; i++) {
+					for (size_t x = 0; x < 8; x++) {
+						if (m_resolutionRenderCalls[i].width == 0) {
+							break;
+						}
+						if ((m_resolutionRenderCalls[i].width == m_resolutionViewportCalls[x].width) && (m_resolutionRenderCalls[i].height == m_resolutionViewportCalls[x].height)) {
+							m_resolutionOutput[out_iter].width = m_resolutionRenderCalls[i].width;
+							m_resolutionOutput[out_iter].height = m_resolutionRenderCalls[i].height;
+							m_resolutionOutput[out_iter].calls = (m_resolutionRenderCalls[i].calls > m_resolutionViewportCalls[x].calls) ? m_resolutionRenderCalls[i].calls : m_resolutionViewportCalls[x].calls;
+							out_iter++;
+							found = true;
+							break;
+						}
+					}
+					if (!found && m_resolutionRenderCalls[i].width != 0) {
+						m_resolutionOutput[out_iter].width = m_resolutionRenderCalls[i].width;
+						m_resolutionOutput[out_iter].height = m_resolutionRenderCalls[i].height;
+						m_resolutionOutput[out_iter].calls = m_resolutionRenderCalls[i].calls;
+						out_iter++;
+					}
+					found = false;
+					if (out_iter == 8) break;
+				}
+				if (out_iter < 8) {
+					size_t out_iter_s = out_iter;
+					for (size_t x = 0; x < 8; x++) {
+						for (size_t y = 0; y < out_iter_s; y++) {
+							if (m_resolutionViewportCalls[x].width == 0) {
+								break;
+							}
+							if ((m_resolutionViewportCalls[x].width == m_resolutionOutput[y].width) && (m_resolutionViewportCalls[x].height == m_resolutionOutput[y].height)) {
+								found = true;
+								break;
+							}
+						}
+						if (!found && m_resolutionViewportCalls[x].width != 0) {
+							m_resolutionOutput[out_iter].width = m_resolutionViewportCalls[x].width;
+							m_resolutionOutput[out_iter].height = m_resolutionViewportCalls[x].height;
+							m_resolutionOutput[out_iter].calls = m_resolutionViewportCalls[x].calls;
+							out_iter++;			
+						}
+						found = false;
+						if (out_iter == 8) break;
+					}
+				}
+				qsort(m_resolutionOutput, 8, sizeof(resolutionCalls), compare);
+				snprintf(Resolutions_c, sizeof(Resolutions_c), "%dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
+			}
+		}
+		else if (!GameRunning && resolutionLookup != 0) {
+			resolutionLookup = 0;
+		}
 
 		mutexUnlock(&mutex_Misc);
 

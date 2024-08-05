@@ -37,6 +37,7 @@ This mode you can know from older releases of Status Monitor. It contains all in
 |----------|-------------------|--------------------------------------------------------------------------|
 | PFPS     | %u                | Pushed Frames Per Second - how many frames were displayed in last second |
 | FPS      | %.2f              | Frames Per Second - value calculated by averaging frametime              |
+| Resolutions | %dx%d || %dx%d | Two the most promising candidates for internal game resolution           |
 
 # Mini
 
@@ -45,11 +46,12 @@ Contains most of supported informations with lower precision.
 | Category | Format                                           | Explanation                                                               |
 |----------|--------------------------------------------------|---------------------------------------------------------------------------|
 | CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f                       | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU Target/Real frequency`(^1)`  |
-| GPU      | %.1f@%.1f                                        | Load@GPU Target/Real Frequency`(^1)`                                                 |
+| GPU      | %.1f@%.1f                                        | Load@GPU Target/Real Frequency`(^1)`                                      |
 | RAM      | %.0f/%.0f@%.1f `or` %.1f@%.1f                    | Total RAM used/Total RAM available in MB@EMC Target/Real frequency `or` RAM load@EMC Target frequency `(^1)`  |
-| TEMP     | %2.1f/%2.1f/%2.1f                                | SoC temperature/PCB temperature/Skin temperature `(^2)`                     |
+| TEMP     | %2.1f/%2.1f/%2.1f                                | SoC temperature/PCB temperature/Skin temperature `(^2)`                   |
 | FAN      | %2.1f                                            | Fan rotation level                                                        |
 | DRAW     | %+.2f[h:mm]                                      | How much power in watts is discharged from or charged to the battery [Time left before shutdown]      |
+| RES      | %dx%d || %dx%d                                   | Two the most promising candidates for internal game resolution            |
 
 - ^1 - Real Frequency + RAM Load available only with sys-clk 2.0.0_rc4+
 - ^2 - Explanation provided at the end of file

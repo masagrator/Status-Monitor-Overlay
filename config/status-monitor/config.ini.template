@@ -8,6 +8,8 @@ layer_width_align=left
 show_real_freqs=true
 show_deltas=true
 show_target_freqs=true
+show_fps=true
+show_res=true
 [mini]
 refresh_rate=1
 layer_width_align=left
@@ -15,7 +17,7 @@ layer_height_align=top
 handheld_font_size=15
 docked_font_size=15
 real_freqs=false
-show=CPU+GPU+RAM+TEMP+FAN+DRAW+FPS
+show=CPU+GPU+RAM+TEMP+FAN+DRAW+FPS+RES
 replace_MB_with_RAM_load=true
 background_color=#1117
 cat_color=#FFFF

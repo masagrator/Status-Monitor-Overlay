@@ -906,6 +906,8 @@ struct FullSettings {
 	bool showRealFreqs;
 	bool showDeltas;
 	bool showTargetFreqs;
+	bool showFPS;
+	bool showRES;
 };
 
 struct MiniSettings {
@@ -973,7 +975,7 @@ void GetConfigSettings(MiniSettings* settings) {
 	convertStrToRGBA4444("#1117", &(settings -> backgroundColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> catColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> textColor));
-	settings -> show = "CPU+GPU+RAM+TEMP+DRAW+FAN+FPS";
+	settings -> show = "CPU+GPU+RAM+TEMP+DRAW+FAN+FPS+RES";
 	settings -> showRAMLoad = true;
 	settings -> refreshRate = 1;
 	settings -> setPos = 0;
@@ -1387,6 +1389,8 @@ void GetConfigSettings(FullSettings* settings) {
 	settings -> showRealFreqs = true;
 	settings -> showDeltas = true;
 	settings -> showTargetFreqs = true;
+	settings -> showFPS = true;
+	settings -> showRES = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1436,6 +1440,16 @@ void GetConfigSettings(FullSettings* settings) {
 		key = parsedData["full"]["show_target_freqs"];
 		convertToUpper(key);
 		settings -> showTargetFreqs = key.compare("FALSE");
+	}
+	if (parsedData["full"].find("show_fps") != parsedData["full"].end()) {
+		key = parsedData["full"]["show_fps"];
+		convertToUpper(key);
+		settings -> showFPS = key.compare("FALSE");
+	}
+	if (parsedData["full"].find("show_res") != parsedData["full"].end()) {
+		key = parsedData["full"]["show_res"];
+		convertToUpper(key);
+		settings -> showRES = key.compare("FALSE");
 	}
 }
 
