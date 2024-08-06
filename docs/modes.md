@@ -172,7 +172,7 @@ Exiting is done by using the same combo buttons used in other main modes.
 
 Games that don't mesh well with RES category in `Mini` and Resolution in `Full` modes while showing properly rendering resolutions in this menu:
 - `Kirby and The Forgotten Land`: dynamic resolution has much less calls than other resolutions, it shows up correctly only when it's max dynamic resolution set. It shows up always first in Depth category of Game Resolutions menu.
-- `Darksiders 2`: Dynamic resolution is randomly showing up, fighting for attention with native resolution call. In Game Resolutions menu it shows up either at 2nd or 3rd place.
+- `Darksiders 2`: Dynamic resolution is randomly showing up, fighting for attention with native resolution call. In Game Resolutions menu it shows up either at 2nd or 3rd place of Viewport.
 
 # Additional info
 
