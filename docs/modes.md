@@ -37,7 +37,9 @@ This mode you can know from older releases of Status Monitor. It contains all in
 |----------|-------------------|--------------------------------------------------------------------------|
 | PFPS     | %u                | Pushed Frames Per Second - how many frames were displayed in last second |
 | FPS      | %.2f              | Frames Per Second - value calculated by averaging frametime              |
-| Resolutions | %dx%d || %dx%d | Two the most promising candidates for internal game resolution           |
+| Resolutions | %dx%d || %dx%d | Two the most promising candidates for internal game resolution `(^1)`    |
+
+- ^1 - read more informations in explanation for "Game Resolutions" menu
 
 # Mini
 
@@ -51,10 +53,11 @@ Contains most of supported informations with lower precision.
 | TEMP     | %2.1f/%2.1f/%2.1f                                | SoC temperature/PCB temperature/Skin temperature `(^2)`                   |
 | FAN      | %2.1f                                            | Fan rotation level                                                        |
 | DRAW     | %+.2f[h:mm]                                      | How much power in watts is discharged from or charged to the battery [Time left before shutdown]      |
-| RES      | %dx%d || %dx%d                                   | Two the most promising candidates for internal game resolution            |
+| RES      | %dx%d || %dx%d                                   | Two the most promising candidates for internal game resolution `(^3)`     |
 
 - ^1 - Real Frequency + RAM Load available only with sys-clk 2.0.0_rc4+
 - ^2 - Explanation provided at the end of file
+- ^3 - read more informations in explanation for "Game Resolutions" menu
 
 ```Optional```
 
@@ -166,6 +169,10 @@ This mode is not 100% fullproof, so it can show that nothing is catched or it wo
 
 By default refresh rate of this menu is 10 FPS. You can change that in config.ini, more in config.md<br>
 Exiting is done by using the same combo buttons used in other main modes.
+
+Games that don't mesh well with RES category in `Mini` and Resolution in `Full` modes while showing properly rendering resolutions in this menu:
+- `Kirby and The Forgotten Land`: dynamic resolution has much less calls than other resolutions, it shows up correctly only when it's max dynamic resolution set. It shows up always first in Depth category of Game Resolutions menu.
+- `Darksiders 2`: Dynamic resolution is randomly showing up, fighting for attention with native resolution call. In Game Resolutions menu it shows up either at 2nd or 3rd place.
 
 # Additional info
 
