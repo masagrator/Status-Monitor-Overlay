@@ -195,7 +195,7 @@ public:
 					renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
 				}
 				if ((settings.showRES == true) && *API_shared == 1) {
-					width_offset = 200;
+					width_offset = 170;
 					renderer->drawString("Resolution:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
 					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, 205, 20, renderer->a(0xFFFF));
 				}
