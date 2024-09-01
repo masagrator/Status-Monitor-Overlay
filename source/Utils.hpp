@@ -6,6 +6,7 @@
 #include "Misc.hpp"
 #include "i2c.h"
 #include "max17050.h"
+#include "pwm.h"
 #include <numeric>
 #include <tesla.hpp>
 #include <sys/stat.h>
@@ -36,7 +37,7 @@ Thread t7;
 const uint64_t systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
-FanController g_ICon;
+PwmChannelSession g_ICon;
 std::string folderpath = "sdmc:/switch/.overlays/";
 std::string filename = "";
 std::string filepath = "";
@@ -52,7 +53,7 @@ Result clkrstCheck = 1;
 Result nvCheck = 1;
 Result pcvCheck = 1;
 Result tsCheck = 1;
-Result fanCheck = 1;
+Result pwmCheck = 1;
 Result tcCheck = 1;
 Result Hinted = 1;
 Result pmdmntCheck = 1;
@@ -63,6 +64,7 @@ Result nvencCheck = 1;
 Result nvjpgCheck = 1;
 Result nifmCheck = 1;
 Result sysclkCheck = 1;
+Result pwmDutyCycleCheck = 1;
 
 //Wi-Fi
 NifmInternetConnectionType NifmConnectionType = (NifmInternetConnectionType)-1;
@@ -123,7 +125,7 @@ uint64_t RAM_Used_system_u = 0;
 uint64_t RAM_Used_systemunsafe_u = 0;
 
 //Fan
-float Rotation_SpeedLevel_f = 0;
+double Rotation_Duty = 0;
 
 //GPU Usage
 FieldDescriptor fd = 0;
@@ -464,7 +466,15 @@ void Misc(void*) {
 		}
 		
 		//Fan
-		if (R_SUCCEEDED(fanCheck)) fanControllerGetRotationSpeedLevel(&g_ICon, &Rotation_SpeedLevel_f);
+		if (R_SUCCEEDED(pwmCheck)) {
+			double temp = 0;
+			if (R_SUCCEEDED(pwmChannelSessionGetDutyCycle(&g_ICon, &temp))) {
+				temp *= 10;
+				temp = trunc(temp);
+				temp /= 10;
+				Rotation_Duty = 100.0 - temp;
+			}
+		}
 		
 		//GPU Load
 		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
