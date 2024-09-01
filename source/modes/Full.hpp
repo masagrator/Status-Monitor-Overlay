@@ -173,7 +173,7 @@ public:
 			}
 			
 			///Thermal
-			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(fanCheck)) {
+			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(pwmCheck)) {
 				renderer->drawString("Board:", false, 20, 550, 20, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(tsCheck)) renderer->drawString(BatteryDraw_c, false, COMMON_MARGIN, 575, 15, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(tsCheck)) {
@@ -183,7 +183,7 @@ public:
 					renderer->drawString("SoC\nPCB\nSkin", false, COMMON_MARGIN + dimensions1.first, 590, 15, renderer->a(0xFFFF));
 					renderer->drawString(SoCPCB_temperature_c, false, COMMON_MARGIN + dimensions1.first + dimensions2.first, 590, 15, renderer->a(0xFFFF));
 				}
-				if (R_SUCCEEDED(fanCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, COMMON_MARGIN, 635, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(pwmCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, COMMON_MARGIN, 635, 15, renderer->a(0xFFFF));
 			}
 			
 			///FPS
@@ -300,7 +300,7 @@ public:
 				PCB_temperatureC / 1000, (PCB_temperatureC % 100) % 10,
 				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
 		}
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level: %2.1f%%", Rotation_SpeedLevel_f * 100);
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level: %2.1f%%", Rotation_Duty);
 		
 		///FPS
 		if (settings.showFPS == true) 

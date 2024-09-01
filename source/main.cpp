@@ -227,9 +227,8 @@ public:
 			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
-			if (R_SUCCEEDED(fanInitialize())) {
-				if (hosversionAtLeast(7,0,0)) fanCheck = fanOpenController(&g_ICon, 0x3D000001);
-				else fanCheck = fanOpenController(&g_ICon, 1);
+			if (hosversionAtLeast(6,0,0) && R_SUCCEEDED(pwmInitialize())) {
+				pwmCheck = pwmOpenSession2(&g_ICon, 0x3D000001);
 			}
 
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
@@ -268,8 +267,8 @@ public:
 		pcvExit();
 		tsExit();
 		tcExit();
-		fanControllerClose(&g_ICon);
-		fanExit();
+		pwmChannelSessionClose(&g_ICon);
+		pwmExit();
 		nvClose(fd);
 		nvExit();
 		psmExit();
@@ -300,9 +299,8 @@ public:
 			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
-			if (R_SUCCEEDED(fanInitialize())) {
-				if (hosversionAtLeast(7,0,0)) fanCheck = fanOpenController(&g_ICon, 0x3D000001);
-				else fanCheck = fanOpenController(&g_ICon, 1);
+			if (hosversionAtLeast(6,0,0) && R_SUCCEEDED(pwmInitialize())) {
+				pwmCheck = pwmOpenSession2(&g_ICon, 0x3D000001);
 			}
 
 			i2cInitialize();
@@ -340,8 +338,8 @@ public:
 		pcvExit();
 		tsExit();
 		tcExit();
-		fanControllerClose(&g_ICon);
-		fanExit();
+		pwmChannelSessionClose(&g_ICon);
+		pwmExit();
 		i2cExit();
 		psmExit();
 		nvClose(fd);

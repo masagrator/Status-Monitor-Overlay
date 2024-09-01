@@ -336,7 +336,7 @@ public:
 				PCB_temperatureC / 1000, (PCB_temperatureC / 100) % 10, 
 				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
 		}
-		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%%", Rotation_SpeedLevel_f * 100);
+		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%%", Rotation_Duty);
 
 		if (GameRunning && renderCalls_shared && resolutionShow) {
 			if (!resolutionLookup) {
