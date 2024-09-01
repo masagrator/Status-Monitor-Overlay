@@ -30,6 +30,6 @@ Result pwmChannelSessionGetDutyCycle(PwmChannelSession *c, double* out) {
     return serviceDispatchOut(&c->s, 7, *out);
 }
 
-void pwmChannelSessionClose(PwmChannelSession *controller) {
-    serviceClose(&controller->s);
+void pwmChannelSessionClose(PwmChannelSession *c) {
+    serviceClose(&c->s);
 }
