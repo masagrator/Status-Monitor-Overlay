@@ -323,19 +323,10 @@ public:
 		}
 		
 		///Thermal
-		if (hosversionAtLeast(10,0,0)) {
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, 
-				"%2.1f\u00B0C/%2.1f\u00B0C/%hu.%hhu\u00B0C", 
-				SOC_temperatureF, PCB_temperatureF, 
-				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
-		}
-		else {
-			snprintf(skin_temperature_c, sizeof skin_temperature_c, 
-				"%hu.%hhu\u00B0C/%hu.%hhu\u00B0C/%hu.%hhu\u00B0C", 
-				SOC_temperatureC / 1000, (SOC_temperatureC / 100) % 10, 
-				PCB_temperatureC / 1000, (PCB_temperatureC / 100) % 10, 
-				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
-		}
+		snprintf(skin_temperature_c, sizeof skin_temperature_c, 
+			"%2.1f\u00B0C/%2.1f\u00B0C/%hu.%hhu\u00B0C", 
+			SOC_temperatureF, PCB_temperatureF, 
+			skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%%", Rotation_Duty);
 
 		if (GameRunning && renderCalls_shared && resolutionShow) {
