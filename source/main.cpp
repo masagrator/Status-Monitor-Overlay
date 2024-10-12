@@ -224,7 +224,6 @@ public:
 			if (hosversionAtLeast(8,0,0)) clkrstCheck = clkrstInitialize();
 			else pcvCheck = pcvInitialize();
 
-			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
 			if (hosversionAtLeast(6,0,0) && R_SUCCEEDED(pwmInitialize())) {
@@ -237,7 +236,7 @@ public:
 			if (R_SUCCEEDED(psmCheck)) {
 				psmService = psmGetServiceSession();
 			}
-			i2cInitialize();
+			i2cCheck = i2cInitialize();
 
 			SaltySD = CheckPort();
 
@@ -296,14 +295,13 @@ public:
 
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 
-			tsCheck = tsInitialize();
 			if (hosversionAtLeast(5,0,0)) tcCheck = tcInitialize();
 
 			if (hosversionAtLeast(6,0,0) && R_SUCCEEDED(pwmInitialize())) {
 				pwmCheck = pwmOpenSession2(&g_ICon, 0x3D000001);
 			}
 
-			i2cInitialize();
+			i2cCheck = i2cInitialize();
 
 			psmCheck = psmInitialize();
 			if (R_SUCCEEDED(psmCheck)) {

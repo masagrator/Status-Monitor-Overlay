@@ -173,10 +173,10 @@ public:
 			}
 			
 			///Thermal
-			if (R_SUCCEEDED(tsCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(pwmCheck)) {
+			if (R_SUCCEEDED(i2cCheck) || R_SUCCEEDED(tcCheck) || R_SUCCEEDED(pwmCheck)) {
 				renderer->drawString("Board:", false, 20, 550, 20, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tsCheck)) renderer->drawString(BatteryDraw_c, false, COMMON_MARGIN, 575, 15, renderer->a(0xFFFF));
-				if (R_SUCCEEDED(tsCheck)) {
+				if (R_SUCCEEDED(i2cCheck)) renderer->drawString(BatteryDraw_c, false, COMMON_MARGIN, 575, 15, renderer->a(0xFFFF));
+				if (R_SUCCEEDED(i2cCheck) || R_SUCCEEDED(tcCheck)) {
 					auto dimensions1 = renderer->drawString("Temperatures: ", false, 0, 590, 15, renderer->a(0x0000));
 					auto dimensions2 = renderer->drawString("SoC \nPCB \nSkin ", false, 0, 590, 15, renderer->a(0x0000));
 					renderer->drawString("Temperatures:", false, COMMON_MARGIN, 590, 15, renderer->a(0xFFFF));
@@ -288,18 +288,9 @@ public:
 				RAM_GPU_Load / 10, RAM_GPU_Load % 10);
 		}
 		///Thermal
-		if (hosversionAtLeast(10,0,0)) {
-			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, 
-				"%2.1f\u00B0C\n%2.1f\u00B0C\n%2d.%d\u00B0C", 
-				SOC_temperatureF, PCB_temperatureF, skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
-		}
-		else {
-			snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, 
-				"%2d.%d\u00B0C\n%2d.%d\u00B0C\n%2d.%d\u00B0C", 
-				SOC_temperatureC / 1000, (SOC_temperatureC / 100) % 10, 
-				PCB_temperatureC / 1000, (PCB_temperatureC % 100) % 10,
-				skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
-		}
+		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, 
+			"%2.1f\u00B0C\n%2.1f\u00B0C\n%2d.%d\u00B0C", 
+			SOC_temperatureF, PCB_temperatureF, skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level: %2.1f%%", Rotation_Duty);
 		
 		///FPS

@@ -20,12 +20,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*
+ * Modified by: MasaGratoR
+ */
 
 #ifndef __MAX17050_H_
 #define __MAX17050_H_
 
 //#include <utils/types.h>
-
+#include "i2c.h"
 
 /* Board default values */
 #define MAX17050_BOARD_CGAIN 2 /* Actual: 1.99993 */
@@ -43,6 +46,9 @@
 */
 
 #define MAX17050_WAIT_NS 1175800000
+
+constexpr float max17050SenseResistor = MAX17050_BOARD_SNS_RESISTOR_UOHM / 1000; // in uOhm
+constexpr float max17050CGain = 1.99993;
 
 
 enum MAX17050_reg {
@@ -143,3 +149,17 @@ int max17050_fix_configuration();
 u32 max17050_get_cached_batt_volt();
 */
 #endif /* __MAX17050_H_ */
+
+Result Max17050ReadReg(u8 reg, u16 *out)
+{
+	u16 data = 0;
+	Result res = I2cReadRegHandler16(reg, I2cDevice_Max17050, &data);
+
+	if (R_FAILED(res))
+	{
+		return res;
+	}
+
+	*out = data;
+	return res;
+}
