@@ -1,12 +1,12 @@
 class FullOverlay : public tsl::Gui {
 private:
 	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
-	char RealCPU_Hz_c[32] = "";
 	char DeltaCPU_c[12] = "";
 	char DeltaGPU_c[12] = "";
 	char DeltaRAM_c[12] = "";
-	char RealGPU_Hz_c[32] = "";
-	char RealRAM_Hz_c[32] = "";
+	char RealCPU_Hz_c[64] = "";
+	char RealGPU_Hz_c[64] = "";
+	char RealRAM_Hz_c[64] = "";
 	char GPU_Load_c[32] = "";
 	char Rotation_SpeedLevel_c[64] = "";
 	char RAM_compressed_c[64] = "";
@@ -15,10 +15,6 @@ private:
 	char GPU_Hz_c[64] = "";
 	char RAM_Hz_c[64] = "";
 	char CPU_compressed_c[160] = "";
-	char CPU_Usage0[32] = "";
-	char CPU_Usage1[32] = "";
-	char CPU_Usage2[32] = "";
-	char CPU_Usage3[32] = "";
 	char SoCPCB_temperature_c[64] = "";
 	char skin_temperature_c[32] = "";
 	char BatteryDraw_c[64] = "";
@@ -73,15 +69,11 @@ public:
 					height_offset = 162;
 				}
 				renderer->drawString("CPU Usage:", false, COMMON_MARGIN, 120, 20, renderer->a(0xFFFF));
-				auto dimensions = renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0x0000));
-				uint32_t offset = COMMON_MARGIN + dimensions.first;
 				if (settings.showTargetFreqs) {
-					renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
-					renderer->drawString(CPU_Hz_c, false, offset, height_offset, 15, renderer->a(0xFFFF));
+					renderer->drawString(CPU_Hz_c, false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
 				}
 				if (realCPU_Hz && settings.showRealFreqs) {
-					renderer->drawString("Real Frequency:", false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
-					renderer->drawString(RealCPU_Hz_c, false, offset, height_offset - 15, 15, renderer->a(0xFFFF));
+					renderer->drawString(RealCPU_Hz_c, false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
 					if (settings.showDeltas && settings.showTargetFreqs) {
 						renderer->drawString(DeltaCPU_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
 					}
@@ -105,16 +97,12 @@ public:
 
 				renderer->drawString("GPU Usage:", false, COMMON_MARGIN, 285, 20, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) {
-					auto dimensions = renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0x0000));
-					uint32_t offset = COMMON_MARGIN + dimensions.first;
 					if (settings.showTargetFreqs) { 
-						renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
-						renderer->drawString(GPU_Hz_c, false, offset, height_offset, 15, renderer->a(0xFFFF));
+						renderer->drawString(GPU_Hz_c, false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
 
 					}
 					if (realCPU_Hz && settings.showRealFreqs) {
-						renderer->drawString("Real Frequency: ", false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
-						renderer->drawString(RealGPU_Hz_c, false, offset, height_offset - 15, 15, renderer->a(0xFFFF));
+						renderer->drawString(RealGPU_Hz_c, false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
 						if (settings.showDeltas && settings.showTargetFreqs) {
 							renderer->drawString(DeltaGPU_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
 						}
@@ -142,15 +130,11 @@ public:
 
 				renderer->drawString("RAM Usage:", false, COMMON_MARGIN, 375, 20, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(clkrstCheck) || R_SUCCEEDED(pcvCheck)) {
-					auto dimensions = renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0x0000));
-					uint32_t offset = COMMON_MARGIN + dimensions.first;
 					if (settings.showTargetFreqs) {
-						renderer->drawString("Target Frequency: ", false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
-						renderer->drawString(RAM_Hz_c, false, offset, height_offset, 15, renderer->a(0xFFFF));
+						renderer->drawString(RAM_Hz_c, false, COMMON_MARGIN, height_offset, 15, renderer->a(0xFFFF));
 					}
 					if (realRAM_Hz && settings.showRealFreqs) {
-						renderer->drawString("Real Frequency:", false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
-						renderer->drawString(RealRAM_Hz_c, false, offset, height_offset - 15, 15, renderer->a(0xFFFF));
+						renderer->drawString(RealRAM_Hz_c, false, COMMON_MARGIN, height_offset - 15, 15, renderer->a(0xFFFF));
 						if (settings.showDeltas && settings.showTargetFreqs) {
 							renderer->drawString(DeltaRAM_c, false, COMMON_MARGIN + 230, height_offset - 7, 15, renderer->a(0xFFFF));
 						}
@@ -166,7 +150,7 @@ public:
 					}
 				}
 				if (R_SUCCEEDED(Hinted)) {
-					auto dimensions = renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, 0, height_offset + 40, 15, renderer->a(0x0000));
+					static auto dimensions = renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, 0, height_offset + 40, 15, renderer->a(0x0000));
 					renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, COMMON_MARGIN, height_offset + 40, 15, renderer->a(0xFFFF));
 					renderer->drawString(RAM_var_compressed_c, false, COMMON_MARGIN + dimensions.first, height_offset + 40, 15, renderer->a(0xFFFF));
 				}
@@ -177,8 +161,8 @@ public:
 				renderer->drawString("Board:", false, 20, 550, 20, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(i2cCheck)) renderer->drawString(BatteryDraw_c, false, COMMON_MARGIN, 575, 15, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(i2cCheck) || R_SUCCEEDED(tcCheck)) {
-					auto dimensions1 = renderer->drawString("Temperatures: ", false, 0, 590, 15, renderer->a(0x0000));
-					auto dimensions2 = renderer->drawString("SoC \nPCB \nSkin ", false, 0, 590, 15, renderer->a(0x0000));
+					static auto dimensions1 = renderer->drawString("Temperatures: ", false, 0, 590, 15, renderer->a(0x0000));
+					static auto dimensions2 = renderer->drawString("SoC \nPCB \nSkin ", false, 0, 590, 15, renderer->a(0x0000));
 					renderer->drawString("Temperatures:", false, COMMON_MARGIN, 590, 15, renderer->a(0xFFFF));
 					renderer->drawString("SoC\nPCB\nSkin", false, COMMON_MARGIN + dimensions1.first, 590, 15, renderer->a(0xFFFF));
 					renderer->drawString(SoCPCB_temperature_c, false, COMMON_MARGIN + dimensions1.first + dimensions2.first, 590, 15, renderer->a(0xFFFF));
@@ -190,7 +174,7 @@ public:
 			if (GameRunning) {
 				uint32_t width_offset = 230;
 				if (settings.showFPS == true) {
-					auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
+					static auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
 					uint32_t offset = COMMON_MARGIN + width_offset + dimensions.first;
 					renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
 				}
@@ -218,42 +202,33 @@ public:
 	virtual void update() override {
 		//Make stuff ready to print
 		///CPU
-		if (idletick0 > systemtickfrequency_impl)
-			strcpy(CPU_Usage0, "Core #0: 0.00%");
-		else snprintf(CPU_Usage0, sizeof CPU_Usage0, "Core #0: %.2f%%", (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100);
-		if (idletick1 > systemtickfrequency_impl)
-			strcpy(CPU_Usage1, "Core #1: 0.00%");
-		else snprintf(CPU_Usage1, sizeof CPU_Usage1, "Core #1: %.2f%%", (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100);
-		if (idletick2 > systemtickfrequency_impl)
-			strcpy(CPU_Usage2, "Core #2: 0.00%");
-		else snprintf(CPU_Usage2, sizeof CPU_Usage2, "Core #2: %.2f%%", (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100);
-		if (idletick3 > systemtickfrequency_impl)
-			strcpy(CPU_Usage3, "Core #3: 0.00%");
-		else snprintf(CPU_Usage3, sizeof CPU_Usage3, "Core #3: %.2f%%", (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
-
-		snprintf(CPU_compressed_c, sizeof CPU_compressed_c, "%s\n%s\n%s\n%s", CPU_Usage0, CPU_Usage1, CPU_Usage2, CPU_Usage3);
+		snprintf(CPU_compressed_c, sizeof(CPU_compressed_c), "Core #0: %.2f%%\nCore #1: %.2f%%\nCore #2: %.2f%%\nCore #3: %.2f%%", 
+			(idletick0 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100,
+			(idletick1 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100,
+			(idletick2 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100,
+			(idletick3 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
 
 		mutexLock(&mutex_Misc);
-		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "%u.%u MHz", CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
+		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "Target Frequency: %u.%u MHz", CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
 		if (realCPU_Hz) {
-			snprintf(RealCPU_Hz_c, sizeof(RealCPU_Hz_c), "%u.%u MHz", realCPU_Hz / 1000000, (realCPU_Hz / 100000) % 10);
+			snprintf(RealCPU_Hz_c, sizeof(RealCPU_Hz_c), "Real Frequency: %u.%u MHz", realCPU_Hz / 1000000, (realCPU_Hz / 100000) % 10);
 			int32_t deltaCPU = (int32_t)(realCPU_Hz / 1000) - (CPU_Hz / 1000);
 			snprintf(DeltaCPU_c, sizeof(DeltaCPU_c), "Δ %d.%u", deltaCPU / 1000, abs(deltaCPU / 100) % 10);
 		}
 		
 		///GPU
-		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "%u.%u MHz", GPU_Hz / 1000000, (GPU_Hz / 100000) % 10);
+		snprintf(GPU_Hz_c, sizeof GPU_Hz_c, "Target Frequency: %u.%u MHz", GPU_Hz / 1000000, (GPU_Hz / 100000) % 10);
 		if (realGPU_Hz) {
-			snprintf(RealGPU_Hz_c, sizeof(RealGPU_Hz_c), "%u.%u MHz", realGPU_Hz / 1000000, (realGPU_Hz / 100000) % 10);
+			snprintf(RealGPU_Hz_c, sizeof(RealGPU_Hz_c), "Real Frequency: %u.%u MHz", realGPU_Hz / 1000000, (realGPU_Hz / 100000) % 10);
 			int32_t deltaGPU = (int32_t)(realGPU_Hz / 1000) - (GPU_Hz / 1000);
 			snprintf(DeltaGPU_c, sizeof(DeltaGPU_c), "Δ %d.%u", deltaGPU / 1000, abs(deltaGPU / 100) % 10);
 		}
 		snprintf(GPU_Load_c, sizeof GPU_Load_c, "Load: %u.%u%%", GPU_Load_u / 10, GPU_Load_u % 10);
 		
 		///RAM
-		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "%u.%u MHz", RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
+		snprintf(RAM_Hz_c, sizeof RAM_Hz_c, "Target Frequency: %u.%u MHz", RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
 		if (realRAM_Hz) {
-			snprintf(RealRAM_Hz_c, sizeof(RealRAM_Hz_c), "%u.%u MHz", realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
+			snprintf(RealRAM_Hz_c, sizeof(RealRAM_Hz_c), "Real Frequency: %u.%u MHz", realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
 			int32_t deltaRAM = (int32_t)(realRAM_Hz / 1000) - (RAM_Hz / 1000);
 			snprintf(DeltaRAM_c, sizeof(DeltaRAM_c), "Δ %d.%u", deltaRAM / 1000, abs(deltaRAM / 100) % 10);
 		}
@@ -267,17 +242,13 @@ public:
 		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
-		char FULL_RAM_all_c[21] = "";
-		char FULL_RAM_application_c[21] = "";
-		char FULL_RAM_applet_c[21] = "";
-		char FULL_RAM_system_c[21] = "";
-		char FULL_RAM_systemunsafe_c[21] = "";
-		snprintf(FULL_RAM_all_c, sizeof(FULL_RAM_all_c), "%4.2f / %4.2f MB", RAM_Used_all_f, RAM_Total_all_f);
-		snprintf(FULL_RAM_application_c, sizeof(FULL_RAM_application_c), "%4.2f / %4.2f MB", RAM_Used_application_f, RAM_Total_application_f);
-		snprintf(FULL_RAM_applet_c, sizeof(FULL_RAM_applet_c), "%4.2f / %4.2f MB", RAM_Used_applet_f, RAM_Total_applet_f);
-		snprintf(FULL_RAM_system_c, sizeof(FULL_RAM_system_c), "%4.2f / %4.2f MB", RAM_Used_system_f, RAM_Total_system_f);
-		snprintf(FULL_RAM_systemunsafe_c, sizeof(FULL_RAM_systemunsafe_c), "%4.2f / %4.2f MB", RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
-		snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%s\n%s\n%s\n%s\n%s", FULL_RAM_all_c, FULL_RAM_application_c, FULL_RAM_applet_c, FULL_RAM_system_c, FULL_RAM_systemunsafe_c);
+
+		snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB", 
+			RAM_Used_all_f, RAM_Total_all_f,
+			RAM_Used_application_f, RAM_Total_application_f,
+			RAM_Used_applet_f, RAM_Total_applet_f,
+			RAM_Used_system_f, RAM_Total_system_f,
+			RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
 		
 		if (R_SUCCEEDED(sysclkCheck)) {
 			int RAM_GPU_Load = ramLoad[SysClkRamLoad_All] - ramLoad[SysClkRamLoad_Cpu];
