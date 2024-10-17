@@ -188,9 +188,14 @@ public:
 			std::string formattedKeyCombo = keyCombo;
 			formatButtonCombination(formattedKeyCombo);
 			
-			std::string message = "Hold " + formattedKeyCombo + " to Exit";
-			
-			renderer->drawString(message.c_str(), false, COMMON_MARGIN, 693, 23, renderer->a(0xFFFF));
+			static std::string message = "Hold " + formattedKeyCombo + " to Exit";
+			static std::vector<std::string> UNICODE_SYMBOLS = {{
+			    "\uE0E4", "\uE0E5", "\uE0E6", "\uE0E7", "\uE0E8", "\uE0E9",
+			    "\uE0ED", "\uE0EB", "\uE0EE", "\uE0EC", "\uE0E0", "\uE0E1",
+			    "\uE0E2", "\uE0E3", "\uE08A", "\uE08B", "\uE0B6", "\uE0B5"
+			}};
+			//renderer->drawString(message.c_str(), false, COMMON_MARGIN, 693, 23, renderer->a(0xFFFF));
+			renderer->drawStringWithColoredSections(message.c_str(), UNICODE_SYMBOLS, COMMON_MARGIN, 693, 23, a(tsl::bottomTextColor), a(tsl::buttonColor));
 			
 		});
 
