@@ -113,6 +113,25 @@ public:
 					break;
 			}
 
+		    // Horizontal alignment (base_x)
+		    if (useRightAlignment) {
+		        base_x = 448 - (rectangle_width + 21);  // Align to the right
+		    } else {
+		        // Default horizontal alignment based on settings.setPos
+		        switch (settings.setPos) {
+		            case 1:
+		            case 4:
+		            case 7:
+		                base_x = 224 - ((rectangle_width + 21) / 2);  // Centered horizontally
+		                break;
+		            case 2:
+		            case 5:
+		            case 8:
+		                base_x = 448 - (rectangle_width + 21);  // Align to the right
+		                break;
+		        }
+		    }
+
 			renderer->drawRect(base_x, base_y, rectangle_width + 21, rectangle_height + 12, a(settings.backgroundColor));
 			s16 size = (refreshRate > 60 || !refreshRate) ? 63 : (s32)(63.0/(60.0/refreshRate));
 			std::pair<u32, u32> dimensions = renderer->drawString(FPSavg_c, false, 0, 0, size, renderer->a(0x0000));
