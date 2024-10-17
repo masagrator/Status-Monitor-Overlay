@@ -26,6 +26,7 @@ extern "C"
 #define FieldDescriptor uint32_t
 #define BASE_SNS_UOHM 5000
 
+
 //Common
 Thread t0;
 Thread t1;
@@ -795,7 +796,7 @@ void ParseIniFile() {
 		fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 		fclose(configFileIn);
 
-		parsedData = tsl::hlp::ini::parseIni(fileDataString);
+		parsedData = ult::parseIni(fileDataString);
 		
 		// Access and use the parsed data as needed
 		// For example, print the value of a specific section and key
@@ -849,7 +850,7 @@ void ParseIniFile() {
 			}
 			fclose(ultrahandConfigFileIn);
 			
-			parsedData = tsl::hlp::ini::parseIni(ultrahandFileData);
+			parsedData = ult::parseIni(ultrahandFileData);
 			if (parsedData.find("ultrahand") != parsedData.end() &&
 				parsedData["ultrahand"].find("key_combo") != parsedData["ultrahand"].end()) {
 				keyCombo = parsedData["ultrahand"]["key_combo"];
@@ -866,7 +867,7 @@ void ParseIniFile() {
 			}
 			fclose(teslaConfigFileIn);
 			
-			parsedData = tsl::hlp::ini::parseIni(teslaFileData);
+			parsedData = ult::parseIni(teslaFileData);
 			if (parsedData.find("tesla") != parsedData.end() &&
 				parsedData["tesla"].find("key_combo") != parsedData["tesla"].end()) {
 				keyCombo = parsedData["tesla"]["key_combo"];
@@ -993,7 +994,7 @@ void GetConfigSettings(MiniSettings* settings) {
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
-	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+	auto parsedData = ult::parseIni(fileDataString);
 
 	std::string key;
 	if (parsedData.find("mini") == parsedData.end())
@@ -1111,7 +1112,7 @@ void GetConfigSettings(MicroSettings* settings) {
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
-	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+	auto parsedData = ult::parseIni(fileDataString);
 
 	std::string key;
 	if (parsedData.find("micro") == parsedData.end())
@@ -1221,7 +1222,7 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
-	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+	auto parsedData = ult::parseIni(fileDataString);
 
 	std::string key;
 	if (parsedData.find("fps-counter") == parsedData.end())
@@ -1304,7 +1305,7 @@ void GetConfigSettings(FpsGraphSettings* settings) {
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
-	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+	auto parsedData = ult::parseIni(fileDataString);
 
 	std::string key;
 	if (parsedData.find("fps-graph") == parsedData.end())
@@ -1405,7 +1406,7 @@ void GetConfigSettings(FullSettings* settings) {
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
-	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+	auto parsedData = ult::parseIni(fileDataString);
 
 	std::string key;
 	if (parsedData.find("full") == parsedData.end())
@@ -1473,7 +1474,7 @@ void GetConfigSettings(ResolutionSettings* settings) {
 	fread(&fileDataString[0], sizeof(char), fileSize, configFileIn);
 	fclose(configFileIn);
 	
-	auto parsedData = tsl::hlp::ini::parseIni(fileDataString);
+	auto parsedData = ult::parseIni(fileDataString);
 
 	std::string key;
 	if (parsedData.find("game_resolutions") == parsedData.end())

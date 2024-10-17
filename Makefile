@@ -41,8 +41,8 @@ APP_TITLE	:=	Status Monitor
 APP_VERSION	:=	1.1.4
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source
-INCLUDES	:=	include lib/Atmosphere-libs/libstratosphere/source/dmnt lib/Atmosphere-libs/libstratosphere/source lib/libtesla/include
+SOURCES		:=	source lib/libultrahand/libultra/source #lib/libultrahand/libtesla/source
+INCLUDES	:=	include lib/Atmosphere-libs/libstratosphere/source/dmnt lib/Atmosphere-libs/libstratosphere/source lib/libultrahand/libultra/include lib/libultrahand/libtesla/include
 NO_ICON		:=  1
 #ROMFS       :=  romfs
 
@@ -51,17 +51,33 @@ NO_ICON		:=  1
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
+CFLAGS	:=	-g -Wall -Os -ffunction-sections -flto\
 			$(ARCH) $(DEFINES)
+
+# For compiling Ultrahand Overlay only
+IS_STATUS_MONITOR_DIRECTIVE := 1
+CFLAGS += -DIS_STATUS_MONITOR_DIRECTIVE=$(IS_STATUS_MONITOR_DIRECTIVE)
+
+# Disable fstream
+NO_FSTREAM_DIRECTIVE := 1
+CFLAGS += -DNO_FSTREAM_DIRECTIVE=$(NO_FSTREAM_DIRECTIVE)
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DAPP_VERSION="\"$(APP_VERSION)\""
 
-CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=c++23 -Wno-dangling-else
+CXXFLAGS	:= $(CFLAGS) -std=c++23 -Wno-dangling-else
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lnx
+LIBS := -lnx
+
+CXXFLAGS += -fno-exceptions -ffunction-sections -fdata-sections -fno-rtti
+LDFLAGS += -Wl,--gc-sections -Wl,--as-needed
+
+
+# For Ensuring Parallel LTRANS Jobs w/ GCC, make -j6
+CXXFLAGS += -flto -fuse-linker-plugin -flto=6
+LDFLAGS += -flto=6
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

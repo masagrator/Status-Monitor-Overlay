@@ -26,12 +26,12 @@ public:
 			case 1:
 			case 4:
 			case 7:
-				tsl::gfx::Renderer::getRenderer().setLayerPos(624, 0);
+				tsl::gfx::Renderer::get().setLayerPos(624, 0);
 				break;
 			case 2:
 			case 5:
 			case 8:
-				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+				tsl::gfx::Renderer::get().setLayerPos(1248, 0);
 				break;
 		}
 		mutexInit(&mutex_BatteryChecker);
@@ -67,7 +67,7 @@ public:
 			if (!Initialized) {
 				std::pair<u32, u32> dimensions;
 				rectangleWidth = 0;
-				for (std::string key : tsl::hlp::split(settings.show, '+')) {
+				for (std::string key : ult::split(settings.show, '+')) {
 					if (!key.compare("CPU")) {
 						dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
 						if (rectangleWidth < dimensions.first)
@@ -115,7 +115,7 @@ public:
 			char print_text[36] = "";
 			size_t entry_count = 0;
 			uint8_t flags = 0;
-			for (std::string key : tsl::hlp::split(settings.show, '+')) {
+			for (std::string key : ult::split(settings.show, '+')) {
 				if (!key.compare("CPU") && !(flags & 1 << 0)) {
 					if (print_text[0])
 						strcat(print_text, "\n");
@@ -401,7 +401,7 @@ public:
 		///FPS
 		char Temp[256] = "";
 		uint8_t flags = 0;
-		for (std::string key : tsl::hlp::split(settings.show, '+')) {
+		for (std::string key : ult::split(settings.show, '+')) {
 			if (!key.compare("CPU") && !(flags & 1 << 0)) {
 				if (Temp[0]) {
 					strcat(Temp, "\n");
@@ -483,7 +483,7 @@ public:
 		mutexUnlock(&mutex_BatteryChecker);
 
 	}
-	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
 		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
 			TeslaFPS = 60;
 			tsl::goBack();

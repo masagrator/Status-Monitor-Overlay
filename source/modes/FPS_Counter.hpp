@@ -19,12 +19,12 @@ public:
 			case 1:
 			case 4:
 			case 7:
-				tsl::gfx::Renderer::getRenderer().setLayerPos(624, 0);
+				tsl::gfx::Renderer::get().setLayerPos(624, 0);
 				break;
 			case 2:
 			case 5:
 			case 8:
-				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+				tsl::gfx::Renderer::get().setLayerPos(1248, 0);
 				break;
 		}
 		StartFPSCounterThread();
@@ -38,7 +38,7 @@ public:
 		TeslaFPS = 60;
 		EndFPSCounterThread();
 		if (settings.setPos)
-			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
+			tsl::gfx::Renderer::get().setLayerPos(0, 0);
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
@@ -98,7 +98,7 @@ public:
 		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f", FPSavg);
 		
 	}
-	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
 		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
 			tsl::goBack();
 			return true;
