@@ -48,7 +48,7 @@ public:
 	}
 
     virtual tsl::elm::Element* createUI() override {
-		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
+		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION, true);
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
