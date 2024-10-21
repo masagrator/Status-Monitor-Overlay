@@ -1,4 +1,5 @@
 #pragma once
+#define ALWAYS_INLINE inline __attribute__((always_inline))
 #include "SaltyNX.h"
 
 #include "Battery.hpp"
@@ -403,6 +404,7 @@ void StartBatteryThread() {
 }
 
 Mutex mutex_Misc = {0};
+
 //Stuff that doesn't need multithreading
 void Misc(void*) {
 	while (!threadexit) {
@@ -761,7 +763,7 @@ uint64_t MapButtons(const std::string& buttonCombo) {
 	return comboBitmask;
 }
 
-static inline bool isKeyComboPressed(uint64_t keysHeld, uint64_t keysDown, uint64_t comboBitmask) {
+ALWAYS_INLINE bool isKeyComboPressed(uint64_t keysHeld, uint64_t keysDown, uint64_t comboBitmask) {
 	return (keysDown == comboBitmask) || (keysHeld == comboBitmask);
 }
 
@@ -879,7 +881,7 @@ void ParseIniFile() {
 }
 
 
-bool isValidRGBA4Color(const std::string& hexColor) {
+ALWAYS_INLINE bool isValidRGBA4Color(const std::string& hexColor) {
     for (char c : hexColor) {
         if (!isxdigit(c)) {
             return false; // Must contain only hexadecimal digits (0-9, A-F, a-f)
@@ -971,7 +973,7 @@ struct ResolutionSettings {
 	int setPos;
 };
 
-void GetConfigSettings(MiniSettings* settings) {
+ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
 	settings -> realFrequencies = false;
 	settings -> handheldFontSize = 15;
 	settings -> dockedFontSize = 15;
@@ -1088,7 +1090,7 @@ void GetConfigSettings(MiniSettings* settings) {
 	}
 }
 
-void GetConfigSettings(MicroSettings* settings) {
+ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
 	settings -> realFrequencies = false;
 	settings -> handheldFontSize = 18;
 	settings -> dockedFontSize = 18;
@@ -1203,7 +1205,7 @@ void GetConfigSettings(MicroSettings* settings) {
 	}
 }
 
-void GetConfigSettings(FpsCounterSettings* settings) {
+ALWAYS_INLINE void GetConfigSettings(FpsCounterSettings* settings) {
 	settings -> handheldFontSize = 40;
 	settings -> dockedFontSize = 40;
 	convertStrToRGBA4444("#1117", &(settings -> backgroundColor));
@@ -1281,7 +1283,7 @@ void GetConfigSettings(FpsCounterSettings* settings) {
 	}
 }
 
-void GetConfigSettings(FpsGraphSettings* settings) {
+ALWAYS_INLINE void GetConfigSettings(FpsGraphSettings* settings) {
 	settings -> setPos = 0;
 	convertStrToRGBA4444("#1117", &(settings -> backgroundColor));
 	convertStrToRGBA4444("#4444", &(settings -> fpsColor));
@@ -1386,7 +1388,7 @@ void GetConfigSettings(FpsGraphSettings* settings) {
 	}
 }
 
-void GetConfigSettings(FullSettings* settings) {
+ALWAYS_INLINE void GetConfigSettings(FullSettings* settings) {
 	settings -> setPosRight = false;
 	settings -> refreshRate = 1;
 	settings -> showRealFreqs = true;
@@ -1456,7 +1458,7 @@ void GetConfigSettings(FullSettings* settings) {
 	}
 }
 
-void GetConfigSettings(ResolutionSettings* settings) {
+ALWAYS_INLINE void GetConfigSettings(ResolutionSettings* settings) {
 	convertStrToRGBA4444("#1117", &(settings -> backgroundColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> catColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> textColor));
