@@ -114,7 +114,7 @@ public:
 			}
 
 		    // Horizontal alignment (base_x)
-		    if (useRightAlignment) {
+		    if (ult::useRightAlignment) {
 		        base_x = 448 - (rectangle_width + 21);  // Align to the right
 		    } else {
 		        // Default horizontal alignment based on settings.setPos

@@ -181,7 +181,7 @@ public:
 		    int base_x = 0;
 		    int base_y = 0;
 		
-		    if (useRightAlignment) {
+		    if (ult::useRightAlignment) {
 		        base_x = frameWidth - (margin + rectangleWidth + (fontsize / 3));
 		    } else {
 		        switch (settings.setPos) {

@@ -366,8 +366,8 @@ int main(int argc, char **argv) {
 	}
 	for (u8 arg = 0; arg < argc; arg++) {
 		if (strcasecmp(argv[arg], "--microOverlay_") == 0) {
-			DefaultFramebufferWidth = 1280;
-			DefaultFramebufferHeight = 28;
+			ult::DefaultFramebufferWidth = 1280;
+			ult::DefaultFramebufferHeight = 28;
 			FILE* test = fopen(std::string(folderpath + filename).c_str(), "rb");
 			if (test) {
 				fclose(test);
@@ -383,8 +383,8 @@ int main(int argc, char **argv) {
 			return tsl::loop<MicroMode>(argc, argv);
 		} else if (strcasecmp(argv[arg], "--microOverlay") == 0) {
             skipMain = true;
-			DefaultFramebufferWidth = 1280;
-			DefaultFramebufferHeight = 28;
+			ult::DefaultFramebufferWidth = 1280;
+			ult::DefaultFramebufferHeight = 28;
 			FILE* test = fopen(std::string(folderpath + filename).c_str(), "rb");
 			if (test) {
 				fclose(test);

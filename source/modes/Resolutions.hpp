@@ -83,7 +83,7 @@ public:
 			}
 		
 			// Adjust for right-side alignment
-			if (useRightAlignment) {
+			if (ult::useRightAlignment) {
 				base_x = frameWidth - base_x - 360; // Subtract width of the box (360px) from the frame width
 			}
 		
