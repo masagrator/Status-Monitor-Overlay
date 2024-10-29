@@ -49,9 +49,9 @@ NO_ICON		:=  1
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+ARCH	:=	-march=armv8-a+simd+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	-g -Wall -Os -ffunction-sections -flto\
+CFLAGS	:=	-g -Wall -Os -ffunction-sections -flto -fomit-frame-pointer\
 			$(ARCH) $(DEFINES)
 
 # For compiling Ultrahand Overlay only
@@ -69,7 +69,7 @@ CFLAGS += -DUI_OVERRIDE_PATH="\"$(UI_OVERRIDE_PATH)\""
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DAPP_VERSION="\"$(APP_VERSION)\""
 
-CXXFLAGS	:= $(CFLAGS) -std=c++23 -Wno-dangling-else
+CXXFLAGS	:= $(CFLAGS) -std=c++23 -Wno-dangling-else -fno-unwind-tables -fno-asynchronous-unwind-tables
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
