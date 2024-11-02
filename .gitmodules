@@ -1,6 +1,3 @@
-[submodule "lib/libtesla"]
-	path = lib/libtesla
-	url = https://github.com/masagrator/libtesla
 [submodule "lib/Atmosphere-libs"]
 	path = lib/Atmosphere-libs
 	url = https://github.com/Atmosphere-NX/Atmosphere-libs
