@@ -849,7 +849,7 @@ void ParseIniFile() {
 			if (parsedData["status-monitor"].find("average_gpu_load") != parsedData["status-monitor"].end()) {
 				auto key = parsedData["status-monitor"]["average_gpu_load"];
 				convertToUpper(key);
-				GPULoadPerFrame = !key.compare("FALSE");
+				GPULoadPerFrame = key.compare("TRUE");
 			}
 		}
 		
