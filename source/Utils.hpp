@@ -35,6 +35,7 @@ Thread t3;
 Thread t4;
 Thread t6;
 Thread t7;
+Thread t5;
 const uint64_t systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
@@ -129,6 +130,7 @@ double Rotation_Duty = 0;
 //GPU Usage
 FieldDescriptor fd = 0;
 uint32_t GPU_Load_u = 0;
+bool GPULoadPerFrame = true;
 
 //NX-FPS
 bool GameRunning = false;
@@ -404,6 +406,16 @@ void StartBatteryThread() {
 
 Mutex mutex_Misc = {0};
 
+void gpuLoadThread(void*) {
+	if (!GPULoadPerFrame && R_SUCCEEDED(nvCheck)) while(!threadexit) {
+		u8 average = 5;
+		u32 temp = 0;
+		nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &temp);
+		GPU_Load_u = ((GPU_Load_u * (average-1)) + temp) / average;
+		svcSleepThread(16'666'000);
+	}
+}
+
 //Stuff that doesn't need multithreading
 void Misc(void*) {
 	while (!threadexit) {
@@ -471,7 +483,7 @@ void Misc(void*) {
 		}
 		
 		//GPU Load
-		if (R_SUCCEEDED(nvCheck)) nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
+		if (R_SUCCEEDED(nvCheck) && GPULoadPerFrame) nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
 		
 		//FPS
 		if (GameRunning) {
@@ -563,6 +575,7 @@ void StartThreads() {
 	threadCreate(&t2, CheckCore2, NULL, NULL, 0x1000, 0x10, 2);
 	threadCreate(&t3, CheckCore3, NULL, NULL, 0x1000, 0x10, 3);
 	threadCreate(&t4, Misc, NULL, NULL, 0x1000, 0x3F, -2);
+	threadCreate(&t5, gpuLoadThread, NULL, NULL, 0x1000, 0x3F, -2);
 	if (SaltySD) {
 		//Assign NX-FPS to default core
 		threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
@@ -573,6 +586,7 @@ void StartThreads() {
 	threadStart(&t2);
 	threadStart(&t3);
 	threadStart(&t4);
+	threadStart(&t5);
 	if (SaltySD) {
 		//Start NX-FPS detection
 		threadStart(&t6);
@@ -589,6 +603,7 @@ void CloseThreads() {
 	threadWaitForExit(&t2);
 	threadWaitForExit(&t3);
 	threadWaitForExit(&t4);
+	threadWaitForExit(&t5);
 	threadWaitForExit(&t6);
 	threadWaitForExit(&t7);
 	threadClose(&t0);
@@ -596,6 +611,7 @@ void CloseThreads() {
 	threadClose(&t2);
 	threadClose(&t3);
 	threadClose(&t4);
+	threadClose(&t5);
 	threadClose(&t6);
 	threadClose(&t7);
 	threadexit = false;
@@ -829,6 +845,11 @@ void ParseIniFile() {
 					rate = minSeconds;
 				}
 				batteryTimeLeftRefreshRate = rate;
+			}
+			if (parsedData["status-monitor"].find("average_gpu_load") != parsedData["status-monitor"].end()) {
+				auto key = parsedData["status-monitor"]["average_gpu_load"];
+				convertToUpper(key);
+				GPULoadPerFrame = !key.compare("FALSE");
 			}
 		}
 		
