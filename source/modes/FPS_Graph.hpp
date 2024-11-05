@@ -187,16 +187,17 @@ public:
 			isDocked = false;
 		}
 
-		if (!isDocked && isStarted && FPSavg_old != 0 && FPSavg_old == FPSavg) {
+		if (FPSavg_old == FPSavg)
+			return;
+
+		if (!isDocked && isStarted && FPSavg_old != 0) {
 			if (R_SUCCEEDED(SaltySD_Connect())) {
 				if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
 					refreshRate = 0;
-				svcSleepThread(100'000'000);
 				SaltySD_Term();
 			}			
 		}
-		if (FPSavg_old == FPSavg)
-			return;
+
 		FPSavg_old = FPSavg;
 		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f",  FPSavg);
 		if (FPSavg < 254) {
@@ -204,7 +205,6 @@ public:
 				if (!isDocked && R_SUCCEEDED(SaltySD_Connect())) {
 					if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
 						refreshRate = 0;
-					svcSleepThread(100'000);
 					SaltySD_Term();
 					isStarted = true;
 				}
