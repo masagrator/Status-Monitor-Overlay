@@ -25,6 +25,8 @@ private:
 	uint8_t COMMON_MARGIN = 20;
 	FullSettings settings;
 	uint64_t systemtickfrequency_impl = systemtickfrequency;
+	std::string formattedKeyCombo = keyCombo;
+	std::string message = "Hold to Exit";
 public:
     FullOverlay() { 
 		GetConfigSettings(&settings);
@@ -37,6 +39,8 @@ public:
 			tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 		}
 		deactivateOriginalFooter = true;
+		formatButtonCombination(formattedKeyCombo);
+		message = "Hold " + formattedKeyCombo + " to Exit";
         StartThreads();
 	}
 	~FullOverlay() {
@@ -178,17 +182,12 @@ public:
 					uint32_t offset = COMMON_MARGIN + width_offset + dimensions.first;
 					renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
 				}
-				if ((settings.showRES == true) && *API_shared == 1) {
+				if ((settings.showRES == true) && (NxFps -> API) == 1) {
 					width_offset = 170;
 					renderer->drawString("Resolution:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
 					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, 205, 20, renderer->a(0xFFFF));
 				}
 			}
-			
-			std::string formattedKeyCombo = keyCombo;
-			formatButtonCombination(formattedKeyCombo);
-			
-			std::string message = "Hold " + formattedKeyCombo + " to Exit";
 			
 			renderer->drawString(message.c_str(), false, COMMON_MARGIN, 693, 23, renderer->a(0xFFFF));
 			
@@ -269,17 +268,17 @@ public:
 			snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.1f", FPS, FPSavg);
 
 		//Resolutions
-		if ((settings.showRES == true) && GameRunning && renderCalls_shared) {
+		if ((settings.showRES == true) && GameRunning && NxFps) {
 			if (!resolutionLookup) {
-				renderCalls_shared[0].calls = 0xFFFF;
+				(NxFps -> renderCalls[0].calls) = 0xFFFF;
 				resolutionLookup = 1;
 			}
 			else if (resolutionLookup == 1) {
-				if (renderCalls_shared[0].calls != 0xFFFF) resolutionLookup = 2;
+				if ((NxFps -> renderCalls[0].calls) != 0xFFFF) resolutionLookup = 2;
 			}
 			else {
-				memcpy(&m_resolutionRenderCalls, renderCalls_shared, sizeof(m_resolutionRenderCalls));
-				memcpy(&m_resolutionViewportCalls, viewportCalls_shared, sizeof(m_resolutionViewportCalls));
+				memcpy(&m_resolutionRenderCalls, &(NxFps -> renderCalls), sizeof(m_resolutionRenderCalls));
+				memcpy(&m_resolutionViewportCalls, &(NxFps -> viewportCalls), sizeof(m_resolutionViewportCalls));
 				qsort(m_resolutionRenderCalls, 8, sizeof(resolutionCalls), compare);
 				qsort(m_resolutionViewportCalls, 8, sizeof(resolutionCalls), compare);
 				memset(&m_resolutionOutput, 0, sizeof(m_resolutionOutput));
