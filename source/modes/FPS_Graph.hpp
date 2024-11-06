@@ -1,6 +1,5 @@
 class com_FPSGraph : public tsl::Gui {
 private:
-	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	uint8_t refreshRate = 0;
 	char FPSavg_c[8];
 	FpsGraphSettings settings;
@@ -259,7 +258,7 @@ public:
 		
 	}
 	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
+		if (isKeyComboPressed(keysHeld, keysDown)) {
 			TeslaFPS = 60;
 			tsl::goBack();
 			return true;

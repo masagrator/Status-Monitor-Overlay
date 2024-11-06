@@ -6,6 +6,7 @@
 static tsl::elm::OverlayFrame* rootFrame = nullptr;
 static bool skipMain = false;
 
+
 #include "modes/FPS_Counter.hpp"
 #include "modes/FPS_Graph.hpp"
 #include "modes/Full.hpp"
@@ -14,6 +15,7 @@ static bool skipMain = false;
 #include "modes/Battery.hpp"
 #include "modes/Misc.hpp"
 #include "modes/Resolutions.hpp"
+
 
 
 
@@ -54,6 +56,14 @@ public:
 	virtual void update() override {}
 
 	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		if (fixHiding) {
+			if (isKeyComboPressed2(keysDown, keysHeld)) {
+				tsl::Overlay::get()->hide();
+				fixHiding = false;
+				return true;
+			}
+		}
+
 		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;
@@ -111,6 +121,14 @@ public:
 	virtual void update() override {}
 
 	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		if (fixHiding) {
+			if (isKeyComboPressed2(keysDown, keysHeld)) {
+				tsl::Overlay::get()->hide();
+				fixHiding = false;
+				return true;
+			}
+		}
+
 		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;
@@ -207,6 +225,15 @@ public:
 	}
 
 	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		
+		if (fixHiding) {
+			if (isKeyComboPressed2(keysDown, keysHeld)) {
+				tsl::Overlay::get()->hide();
+				fixHiding = false;
+				return true;
+			}
+		}
+
 		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;

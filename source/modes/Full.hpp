@@ -1,6 +1,5 @@
 class FullOverlay : public tsl::Gui {
 private:
-	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char DeltaCPU_c[12] = "";
 	char DeltaGPU_c[12] = "";
 	char DeltaRAM_c[12] = "";
@@ -361,7 +360,7 @@ public:
 		
 	}
 	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
+		if (isKeyComboPressed(keysHeld, keysDown)) {
 			TeslaFPS = 60;
 			tsl::goBack();
 			return true;

@@ -1,6 +1,5 @@
 class ResolutionsOverlay : public tsl::Gui {
 private:
-	uint64_t mappedButtons = MapButtons(keyCombo);
 	char Resolutions_c[512];
 	char Resolutions2_c[512];
 	ResolutionSettings settings;
@@ -185,7 +184,7 @@ public:
 		}
 	}
 	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
+		if (isKeyComboPressed(keysHeld, keysDown)) {
 			tsl::goBack();
 			return true;
 		}

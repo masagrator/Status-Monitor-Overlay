@@ -1,6 +1,5 @@
 class com_FPS : public tsl::Gui {
 private:
-	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char FPSavg_c[8];
 	FpsCounterSettings settings;
 	size_t fontsize = 0;
@@ -119,7 +118,7 @@ public:
 		
 	}
 	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
+		if (isKeyComboPressed(keysHeld, keysDown)) {
 			tsl::goBack();
 			return true;
 		}

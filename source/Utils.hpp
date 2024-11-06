@@ -27,6 +27,8 @@ extern "C"
 #define FieldDescriptor uint32_t
 #define BASE_SNS_UOHM 5000
 
+static bool fixHiding = false;
+
 
 //Common
 Thread t0;
@@ -737,6 +739,8 @@ void formatButtonCombination(std::string& line) {
 	}	
 }
 
+uint64_t comboBitmask = 0;
+
 uint64_t MapButtons(const std::string& buttonCombo) {
 	std::map<std::string, uint64_t> buttonMap = {
 		{"A", HidNpadButton_A},
@@ -765,7 +769,7 @@ uint64_t MapButtons(const std::string& buttonCombo) {
 		{"RIGHT", HidNpadButton_AnyRight}
 	};
 
-	uint64_t comboBitmask = 0;
+	
 	std::string comboCopy = buttonCombo;  // Make a copy of buttonCombo
 
 	std::string delimiter = "+";
@@ -788,13 +792,13 @@ uint64_t MapButtons(const std::string& buttonCombo) {
 	return comboBitmask;
 }
 
-ALWAYS_INLINE bool isKeyComboPressed(uint64_t keysHeld, uint64_t keysDown, uint64_t comboBitmask) {
+ALWAYS_INLINE bool isKeyComboPressed(uint64_t keysHeld, uint64_t keysDown) {
     // Static variables to track the state and hold time
     static uint64_t holdStartTime = 0;
     static bool isHolding = false; // Tracks if the keys are currently being held for 0.3 seconds
 
     // If the combo is first pressed, start tracking
-    if ((keysDown & comboBitmask) == comboBitmask) {
+    if (!isHolding && (keysHeld & comboBitmask) == comboBitmask) {
         holdStartTime = armGetSystemTick(); // Record start time
         isHolding = true;
     }
@@ -807,12 +811,40 @@ ALWAYS_INLINE bool isKeyComboPressed(uint64_t keysHeld, uint64_t keysDown, uint6
         if (elapsed >= 300000000) {
             isHolding = false; // Stop further duration checks
             holdStartTime = 0; // Reset timing
+            fixHiding = true; // for fixing hiding when returning
             return true; // Return false until released
         }
     }
 
     return false; // Default return if conditions are not met
 }
+
+
+
+// Helper function to check if comboBitmask is satisfied with at least one key in keysDown and the rest in keysHeld
+bool isKeyComboPressed2(uint64_t keysDown, uint64_t keysHeld) {
+    uint64_t requiredKeys = comboBitmask;
+    bool hasKeyDown = false; // Tracks if at least one key is in keysDown
+
+    // Iterate over each bit in the comboBitmask
+    while (requiredKeys) {
+        uint64_t keyBit = requiredKeys & ~(requiredKeys - 1); // Get the lowest bit set in requiredKeys
+
+        // Check if the key is in keysDown or keysHeld
+        if (keysDown & keyBit) {
+            hasKeyDown = true; // Found at least one key in keysDown
+        } else if (!(keysHeld & keyBit)) {
+            return false; // If the key is neither in keysDown nor keysHeld, the combo is incomplete
+        }
+
+        // Remove the lowest bit and continue to check other keys
+        requiredKeys &= ~keyBit;
+    }
+
+    // Ensure that at least one key was in keysDown and the rest were in keysHeld
+    return hasKeyDown;
+}
+
 
 // Custom utility function for parsing an ini file
 void ParseIniFile() {

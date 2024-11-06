@@ -1,6 +1,5 @@
 class MicroOverlay : public tsl::Gui {
 private:
-	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char GPU_Load_c[32] = "";
 	char Rotation_SpeedLevel_c[64] = "";
 	char RAM_var_compressed_c[128] = "";
@@ -347,7 +346,7 @@ public:
 		
 	}
 	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
+		if (isKeyComboPressed(keysHeld, keysDown)) {
 			TeslaFPS = 60;
             if (skipMain)
                 tsl::goBack();
