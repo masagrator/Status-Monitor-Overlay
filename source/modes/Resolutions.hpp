@@ -88,7 +88,7 @@ public:
 			}
 		
 			// Drawing when game is running and NVN is used
-			if (gameStart && *API_shared == 1) {
+			if (gameStart && (NxFps -> API) == 1) {
 				renderer->drawRect(base_x, base_y, 360, 200, renderer->a(settings.backgroundColor));
 		
 				renderer->drawString("Depth:", false, base_x + 20, base_y + 20, 20, renderer->a(settings.catColor));
@@ -107,7 +107,7 @@ public:
 						break;
 				}
 		
-				if (gameStart && *API_shared > 1) {
+				if (gameStart && (NxFps -> API) > 1) {
 					renderer->drawRect(base_x, base_y, 360, 28, renderer->a(settings.backgroundColor));
 					renderer->drawString("Game doesn't use NVN, it's incompatible.", false, base_x, base_y + 20, 18, renderer->a(0xF00F));
 				}
