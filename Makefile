@@ -38,7 +38,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	Status Monitor
-APP_VERSION	:=	1.1.5+
+APP_VERSION	:=	1.1.6+
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source lib/libultrahand/libultra/source #lib/libultrahand/libtesla/source
@@ -51,7 +51,7 @@ NO_ICON		:=  1
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+simd+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	-g -Wall -Os -ffunction-sections -flto -fomit-frame-pointer\
+CFLAGS	:=	-g -Wall -Wno-address-of-packed-member -Os -ffunction-sections -flto -fomit-frame-pointer\
 			$(ARCH) $(DEFINES)
 
 # For compiling Ultrahand Overlay only

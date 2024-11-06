@@ -134,6 +134,35 @@ uint32_t GPU_Load_u = 0;
 bool GPULoadPerFrame = true;
 
 //NX-FPS
+
+struct resolutionCalls {
+	uint16_t width;
+	uint16_t height;
+	uint16_t calls;
+};
+
+struct NxFpsSharedBlock {
+	uint32_t MAGIC;
+	uint8_t FPS;
+	float FPSavg;
+	bool pluginActive;
+	uint8_t FPSlocked;
+	uint8_t FPSmode;
+	uint8_t ZeroSync;
+	uint8_t patchApplied;
+	uint8_t API;
+	uint32_t FPSticks[10];
+	uint8_t Buffers;
+	uint8_t SetBuffers;
+	uint8_t ActiveBuffers;
+	uint8_t SetActiveBuffers;
+	uint8_t displaySync;
+	resolutionCalls renderCalls[8];
+	resolutionCalls viewportCalls[8];
+	bool forceOriginalRefreshRate;
+} NX_PACKED;
+
+NxFpsSharedBlock* NxFps = 0;
 bool GameRunning = false;
 bool check = true;
 bool SaltySD = false;
@@ -144,21 +173,7 @@ uint32_t FPS = 0xFE;
 float FPSavg = 254;
 SharedMemory _sharedmemory = {};
 bool SharedMemoryUsed = false;
-uint32_t* MAGIC_shared = 0;
-uint8_t* FPS_shared = 0;
-uint8_t* API_shared = 0;
-float* FPSavg_shared = 0;
-bool* pluginActive = 0;
-uint32_t* FPSticks_shared = 0;
 Handle remoteSharedMemory = 1;
-
-struct resolutionCalls {
-	uint16_t width;
-	uint16_t height;
-	uint16_t calls;
-};
-resolutionCalls* renderCalls_shared = 0;
-resolutionCalls* viewportCalls_shared = 0;
 
 //Read real freqs from sys-clk sysmodule
 uint32_t realCPU_Hz = 0;
@@ -208,16 +223,17 @@ void LoadSharedMemory() {
 	else FPS = 1234;
 }
 
-ptrdiff_t searchSharedMemoryBlock(uintptr_t base) {
+void searchSharedMemoryBlock(uintptr_t base) {
 	ptrdiff_t search_offset = 0;
 	while(search_offset < 0x1000) {
-		MAGIC_shared = (uint32_t*)(base + search_offset);
-		if (*MAGIC_shared == 0x465053) {
-			return search_offset;
+		NxFps = (NxFpsSharedBlock*)(base + search_offset);
+		if (NxFps -> MAGIC == 0x465053) {
+			return;
 		}
 		else search_offset += 4;
 	}
-	return -1;
+	NxFps = 0;
+	return;
 }
 
 //Check if SaltyNX is working
@@ -248,10 +264,10 @@ void CheckIfGameRunning(void*) {
 		if (!check && R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
 			GameRunning = false;
 			if (SharedMemoryUsed) {
-				*MAGIC_shared = 0;
-				*pluginActive = false;
-				*FPS_shared = 0;
-				*FPSavg_shared = 0.0;
+				(NxFps -> MAGIC) = 0;
+				(NxFps -> pluginActive) = false;
+				(NxFps -> FPS) = 0;
+				(NxFps -> FPSavg) = 0.0;
 				FPS = 254;
 				FPSavg = 254.0;
 			}
@@ -259,18 +275,11 @@ void CheckIfGameRunning(void*) {
 		}
 		else if (!GameRunning && SharedMemoryUsed) {
 				uintptr_t base = (uintptr_t)shmemGetAddr(&_sharedmemory);
-				ptrdiff_t rel_offset = searchSharedMemoryBlock(base);
-				if (rel_offset > -1) {
-					FPS_shared = (uint8_t*)(base + rel_offset + 4);
-					FPSavg_shared = (float*)(base + rel_offset + 5);
-					pluginActive = (bool*)(base + rel_offset + 9);
-					API_shared = (uint8_t*)(base + rel_offset + 14);
-					FPSticks_shared = (uint32_t*)(base + rel_offset + 15);
-					renderCalls_shared = (resolutionCalls*)(base + rel_offset + 60);
-					viewportCalls_shared = (resolutionCalls*)(base + rel_offset + 60 + (sizeof(resolutionCalls) * 8));
-					*pluginActive = false;
+				searchSharedMemoryBlock(base);
+				if (NxFps) {
+					(NxFps -> pluginActive) = false;
 					svcSleepThread(100'000'000);
-					if (*pluginActive) {
+					if ((NxFps -> pluginActive)) {
 						GameRunning = true;
 						check = false;
 					}
@@ -489,8 +498,8 @@ void Misc(void*) {
 		//FPS
 		if (GameRunning) {
 			if (SharedMemoryUsed) {
-				FPS = *FPS_shared;
-				FPSavg = 19'200'000.f / (std::accumulate<uint32_t*, float>(FPSticks_shared, FPSticks_shared+10, 0) / 10);
+				FPS = (NxFps -> FPS);
+				FPSavg = 19'200'000.f / (std::accumulate<uint32_t*, float>(&(NxFps -> FPSticks[0]), &(NxFps -> FPSticks[10]), 0) / 10);
 			}
 		}
 		else FPSavg = 254;
@@ -624,8 +633,8 @@ void FPSCounter(void*) {
 	while (!threadexit) {
 		if (GameRunning) {
 			if (SharedMemoryUsed) {
-				FPS = *FPS_shared;
-				FPSavg = 19'200'000.f / (std::accumulate<uint32_t*, float>(FPSticks_shared, FPSticks_shared+10, 0) / 10);
+				FPS = (NxFps -> FPS);
+				FPSavg = 19'200'000.f / (std::accumulate<uint32_t*, float>(&(NxFps -> FPSticks[0]), &(NxFps -> FPSticks[10]), 0) / 10);
 			}
 		}
 		else FPSavg = 254;

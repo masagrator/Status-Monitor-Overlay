@@ -335,17 +335,17 @@ public:
 			skin_temperaturemiliC / 1000, (skin_temperaturemiliC / 100) % 10);
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%%", Rotation_Duty);
 
-		if (GameRunning && renderCalls_shared && resolutionShow) {
+		if (GameRunning && NxFps && resolutionShow) {
 			if (!resolutionLookup) {
-				renderCalls_shared[0].calls = 0xFFFF;
+				(NxFps -> renderCalls[0].calls) = 0xFFFF;
 				resolutionLookup = 1;
 			}
 			else if (resolutionLookup == 1) {
-				if (renderCalls_shared[0].calls != 0xFFFF) resolutionLookup = 2;
+				if ((NxFps -> renderCalls[0].calls) != 0xFFFF) resolutionLookup = 2;
 			}
 			else {
-				memcpy(&m_resolutionRenderCalls, renderCalls_shared, sizeof(m_resolutionRenderCalls));
-				memcpy(&m_resolutionViewportCalls, viewportCalls_shared, sizeof(m_resolutionViewportCalls));
+				memcpy(&m_resolutionRenderCalls, &(NxFps -> renderCalls), sizeof(m_resolutionRenderCalls));
+				memcpy(&m_resolutionViewportCalls, &(NxFps -> viewportCalls), sizeof(m_resolutionViewportCalls));
 				qsort(m_resolutionRenderCalls, 8, sizeof(resolutionCalls), compare);
 				qsort(m_resolutionViewportCalls, 8, sizeof(resolutionCalls), compare);
 				memset(&m_resolutionOutput, 0, sizeof(m_resolutionOutput));
@@ -464,10 +464,10 @@ public:
 					strcat(Temp, "\n");
 				}
 				char Temp_s[32] = "";
-				if (*API_shared == 2) {
+				if (NxFps -> API == 2) {
 					snprintf(Temp_s, sizeof(Temp_s), "EGL");
 				}
-				else if (*API_shared == 3) {
+				else if (NxFps -> API == 3) {
 					snprintf(Temp_s, sizeof(Temp_s), "Vulkan");
 				}
 				else snprintf(Temp_s, sizeof(Temp_s), "%dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);

@@ -126,17 +126,17 @@ public:
 
 	virtual void update() override {
 
-		if (gameStart && renderCalls_shared) {
+		if (gameStart && NxFps) {
 			if (!resolutionLookup) {
-				renderCalls_shared[0].calls = 0xFFFF;
+				NxFps -> renderCalls[0].calls = 0xFFFF;
 				resolutionLookup = 1;
 			}
 			else if (resolutionLookup == 1) {
-				if (renderCalls_shared[0].calls != 0xFFFF) resolutionLookup = 2;
+				if ((NxFps -> renderCalls[0].calls) != 0xFFFF) resolutionLookup = 2;
 				else return;
 			}
-			memcpy(&m_resolutionRenderCalls, renderCalls_shared, sizeof(m_resolutionRenderCalls));
-			memcpy(&m_resolutionViewportCalls, viewportCalls_shared, sizeof(m_resolutionViewportCalls));
+			memcpy(&m_resolutionRenderCalls, &(NxFps -> renderCalls), sizeof(m_resolutionRenderCalls));
+			memcpy(&m_resolutionViewportCalls, &(NxFps -> viewportCalls), sizeof(m_resolutionViewportCalls));
 			qsort(m_resolutionRenderCalls, 8, sizeof(resolutionCalls), compare);
 			qsort(m_resolutionViewportCalls, 8, sizeof(resolutionCalls), compare);
 			snprintf(Resolutions_c, sizeof Resolutions_c,
