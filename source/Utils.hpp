@@ -962,6 +962,7 @@ void ParseIniFile() {
 			}
 		}
 	}
+	comboBitmask = MapButtons(keyCombo);
 }
 
 
