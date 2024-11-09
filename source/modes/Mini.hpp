@@ -1,6 +1,5 @@
 class MiniOverlay : public tsl::Gui {
 private:
-	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char GPU_Load_c[32] = "";
 	char Rotation_SpeedLevel_c[64] = "";
 	char RAM_var_compressed_c[128] = "";
@@ -26,12 +25,12 @@ public:
 			case 1:
 			case 4:
 			case 7:
-				tsl::gfx::Renderer::getRenderer().setLayerPos(624, 0);
+				tsl::gfx::Renderer::get().setLayerPos(624, 0);
 				break;
 			case 2:
 			case 5:
 			case 8:
-				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+				tsl::gfx::Renderer::get().setLayerPos(1248, 0);
 				break;
 		}
 		mutexInit(&mutex_BatteryChecker);
@@ -63,154 +62,160 @@ public:
 		rootFrame = new tsl::elm::OverlayFrame("", "");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
-			
-			if (!Initialized) {
-				std::pair<u32, u32> dimensions;
-				rectangleWidth = 0;
-				for (std::string key : tsl::hlp::split(settings.show, '+')) {
-					if (!key.compare("CPU")) {
-						dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
-						if (rectangleWidth < dimensions.first)
-							rectangleWidth = dimensions.first;
-					}
-					else if (!key.compare("GPU") || (!key.compare("RAM") && settings.showRAMLoad && R_SUCCEEDED(sysclkCheck))) {
-						dimensions = renderer->drawString("100.0%@4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
-						if (rectangleWidth < dimensions.first)
-							rectangleWidth = dimensions.first;
-					}
-					else if (!key.compare("RAM") && (!settings.showRAMLoad || R_FAILED(sysclkCheck))) {
-						dimensions = renderer->drawString("4444/4444MB@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
-						if (rectangleWidth < dimensions.first)
-							rectangleWidth = dimensions.first;
-					}
-					else if (!key.compare("TEMP")) {
-						dimensions = renderer->drawString("88.8\u00B0C/88.8\u00B0C/88.8\u00B0C", false, 0, fontsize, fontsize, renderer->a(0x0000));
-						if (rectangleWidth < dimensions.first)
-							rectangleWidth = dimensions.first;
-					}
-					else if (!key.compare("DRAW")) {
-						dimensions = renderer->drawString("-44.44W[44:44]", false, 0, fontsize, fontsize, renderer->a(0x0000));
-						if (rectangleWidth < dimensions.first)
-							rectangleWidth = dimensions.first;
-					}
-					else if (!key.compare("FAN")) {
-						dimensions = renderer->drawString("100.0%", false, 0, fontsize, fontsize, renderer->a(0x0000));
-						if (rectangleWidth < dimensions.first)
-							rectangleWidth = dimensions.first;
-					}
-					else if (!key.compare("FPS")) {
-						dimensions = renderer->drawString("444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
-						if (rectangleWidth < dimensions.first)
-							rectangleWidth = dimensions.first;
-					}
-					else if (!key.compare("RES")) {
-						dimensions = renderer->drawString("3840x2160 || 3840x2160", false, 0, fontsize, fontsize, renderer->a(0x0000));
-						if (rectangleWidth < dimensions.first)
-							rectangleWidth = dimensions.first;
-					}
-				}
-				Initialized = true;
-			}
-			
-			char print_text[36] = "";
-			size_t entry_count = 0;
-			uint8_t flags = 0;
-			for (std::string key : tsl::hlp::split(settings.show, '+')) {
-				if (!key.compare("CPU") && !(flags & 1 << 0)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "CPU");
-					entry_count++;
-					flags |= (1 << 0);
-				}
-				else if (!key.compare("GPU") && !(flags & 1 << 1)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "GPU");
-					entry_count++;
-					flags |= (1 << 1);
-				}
-				else if (!key.compare("RAM") && !(flags & 1 << 2)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "RAM");
-					entry_count++;
-					flags |= (1 << 2);
-				}
-				else if (!key.compare("TEMP") && !(flags & 1 << 3)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "TEMP");
-					entry_count++;
-					flags |= (1 << 3);
-				}
-				else if (!key.compare("DRAW") && !(flags & 1 << 4)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "DRAW");
-					entry_count++;
-					flags |= (1 << 4);
-				}
-				else if (!key.compare("FAN") && !(flags & 1 << 5)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "FAN");
-					entry_count++;
-					flags |= (1 << 5);
-				}
-				else if (!key.compare("FPS") && !(flags & 1 << 6) && GameRunning) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "FPS");
-					entry_count++;
-					flags |= (1 << 6);
-				}
-				else if (!key.compare("RES") && !(flags & 1 << 7) && GameRunning) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "RES");
-					entry_count++;
-					resolutionShow = true;
-					flags |= (1 << 7);
-				}
-			}
-
-			uint32_t height = (fontsize * entry_count) + (fontsize / 3);
-			uint32_t margin = (fontsize * 4);
-
-			int base_x = 0;
-			int base_y = 0;
-			switch(settings.setPos) {
-				case 1:
-					base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
-					break;
-				case 4:
-					base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
-					base_y = 360 - height / 2;
-					break;
-				case 7:
-					base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
-					base_y = 720 - height;
-					break;
-				case 2:
-					base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
-					break;
-				case 5:
-					base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
-					base_y = 360 - height / 2;
-					break;
-				case 8:
-					base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
-					base_y = 720 - height;
-					break;
-			}
-			
-			renderer->drawRect(base_x, base_y, margin + rectangleWidth + (fontsize / 3), height, a(settings.backgroundColor));
-			renderer->drawString(print_text, false, base_x, base_y + fontsize, fontsize, renderer->a(settings.catColor));
-			
-			///GPU
-			renderer->drawString(Variables, false, base_x + margin, base_y + fontsize, fontsize, renderer->a(settings.textColor));
+		    const u16 frameWidth = 448;  // The width of the frame is 448
+		    if (!Initialized) {
+		        std::pair<u32, u32> dimensions;
+		        rectangleWidth = 0;
+		        for (std::string key : ult::split(settings.show, '+')) {
+		            if (!key.compare("CPU")) {
+		                dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
+		                if (rectangleWidth < dimensions.first)
+		                    rectangleWidth = dimensions.first;
+		            }
+		            else if (!key.compare("GPU") || (!key.compare("RAM") && settings.showRAMLoad && R_SUCCEEDED(sysclkCheck))) {
+		                dimensions = renderer->drawString("100.0%@4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+		                if (rectangleWidth < dimensions.first)
+		                    rectangleWidth = dimensions.first;
+		            }
+		            else if (!key.compare("RAM") && (!settings.showRAMLoad || R_FAILED(sysclkCheck))) {
+		                dimensions = renderer->drawString("4444/4444MB@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
+		                if (rectangleWidth < dimensions.first)
+		                    rectangleWidth = dimensions.first;
+		            }
+		            else if (!key.compare("TEMP")) {
+		                dimensions = renderer->drawString("88.8\u00B0C/88.8\u00B0C/88.8\u00B0C", false, 0, fontsize, fontsize, renderer->a(0x0000));
+		                if (rectangleWidth < dimensions.first)
+		                    rectangleWidth = dimensions.first;
+		            }
+		            else if (!key.compare("DRAW")) {
+		                dimensions = renderer->drawString("-44.44W[44:44]", false, 0, fontsize, fontsize, renderer->a(0x0000));
+		                if (rectangleWidth < dimensions.first)
+		                    rectangleWidth = dimensions.first;
+		            }
+		            else if (!key.compare("FAN")) {
+		                dimensions = renderer->drawString("100.0%", false, 0, fontsize, fontsize, renderer->a(0x0000));
+		                if (rectangleWidth < dimensions.first)
+		                    rectangleWidth = dimensions.first;
+		            }
+		            else if (!key.compare("FPS")) {
+		                dimensions = renderer->drawString("444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+		                if (rectangleWidth < dimensions.first)
+		                    rectangleWidth = dimensions.first;
+		            }
+		            else if (!key.compare("RES")) {
+		                dimensions = renderer->drawString("3840x2160 || 3840x2160", false, 0, fontsize, fontsize, renderer->a(0x0000));
+		                if (rectangleWidth < dimensions.first)
+		                    rectangleWidth = dimensions.first;
+		            }
+		        }
+		        Initialized = true;
+		    }
+		
+		    char print_text[36] = "";
+		    size_t entry_count = 0;
+		    uint8_t flags = 0;
+		    for (std::string key : ult::split(settings.show, '+')) {
+		        if (!key.compare("CPU") && !(flags & 1 << 0)) {
+		            if (print_text[0])
+		                strcat(print_text, "\n");
+		            strcat(print_text, "CPU");
+		            entry_count++;
+		            flags |= (1 << 0);
+		        }
+		        else if (!key.compare("GPU") && !(flags & 1 << 1)) {
+		            if (print_text[0])
+		                strcat(print_text, "\n");
+		            strcat(print_text, "GPU");
+		            entry_count++;
+		            flags |= (1 << 1);
+		        }
+		        else if (!key.compare("RAM") && !(flags & 1 << 2)) {
+		            if (print_text[0])
+		                strcat(print_text, "\n");
+		            strcat(print_text, "RAM");
+		            entry_count++;
+		            flags |= (1 << 2);
+		        }
+		        else if (!key.compare("TEMP") && !(flags & 1 << 3)) {
+		            if (print_text[0])
+		                strcat(print_text, "\n");
+		            strcat(print_text, "TEMP");
+		            entry_count++;
+		            flags |= (1 << 3);
+		        }
+		        else if (!key.compare("DRAW") && !(flags & 1 << 4)) {
+		            if (print_text[0])
+		                strcat(print_text, "\n");
+		            strcat(print_text, "DRAW");
+		            entry_count++;
+		            flags |= (1 << 4);
+		        }
+		        else if (!key.compare("FAN") && !(flags & 1 << 5)) {
+		            if (print_text[0])
+		                strcat(print_text, "\n");
+		            strcat(print_text, "FAN");
+		            entry_count++;
+		            flags |= (1 << 5);
+		        }
+		        else if (!key.compare("FPS") && !(flags & 1 << 6) && GameRunning) {
+		            if (print_text[0])
+		                strcat(print_text, "\n");
+		            strcat(print_text, "FPS");
+		            entry_count++;
+		            flags |= (1 << 6);
+		        }
+		        else if (!key.compare("RES") && !(flags & 1 << 7) && GameRunning) {
+		            if (print_text[0])
+		                strcat(print_text, "\n");
+		            strcat(print_text, "RES");
+		            entry_count++;
+		            resolutionShow = true;
+		            flags |= (1 << 7);
+		        }
+		    }
+		
+		    uint32_t height = (fontsize * entry_count) + (fontsize / 3);
+		    uint32_t margin = (fontsize * 4);
+		
+		    int base_x = 0;
+		    int base_y = 0;
+		
+		    if (ult::useRightAlignment) {
+		        base_x = frameWidth - (margin + rectangleWidth + (fontsize / 3));
+		    } else {
+		        switch (settings.setPos) {
+		            case 1:
+		                base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
+		                break;
+		            case 4:
+		                base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
+		                base_y = 360 - height / 2;
+		                break;
+		            case 7:
+		                base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
+		                base_y = 720 - height;
+		                break;
+		            case 2:
+		                base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
+		                break;
+		            case 5:
+		                base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
+		                base_y = 360 - height / 2;
+		                break;
+		            case 8:
+		                base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
+		                base_y = 720 - height;
+		                break;
+		        }
+		    }
+		
+		    renderer->drawRect(base_x, base_y, margin + rectangleWidth + (fontsize / 3), height, renderer->a(settings.backgroundColor));
+		    renderer->drawString(print_text, false, base_x, base_y + fontsize, fontsize, renderer->a(settings.catColor));
+		
+		    /// GPU
+		    renderer->drawString(Variables, false, base_x + margin, base_y + fontsize, fontsize, renderer->a(settings.textColor));
 		});
+		
 
 		rootFrame->setContent(Status);
 
@@ -401,7 +406,7 @@ public:
 		///FPS
 		char Temp[256] = "";
 		uint8_t flags = 0;
-		for (std::string key : tsl::hlp::split(settings.show, '+')) {
+		for (std::string key : ult::split(settings.show, '+')) {
 			if (!key.compare("CPU") && !(flags & 1 << 0)) {
 				if (Temp[0]) {
 					strcat(Temp, "\n");
@@ -483,8 +488,8 @@ public:
 		mutexUnlock(&mutex_BatteryChecker);
 
 	}
-	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		if (isKeyComboPressed(keysHeld, keysDown)) {
 			TeslaFPS = 60;
 			tsl::goBack();
 			return true;

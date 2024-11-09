@@ -1,6 +1,5 @@
 class FullOverlay : public tsl::Gui {
 private:
-	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char DeltaCPU_c[12] = "";
 	char DeltaGPU_c[12] = "";
 	char DeltaRAM_c[12] = "";
@@ -36,7 +35,7 @@ public:
 		TeslaFPS = settings.refreshRate;
 		systemtickfrequency_impl /= settings.refreshRate;
 		if (settings.setPosRight) {
-			tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+			tsl::gfx::Renderer::get().setLayerPos(1248, 0);
 		}
 		deactivateOriginalFooter = true;
 		formatButtonCombination(formattedKeyCombo);
@@ -49,7 +48,7 @@ public:
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
 		if (settings.setPosRight) {
-			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
+			tsl::gfx::Renderer::get().setLayerPos(0, 0);
 		}
 		deactivateOriginalFooter = false;
 	}
@@ -60,7 +59,7 @@ public:
 	uint8_t resolutionLookup = 0;
 
     virtual tsl::elm::Element* createUI() override {
-		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
+		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION, true);
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
@@ -154,9 +153,9 @@ public:
 					}
 				}
 				if (R_SUCCEEDED(Hinted)) {
-					static auto dimensions = renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, 0, height_offset + 40, 15, renderer->a(0x0000));
+					static auto width = tsl::gfx::calculateStringWidth("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", 15, false);
 					renderer->drawString("Total: \nApplication: \nApplet: \nSystem: \nSystem Unsafe: ", false, COMMON_MARGIN, height_offset + 40, 15, renderer->a(0xFFFF));
-					renderer->drawString(RAM_var_compressed_c, false, COMMON_MARGIN + dimensions.first, height_offset + 40, 15, renderer->a(0xFFFF));
+					renderer->drawString(RAM_var_compressed_c, false, COMMON_MARGIN + width, height_offset + 40, 15, renderer->a(0xFFFF));
 				}
 			}
 			
@@ -165,11 +164,11 @@ public:
 				renderer->drawString("Board:", false, 20, 550, 20, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(i2cCheck)) renderer->drawString(BatteryDraw_c, false, COMMON_MARGIN, 575, 15, renderer->a(0xFFFF));
 				if (R_SUCCEEDED(i2cCheck) || R_SUCCEEDED(tcCheck)) {
-					static auto dimensions1 = renderer->drawString("Temperatures: ", false, 0, 590, 15, renderer->a(0x0000));
-					static auto dimensions2 = renderer->drawString("SoC \nPCB \nSkin ", false, 0, 590, 15, renderer->a(0x0000));
+					static auto width1 = tsl::gfx::calculateStringWidth("Temperatures: ", 15, false);
+					static auto width2 = tsl::gfx::calculateStringWidth("SoC \nPCB \nSkin ", 15, false);
 					renderer->drawString("Temperatures:", false, COMMON_MARGIN, 590, 15, renderer->a(0xFFFF));
-					renderer->drawString("SoC\nPCB\nSkin", false, COMMON_MARGIN + dimensions1.first, 590, 15, renderer->a(0xFFFF));
-					renderer->drawString(SoCPCB_temperature_c, false, COMMON_MARGIN + dimensions1.first + dimensions2.first, 590, 15, renderer->a(0xFFFF));
+					renderer->drawString("SoC\nPCB\nSkin", false, COMMON_MARGIN + width1, 590, 15, renderer->a(0xFFFF));
+					renderer->drawString(SoCPCB_temperature_c, false, COMMON_MARGIN + width1 + width2, 590, 15, renderer->a(0xFFFF));
 				}
 				if (R_SUCCEEDED(pwmCheck)) renderer->drawString(Rotation_SpeedLevel_c, false, COMMON_MARGIN, 635, 15, renderer->a(0xFFFF));
 			}
@@ -178,7 +177,7 @@ public:
 			if (GameRunning) {
 				uint32_t width_offset = 230;
 				if (settings.showFPS == true) {
-					static auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
+					auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
 					uint32_t offset = COMMON_MARGIN + width_offset + dimensions.first;
 					renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
 				}
@@ -189,7 +188,17 @@ public:
 				}
 			}
 			
-			renderer->drawString(message.c_str(), false, COMMON_MARGIN, 693, 23, renderer->a(0xFFFF));
+			std::string formattedKeyCombo = keyCombo;
+			formatButtonCombination(formattedKeyCombo);
+			
+			static std::string message = "Hold " + formattedKeyCombo + " to Exit";
+			static std::vector<std::string> UNICODE_SYMBOLS = {{
+			    "\uE0E4", "\uE0E5", "\uE0E6", "\uE0E7", "\uE0E8", "\uE0E9",
+			    "\uE0ED", "\uE0EB", "\uE0EE", "\uE0EC", "\uE0E0", "\uE0E1",
+			    "\uE0E2", "\uE0E3", "\uE08A", "\uE08B", "\uE0B6", "\uE0B5"
+			}};
+			//renderer->drawString(message.c_str(), false, COMMON_MARGIN, 693, 23, renderer->a(0xFFFF));
+			renderer->drawStringWithColoredSections(message.c_str(), UNICODE_SYMBOLS, COMMON_MARGIN, 693, 23, a(tsl::bottomTextColor), a(tsl::buttonColor));
 			
 		});
 
@@ -350,8 +359,8 @@ public:
 		mutexUnlock(&mutex_BatteryChecker);
 		
 	}
-	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		if (isKeyComboPressed(keysHeld, keysDown)) {
 			TeslaFPS = 60;
 			tsl::goBack();
 			return true;

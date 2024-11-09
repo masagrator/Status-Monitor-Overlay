@@ -1,6 +1,5 @@
 class com_FPSGraph : public tsl::Gui {
 private:
-	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	uint8_t refreshRate = 0;
 	char FPSavg_c[8];
 	FpsGraphSettings settings;
@@ -18,12 +17,12 @@ public:
 			case 1:
 			case 4:
 			case 7:
-				tsl::gfx::Renderer::getRenderer().setLayerPos(624, 0);
+				tsl::gfx::Renderer::get().setLayerPos(624, 0);
 				break;
 			case 2:
 			case 5:
 			case 8:
-				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+				tsl::gfx::Renderer::get().setLayerPos(1248, 0);
 				break;
 		}
 		StartFPSCounterThread();
@@ -43,7 +42,7 @@ public:
 	~com_FPSGraph() {
 		EndFPSCounterThread();
 		if (settings.setPos)
-			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
+			tsl::gfx::Renderer::get().setLayerPos(0, 0);
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
@@ -113,11 +112,32 @@ public:
 					break;
 			}
 
+		    // Horizontal alignment (base_x)
+		    if (ult::useRightAlignment) {
+		        base_x = 448 - (rectangle_width + 21);  // Align to the right
+		    } else {
+		        // Default horizontal alignment based on settings.setPos
+		        switch (settings.setPos) {
+		            case 1:
+		            case 4:
+		            case 7:
+		                base_x = 224 - ((rectangle_width + 21) / 2);  // Centered horizontally
+		                break;
+		            case 2:
+		            case 5:
+		            case 8:
+		                base_x = 448 - (rectangle_width + 21);  // Align to the right
+		                break;
+		        }
+		    }
+
 			renderer->drawRect(base_x, base_y, rectangle_width + 21, rectangle_height + 12, a(settings.backgroundColor));
 			s16 size = (refreshRate > 60 || !refreshRate) ? 63 : (s32)(63.0/(60.0/refreshRate));
-			std::pair<u32, u32> dimensions = renderer->drawString(FPSavg_c, false, 0, 0, size, renderer->a(0x0000));
+			//std::pair<u32, u32> dimensions = renderer->drawString(FPSavg_c, false, 0, 0, size, renderer->a(0x0000));
+			auto width = tsl::gfx::calculateStringWidth(FPSavg_c, size);
+
 			s16 pos_y = size + base_y + rectangle_y + ((rectangle_height - size) / 2);
-			s16 pos_x = base_x + rectangle_x + ((rectangle_width - dimensions.first) / 2);
+			s16 pos_x = base_x + rectangle_x + ((rectangle_width - width) / 2);
 
 			renderer->drawString(FPSavg_c, false, pos_x, pos_y, size, renderer->a(settings.fpsColor));
 			renderer->drawEmptyRect(base_x+(rectangle_x - 1), base_y+(rectangle_y - 1), rectangle_width + 2, rectangle_height + 4, renderer->a(settings.borderColor));
@@ -237,8 +257,8 @@ public:
 		}
 		
 	}
-	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		if (isKeyComboPressed(keysHeld, keysDown)) {
 			TeslaFPS = 60;
 			tsl::goBack();
 			return true;

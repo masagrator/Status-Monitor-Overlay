@@ -6,6 +6,7 @@
 static tsl::elm::OverlayFrame* rootFrame = nullptr;
 static bool skipMain = false;
 
+
 #include "modes/FPS_Counter.hpp"
 #include "modes/FPS_Graph.hpp"
 #include "modes/Full.hpp"
@@ -14,6 +15,9 @@ static bool skipMain = false;
 #include "modes/Battery.hpp"
 #include "modes/Misc.hpp"
 #include "modes/Resolutions.hpp"
+
+
+
 
 //Graphs
 class GraphsMenu : public tsl::Gui {
@@ -51,7 +55,15 @@ public:
 
 	virtual void update() override {}
 
-	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		if (fixHiding) {
+			if (isKeyComboPressed2(keysDown, keysHeld)) {
+				tsl::Overlay::get()->hide();
+				fixHiding = false;
+				return true;
+			}
+		}
+
 		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;
@@ -108,7 +120,15 @@ public:
 
 	virtual void update() override {}
 
-	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		if (fixHiding) {
+			if (isKeyComboPressed2(keysDown, keysHeld)) {
+				tsl::Overlay::get()->hide();
+				fixHiding = false;
+				return true;
+			}
+		}
+
 		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;
@@ -200,11 +220,20 @@ public:
 
 	virtual void update() override {
 		if (tsl::cfg::LayerPosX || tsl::cfg::LayerPosY) {
-			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
+			tsl::gfx::Renderer::get().setLayerPos(0, 0);
 		}
 	}
 
-	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		
+		if (fixHiding) {
+			if (isKeyComboPressed2(keysDown, keysHeld)) {
+				tsl::Overlay::get()->hide();
+				fixHiding = false;
+				return true;
+			}
+		}
+
 		if (keysDown & KEY_B) {
 			tsl::goBack();
 			return true;
@@ -364,8 +393,8 @@ int main(int argc, char **argv) {
 	}
 	for (u8 arg = 0; arg < argc; arg++) {
 		if (strcasecmp(argv[arg], "--microOverlay_") == 0) {
-			framebufferWidth = 1280;
-			framebufferHeight = 28;
+			ult::DefaultFramebufferWidth = 1280;
+			ult::DefaultFramebufferHeight = 28;
 			FILE* test = fopen(std::string(folderpath + filename).c_str(), "rb");
 			if (test) {
 				fclose(test);
@@ -381,8 +410,8 @@ int main(int argc, char **argv) {
 			return tsl::loop<MicroMode>(argc, argv);
 		} else if (strcasecmp(argv[arg], "--microOverlay") == 0) {
             skipMain = true;
-			framebufferWidth = 1280;
-			framebufferHeight = 28;
+			ult::DefaultFramebufferWidth = 1280;
+			ult::DefaultFramebufferHeight = 28;
 			FILE* test = fopen(std::string(folderpath + filename).c_str(), "rb");
 			if (test) {
 				fclose(test);

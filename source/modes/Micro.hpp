@@ -1,6 +1,5 @@
 class MicroOverlay : public tsl::Gui {
 private:
-	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
 	char GPU_Load_c[32] = "";
 	char Rotation_SpeedLevel_c[64] = "";
 	char RAM_var_compressed_c[128] = "";
@@ -38,7 +37,9 @@ public:
 		}
 		else fontsize = settings.dockedFontSize;
 		if (settings.setPosBottom) {
-			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 1038);
+			//auto [horizontalUnderscanPixels, verticalUnderscanPixels] = tsl::gfx::getUnderscanPixels();
+			//tsl::gfx::Renderer::get().setLayerPos(0, 1038-verticalUnderscanPixels);
+			tsl::gfx::Renderer::get().setLayerPos(0, 1038);
 		}
 		mutexInit(&mutex_BatteryChecker);
 		mutexInit(&mutex_Misc);
@@ -72,7 +73,7 @@ public:
 				text_width = 0;
 				int8_t entry_count = -1;
 				uint8_t flags = 0;
-				for (std::string key : tsl::hlp::split(settings.show, '+')) {
+				for (std::string key : ult::split(settings.show, '+')) {
 					if (!key.compare("CPU") && !(flags & 1 << 0)) {
 						text_width += CPU_dimensions.first;
 						entry_count += 1;
@@ -109,12 +110,12 @@ public:
 				tsl::hlp::requestForeground(false);
 			}
 
-			u32 base_y = 0;
+			u32 base_y = 3;
 			if (settings.setPosBottom) {
 				base_y = tsl::cfg::FramebufferHeight - (fontsize + (fontsize / 4));
 			}
 
-			renderer->drawRect(0, base_y, tsl::cfg::FramebufferWidth, fontsize + (fontsize / 4), a(settings.backgroundColor));
+			//renderer->drawRect(0, base_y, tsl::cfg::FramebufferWidth, fontsize + (fontsize / 4), a(settings.backgroundColor));
 
 			uint32_t offset = 0;
 			if (settings.alignTo == 1) {
@@ -130,7 +131,7 @@ public:
 				else offset = tsl::cfg::FramebufferWidth - text_width;
 			}
 			uint8_t flags = 0;
-			for (std::string key : tsl::hlp::split(settings.show, '+')) {
+			for (std::string key : ult::split(settings.show, '+')) {
 				if (!key.compare("CPU") && !(flags & 1 << 0)) {
 					auto dimensions_s = renderer->drawString("CPU", false, offset, base_y+fontsize, fontsize, renderer->a(settings.catColor));
 					uint32_t offset_s = offset + dimensions_s.first + margin;
@@ -346,8 +347,8 @@ public:
 		
 		
 	}
-	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		if (isKeyComboPressed(keysHeld, keysDown)) {
 			TeslaFPS = 60;
             if (skipMain)
                 tsl::goBack();

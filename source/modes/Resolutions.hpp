@@ -1,6 +1,5 @@
 class ResolutionsOverlay : public tsl::Gui {
 private:
-	uint64_t mappedButtons = MapButtons(keyCombo);
 	char Resolutions_c[512];
 	char Resolutions2_c[512];
 	ResolutionSettings settings;
@@ -11,12 +10,12 @@ public:
 			case 1:
 			case 4:
 			case 7:
-				tsl::gfx::Renderer::getRenderer().setLayerPos(639, 0);
+				tsl::gfx::Renderer::get().setLayerPos(639, 0);
 				break;
 			case 2:
 			case 5:
 			case 8:
-				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+				tsl::gfx::Renderer::get().setLayerPos(1248, 0);
 				break;
 		}
 		StartFPSCounterThread();
@@ -34,7 +33,7 @@ public:
 		alphabackground = 0xD;
 		FullMode = true;
 		if (settings.setPos)
-			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
+			tsl::gfx::Renderer::get().setLayerPos(0, 0);
 	}
 
 	resolutionCalls m_resolutionRenderCalls[8] = {0};
@@ -48,6 +47,9 @@ public:
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			int base_y = 0;
 			int base_x = 0;
+			const int frameWidth = 448; // Assuming the frame width is 448 pixels
+		
+			// Adjust base_x and base_y based on setPos
 			switch(settings.setPos) {
 				case 1:
 					base_x = 48;
@@ -78,15 +80,22 @@ public:
 					base_y = 520;
 					break;	
 			}
-
-			if (gameStart && NxFps -> API == 1) {
-				renderer->drawRect(base_x, base_y, 360, 200, a(settings.backgroundColor));
-
-				renderer->drawString("Depth:", false, base_x+20, base_y+20, 20, renderer->a(settings.catColor));
-				renderer->drawString(Resolutions_c, false, base_x+20, base_y+55, 18, renderer->a(settings.textColor));
-				renderer->drawString("Viewport:", false, base_x+180, base_y+20, 20, renderer->a(settings.catColor));
-				renderer->drawString(Resolutions2_c, false, base_x+180, base_y+55, 18, renderer->a(settings.textColor));
+		
+			// Adjust for right-side alignment
+			if (ult::useRightAlignment) {
+				base_x = frameWidth - base_x - 360; // Subtract width of the box (360px) from the frame width
 			}
+		
+			// Drawing when game is running and NVN is used
+			if (gameStart && (NxFps -> API) == 1) {
+				renderer->drawRect(base_x, base_y, 360, 200, renderer->a(settings.backgroundColor));
+		
+				renderer->drawString("Depth:", false, base_x + 20, base_y + 20, 20, renderer->a(settings.catColor));
+				renderer->drawString(Resolutions_c, false, base_x + 20, base_y + 55, 18, renderer->a(settings.textColor));
+				renderer->drawString("Viewport:", false, base_x + 180, base_y + 20, 20, renderer->a(settings.catColor));
+				renderer->drawString(Resolutions2_c, false, base_x + 180, base_y + 55, 18, renderer->a(settings.textColor));
+			}
+			// When game is not using NVN or is incompatible
 			else {
 				switch(settings.setPos) {
 					case 3 ... 5:
@@ -96,16 +105,18 @@ public:
 						base_y = 692;
 						break;
 				}
-				if (gameStart && NxFps -> API > 1) {
-					renderer->drawRect(base_x, base_y, 360, 28, a(settings.backgroundColor));
-					renderer->drawString("Game doesn't use NVN, it's incompatible.", false, base_x, base_y+20, 18, renderer->a(0xF00F));				
+		
+				if (gameStart && (NxFps -> API) > 1) {
+					renderer->drawRect(base_x, base_y, 360, 28, renderer->a(settings.backgroundColor));
+					renderer->drawString("Game doesn't use NVN, it's incompatible.", false, base_x, base_y + 20, 18, renderer->a(0xF00F));
 				}
 				else {
-					renderer->drawRect(base_x, base_y, 360, 28, a(settings.backgroundColor));
-					renderer->drawString("Game is not running or it's incompatible.", false, base_x, base_y+20, 18, renderer->a(0xF00F));
+					renderer->drawRect(base_x, base_y, 360, 28, renderer->a(settings.backgroundColor));
+					renderer->drawString("Game is not running or it's incompatible.", false, base_x, base_y + 20, 18, renderer->a(0xF00F));
 				}
 			}
 		});
+
 
 		rootFrame->setContent(Status);
 
@@ -172,8 +183,8 @@ public:
 			resolutionLookup = false;
 		}
 	}
-	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
+	virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
+		if (isKeyComboPressed(keysHeld, keysDown)) {
 			tsl::goBack();
 			return true;
 		}

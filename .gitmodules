@@ -1,6 +1,6 @@
-[submodule "lib/libtesla"]
-	path = lib/libtesla
-	url = https://github.com/masagrator/libtesla
 [submodule "lib/Atmosphere-libs"]
 	path = lib/Atmosphere-libs
 	url = https://github.com/Atmosphere-NX/Atmosphere-libs
+[submodule "lib/libultrahand"]
+	path = lib/libultrahand
+	url = https://github.com/ppkantorski/libultrahand
