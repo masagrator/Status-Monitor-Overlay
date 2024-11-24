@@ -4,16 +4,10 @@ private:
 	uint8_t refreshRate = 0;
 	char FPSavg_c[8];
 	FpsGraphSettings settings;
-	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
-	bool isDocked = false;
 public:
 	bool isStarted = false;
     com_FPSGraph() { 
 		GetConfigSettings(&settings);
-		apmGetPerformanceMode(&performanceMode);
-		if (performanceMode == ApmPerformanceMode_Boost) {
-			isDocked = true;
-		}
 		switch(settings.setPos) {
 			case 1:
 			case 4:
@@ -175,45 +169,13 @@ public:
 
 	virtual void update() override {
 		///FPS
-		static float FPSavg_old = 0;
 		stats temp = {0, false};
-
-		apmGetPerformanceMode(&performanceMode);
-		if (performanceMode == ApmPerformanceMode_Boost) {
-			isDocked = true;
-			refreshRate = 0;
-		}
-		else if (performanceMode == ApmPerformanceMode_Normal) {
-			isDocked = false;
-		}
 		
-		if (!isDocked && isStarted && FPSavg_old != 0) {
-			uint8_t SaltySharedDisplayRefreshRate = *(uint8_t*)((uintptr_t)shmemGetAddr(&_sharedmemory) + 1);
-			if (SaltySharedDisplayRefreshRate) refreshRate = SaltySharedDisplayRefreshRate;
-			else if (FPSavg_old == FPSavg) {
-				if (R_SUCCEEDED(SaltySD_Connect())) {
-					if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
-						refreshRate = 0;
-					svcSleepThread(100'000'000);
-					SaltySD_Term();
-				}
-			}
-		}
-
-		if (FPSavg_old == FPSavg)
-			return;
-
-		FPSavg_old = FPSavg;
-		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f",  FPSavg);
+		uint8_t SaltySharedDisplayRefreshRate = *(uint8_t*)((uintptr_t)shmemGetAddr(&_sharedmemory) + 1);
+		if (SaltySharedDisplayRefreshRate) 
+			refreshRate = SaltySharedDisplayRefreshRate;
+		else refreshRate = 60;
 		if (FPSavg < 254) {
-			if (!isStarted) {
-				if (!isDocked && R_SUCCEEDED(SaltySD_Connect())) {
-					if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
-						refreshRate = 0;
-					SaltySD_Term();
-					isStarted = true;
-				}
-			}
 			if ((s16)(readings.size()) >= rectangle_width) {
 				readings.erase(readings.begin());
 			}
@@ -227,13 +189,6 @@ public:
 		else {
 			readings.clear();
 			readings.shrink_to_fit();
-			if (isStarted && !isDocked && R_SUCCEEDED(SaltySD_Connect())) {
-				if (R_FAILED(SaltySD_GetDisplayRefreshRate(&refreshRate)))
-					refreshRate = 0;
-				svcSleepThread(100'000);
-				SaltySD_Term();
-				isStarted = false;
-			}
 		}
 		
 	}
