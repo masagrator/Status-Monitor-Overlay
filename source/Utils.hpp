@@ -1087,7 +1087,7 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> textColor = temp;
 	}
-	if (parsedData["mini"].find("show") != parsedData["micro"].end()) {
+	if (parsedData["mini"].find("show") != parsedData["mini"].end()) {
 		key = parsedData["mini"]["show"];
 		convertToUpper(key);
 		settings -> show = key;
