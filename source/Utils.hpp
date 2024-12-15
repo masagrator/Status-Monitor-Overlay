@@ -181,15 +181,6 @@ uint32_t realRAM_Hz = 0;
 uint32_t ramLoad[SysClkRamLoad_EnumMax];
 uint8_t refreshRate = 0;
 
-//Tweaks to nvInitialize so it will take less RAM
-#define NVDRV_TMEM_SIZE (8 * 0x1000)
-char nvdrv_tmem_data[NVDRV_TMEM_SIZE] alignas(0x1000);
-
-Result __nx_nv_create_tmem(TransferMemory *t, u32 *out_size, Permission perm) {
-    *out_size = NVDRV_TMEM_SIZE;
-    return tmemCreateFromMemory(t, nvdrv_tmem_data, NVDRV_TMEM_SIZE, perm);
-}
-
 int compare (const void* elem1, const void* elem2) {
 	if ((((resolutionCalls*)(elem1)) -> calls) > (((resolutionCalls*)(elem2)) -> calls)) return -1;
 	else return 1;
