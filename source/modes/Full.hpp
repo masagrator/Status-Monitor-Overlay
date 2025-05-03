@@ -182,7 +182,7 @@ public:
 					uint32_t offset = COMMON_MARGIN + width_offset + dimensions.first;
 					renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
 				}
-				if ((settings.showRES == true) && (NxFps -> API) == 1) {
+				if ((settings.showRES == true) && ((NxFps -> API) == 1 || (NxFps -> API) == 3)) {
 					width_offset = 170;
 					renderer->drawString("Resolution:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
 					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, 205, 20, renderer->a(0xFFFF));

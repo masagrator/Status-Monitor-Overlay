@@ -73,7 +73,7 @@ public:
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 
-			if (refreshRate && refreshRate < 80) {
+			if (refreshRate && refreshRate < 240) {
 				rectangle_height = refreshRate;
 				rectangle_range_max = refreshRate;
 				legend_max[0] = 0x30 + (refreshRate / 10);

@@ -79,7 +79,7 @@ public:
 					break;	
 			}
 
-			if (gameStart && NxFps -> API == 1) {
+			if (gameStart && (NxFps -> API == 1 || NxFps -> API == 3)) {
 				renderer->drawRect(base_x, base_y, 360, 200, a(settings.backgroundColor));
 
 				renderer->drawString("Depth:", false, base_x+20, base_y+20, 20, renderer->a(settings.catColor));
@@ -96,9 +96,9 @@ public:
 						base_y = 692;
 						break;
 				}
-				if (gameStart && NxFps -> API > 1) {
+				if (gameStart && NxFps -> API == 2) {
 					renderer->drawRect(base_x, base_y, 360, 28, a(settings.backgroundColor));
-					renderer->drawString("Game doesn't use NVN, it's incompatible.", false, base_x, base_y+20, 18, renderer->a(0xF00F));				
+					renderer->drawString("Game uses EGL, it's incompatible.", false, base_x, base_y+20, 18, renderer->a(0xF00F));				
 				}
 				else {
 					renderer->drawRect(base_x, base_y, 360, 28, a(settings.backgroundColor));
