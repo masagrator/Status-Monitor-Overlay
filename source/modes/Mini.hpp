@@ -147,7 +147,9 @@ public:
 				else if (!key.compare("DRAW") && !(flags & 1 << 4)) {
 					if (print_text[0])
 						strcat(print_text, "\n");
-					strcat(print_text, "DRAW");
+					if (batTimeEstimate >= 0)
+						strcat(print_text, "DRAW");
+					else strcat(print_text, "CHRG");
 					entry_count++;
 					flags |= (1 << 4);
 				}
