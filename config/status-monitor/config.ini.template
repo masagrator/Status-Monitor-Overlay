@@ -3,6 +3,7 @@ key_combo=LSTICK+RSTICK
 battery_avg_iir_filter=false
 battery_time_left_refreshrate=60
 average_gpu_load=false
+font_cache=true
 [full]
 refresh_rate=1
 layer_width_align=left
