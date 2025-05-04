@@ -43,31 +43,31 @@ TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
 INCLUDES	:=	include lib/Atmosphere-libs/libstratosphere/source/dmnt lib/Atmosphere-libs/libstratosphere/source lib/libtesla/include
-NO_ICON		:=  1
-#ROMFS       :=  romfs
+NO_ICON		:=	1
+#ROMFS		:=	romfs
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+ARCH		:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	-g -Wall -Wno-address-of-packed-member -O2 -ffunction-sections \
-			$(ARCH) $(DEFINES)
+CFLAGS		:=	-g -Wall -Wno-address-of-packed-member -O2 -ffunction-sections \
+				$(ARCH) $(DEFINES)
 
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DAPP_VERSION="\"$(APP_VERSION)\""
+CFLAGS		+=	$(INCLUDE) -D__SWITCH__ -DAPP_VERSION="\"$(APP_VERSION)\""
 
-CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=c++23 -Wno-dangling-else
+CXXFLAGS	:=	$(CFLAGS) -fno-exceptions -std=c++23 -Wno-dangling-else
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+ASFLAGS		:=	-g $(ARCH)
+LDFLAGS		=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lnx
+LIBS		:=	-lnx
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(LIBNX)
+LIBDIRS		:=	$(PORTLIBS) $(LIBNX)
 
 
 #---------------------------------------------------------------------------------
@@ -166,12 +166,23 @@ all: $(BUILD)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@rm -rf out/
+	@mkdir -p out/switch/.overlays/
+	@cp -a $(CURDIR)/config out/
+	@cp $(CURDIR)/$(TARGET).ovl out/switch/.overlays/$(TARGET).ovl
 
 #---------------------------------------------------------------------------------
 clean:
+	@echo "Cleanning ... $(TARGET)"
 	@rm -fr $(BUILD) $(TARGET).ovl $(TARGET).nro $(TARGET).nacp $(TARGET).elf
+	@rm -rf out/
+	@rm -f $(TARGET).zip
 
-
+#---------------------------------------------------------------------------------
+dist: all
+	@echo making dist ...
+	@rm -f $(TARGET).zip
+	@cd out; zip -r ../$(TARGET).zip ./*; cd ../
 #---------------------------------------------------------------------------------
 else
 .PHONY:	all
