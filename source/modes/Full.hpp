@@ -178,11 +178,12 @@ public:
 			if (GameRunning) {
 				uint32_t width_offset = 230;
 				if (settings.showFPS == true) {
-					static auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
+					static auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0x0000));
+					renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
 					uint32_t offset = COMMON_MARGIN + width_offset + dimensions.first;
 					renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
 				}
-				if ((settings.showRES == true) && (NxFps -> API) == 1) {
+				if ((settings.showRES == true) && (NxFps -> API >= 1)) {
 					width_offset = 170;
 					renderer->drawString("Resolution:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
 					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, 205, 20, renderer->a(0xFFFF));
@@ -330,7 +331,9 @@ public:
 					}
 				}
 				qsort(m_resolutionOutput, 8, sizeof(resolutionCalls), compare);
-				snprintf(Resolutions_c, sizeof(Resolutions_c), "%dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
+				if (!m_resolutionOutput[1].width)
+					snprintf(Resolutions_c, sizeof(Resolutions_c), "%dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
+				else snprintf(Resolutions_c, sizeof(Resolutions_c), "%dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
 			}
 		}
 		else if (!GameRunning && resolutionLookup != 0) {
