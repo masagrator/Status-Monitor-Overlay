@@ -458,9 +458,8 @@ public:
 					strcat(Temp, "\n");
 				}
 				char Temp_s[32] = "";
-				if (NxFps -> API == 2) {
-					snprintf(Temp_s, sizeof(Temp_s), "EGL");
-				}
+				if (!m_resolutionOutput[1].width)
+					snprintf(Temp_s, sizeof(Temp_s), "%dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
 				else snprintf(Temp_s, sizeof(Temp_s), "%dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
 				strcat(Temp, Temp_s);
 				flags |= 1 << 7;			
