@@ -831,6 +831,11 @@ void ParseIniFile() {
 				convertToUpper(key);
 				batteryFiltered = !key.compare("TRUE");
 			}
+			if (parsedData["status-monitor"].find("font_cache") != parsedData["status-monitor"].end()) {
+				auto key = parsedData["status-monitor"]["font_cache"];
+				convertToUpper(key);
+				fontCache = !key.compare("TRUE");
+			}
 			if (parsedData["status-monitor"].find("battery_time_left_refreshrate") != parsedData["status-monitor"].end()) {
 				auto key = parsedData["status-monitor"]["battery_time_left_refreshrate"];
 				long maxSeconds = 60;
