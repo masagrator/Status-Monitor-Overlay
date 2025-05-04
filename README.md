@@ -56,3 +56,7 @@ A: There are few possible explanations:
 1. You're using nifm services connection test patches (in short `nifm ctest patches`) that are included in various packs. Those patches allow to connect to network that has no internet connection. But they cause nifm to randomly rampage when connected to network. Find any folder in `atmosphere/exefs_patches` that has in folder name `nifm`, `nfim` and/or `ctest`, delete this folder and restart Switch (if you are using `sys-patch`, turn off `nifm` patching). If you must use it, only solution is to use this overlay only in airplane mode.
 2. You're using some untested custom sysmodule that has no proper thread sleeping implemented. Find out in atmosphere/contents any sysmodule that you don't need, delete it and restart Switch.
 3. Your Switch is using sigpatches, is not a primary device, is using linked account, and is connected to network. Delete sigpatches, change your Switch to primary device, unlink account, or disable Wi-Fi. 
+
+Q: When opening Status Monitor overlays stop responding or something else, that I am trying to open while Status Monitor is opened, is freezing (f.e. Album or HB Menu). How to fix this?
+
+A: Issue comes from too much sysmodules accessing files on sdcard at once. You must limit amount of sysmodules that have such access (you can free one session by disabling logs in SaltyNX-Tool).

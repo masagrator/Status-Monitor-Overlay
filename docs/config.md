@@ -15,6 +15,7 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `battery_avg_iir_filter` | Read voltage + current averages directly from fuel gauge, that uses infinite impulse response filter | `true`, `false` | `false` |
 | `battery_time_left_refreshrate` | How many seconds must pass to refresh Battery Remaining Time | from `1` to `60` | `60` |
 | `average_gpu_load` | Average 5 last GPU load readings. Because GPU load by design shows only load for last 1/60s, this option allows for more accurate gpu load readings at the cost of slight bump in CPU Core #3 usage (from 2 to 4 percentage points depending on CPU clock). | `true`, `false` | `false` |
+| `font_cache` | Allow caching generated glyphs for better performance. Cache is cleaned up when moving between modes. | `true`, `false` | `true` |
 
 
 > [full]
