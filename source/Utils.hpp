@@ -95,6 +95,7 @@ float actualFullBatCapacity = 0;
 float designedFullBatCapacity = 0;
 bool batteryFiltered = false;
 uint8_t batteryTimeLeftRefreshRate = 60;
+int32_t BatteryTimeCache[120];
 
 //Temperatures
 float SOC_temperatureF = 0;
@@ -378,9 +379,13 @@ void BatteryChecker(void*) {
 			if (batteryTimeEstimateInMinutes > (99.0*60.0)+59.0) {
 				batteryTimeEstimateInMinutes = (99.0*60.0)+59.0;
 			}
+			static int itr = 0;
+			int cacheElements = (sizeof(BatteryTimeCache) / sizeof(BatteryTimeCache[0]));
+			BatteryTimeCache[itr++ % cacheElements] = (int32_t)batteryTimeEstimateInMinutes;
 			uint64_t new_tick_TTE = svcGetSystemTick();
 			if (armTicksToNs(new_tick_TTE - tick_TTE) / 1'000'000'000 >= batteryTimeLeftRefreshRate) {
-				batTimeEstimate = (int16_t)batteryTimeEstimateInMinutes;
+				size_t to_divide = itr < cacheElements ? itr : cacheElements;
+				batTimeEstimate = (int16_t)(std::accumulate(&BatteryTimeCache[0], &BatteryTimeCache[to_divide], 0) / to_divide);
 				tick_TTE = new_tick_TTE;
 			}
 		}
@@ -395,6 +400,7 @@ void BatteryChecker(void*) {
 	}
 	batTimeEstimate = -1;
 	_batteryChargeInfoFields = {0};
+	memset(BatteryTimeCache, 0, sizeof(BatteryTimeCache));
 	delete[] readingsAmp;
 	delete[] readingsVolt;
 }
