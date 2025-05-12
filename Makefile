@@ -51,7 +51,7 @@ NO_ICON		:=  1
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	-g -Wall -Wno-address-of-packed-member -O2 -ffunction-sections \
+CFLAGS	:=	-g -Wall -Wno-address-of-packed-member -O2 -ffunction-sections -ffast-math \
 			$(ARCH) $(DEFINES)
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DAPP_VERSION="\"$(APP_VERSION)\""
