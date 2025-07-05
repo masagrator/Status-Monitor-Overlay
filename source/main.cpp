@@ -357,6 +357,7 @@ public:
 
 // This function gets called on startup to create a new Overlay object
 int main(int argc, char **argv) {
+	systemtickfrequency = armGetSystemTickFreq();
 	ParseIniFile(); // parse INI from file
     
 	if (argc > 0) {

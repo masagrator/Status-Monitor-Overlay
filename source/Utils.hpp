@@ -36,7 +36,7 @@ Thread t4;
 Thread t6;
 Thread t7;
 Thread t5;
-const uint64_t systemtickfrequency = 19200000;
+uint64_t systemtickfrequency = 19200000;
 bool threadexit = false;
 bool threadexit2 = false;
 PwmChannelSession g_ICon;
