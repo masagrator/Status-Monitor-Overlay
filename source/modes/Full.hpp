@@ -21,6 +21,7 @@ private:
 	char FPS_var_compressed_c[64] = "";
 	char RAM_load_c[64] = "";
 	char Resolutions_c[64] = "";
+	char readSpeed_c[16] = "";
 
 	uint8_t COMMON_MARGIN = 20;
 	FullSettings settings;
@@ -188,6 +189,10 @@ public:
 					renderer->drawString("Resolution:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
 					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, 205, 20, renderer->a(0xFFFF));
 				}
+				if ((NxFps -> readSpeedPerSecond) != 0.f) {
+					renderer->drawString("Read speed:", false, COMMON_MARGIN + width_offset, 245, 20, renderer->a(0xFFFF));
+					renderer->drawString(readSpeed_c, false, COMMON_MARGIN + width_offset, 265, 20, renderer->a(0xFFFF));
+				}
 			}
 			
 			renderer->drawString(message.c_str(), false, COMMON_MARGIN, 693, 23, renderer->a(0xFFFF));
@@ -202,11 +207,11 @@ public:
 	virtual void update() override {
 		//Make stuff ready to print
 		///CPU
-		snprintf(CPU_compressed_c, sizeof(CPU_compressed_c), "Core #0: %.2f%%\nCore #1: %.2f%%\nCore #2: %.2f%%\nCore #3: %.2f%%", 
-			(idletick0 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100,
-			(idletick1 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100,
-			(idletick2 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100,
-			(idletick3 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
+		snprintf(CPU_compressed_c, sizeof(CPU_compressed_c), "Core #0: %.2f%%\nCore #1: %.2f%%\nCore #2: %.2f%%\nCore #3: %.2f%%",
+			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100),
+			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100),
+			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100),
+			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100));
 
 		mutexLock(&mutex_Misc);
 		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "Target Frequency: %u.%u MHz", CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
@@ -331,6 +336,7 @@ public:
 					}
 				}
 				qsort(m_resolutionOutput, 8, sizeof(resolutionCalls), compare);
+				snprintf(readSpeed_c, sizeof(readSpeed_c), "%.2f MiB/s", (NxFps -> readSpeedPerSecond) / 1048576.f);
 				if (!m_resolutionOutput[1].width)
 					snprintf(Resolutions_c, sizeof(Resolutions_c), "%dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
 				else snprintf(Resolutions_c, sizeof(Resolutions_c), "%dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);

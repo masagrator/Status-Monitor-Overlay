@@ -156,10 +156,14 @@ struct NxFpsSharedBlock {
 	uint8_t SetBuffers;
 	uint8_t ActiveBuffers;
 	uint8_t SetActiveBuffers;
-	uint8_t displaySync;
+	bool displaySync;
 	resolutionCalls renderCalls[8];
 	resolutionCalls viewportCalls[8];
 	bool forceOriginalRefreshRate;
+	bool dontForce60InDocked;
+	bool forceSuspend;
+	uint8_t currentRefreshRate;
+	float readSpeedPerSecond;
 } NX_PACKED;
 
 NxFpsSharedBlock* NxFps = 0;
@@ -485,6 +489,7 @@ void Misc(void*) {
 				temp = trunc(temp);
 				temp /= 10;
 				Rotation_Duty = 100.0 - temp;
+				if (Rotation_Duty <= 0) Rotation_Duty = 0.0000001;
 			}
 		}
 		
