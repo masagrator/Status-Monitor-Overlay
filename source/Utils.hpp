@@ -673,7 +673,7 @@ void StartFPSCounterThread() {
 	threadClose(&t6);
 	threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
 	threadStart(&t6);
-	
+
 	threadClose(&t0);
 	threadCreate(&t0, FPSCounter, NULL, NULL, 0x1000, 0x3F, 3);
 	threadStart(&t0);
@@ -1038,7 +1038,7 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
 	convertStrToRGBA4444("#1117", &(settings -> backgroundColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> catColor));
 	convertStrToRGBA4444("#FFFF", &(settings -> textColor));
-	settings -> show = "CPU+GPU+RAM+TEMP+DRAW+FAN+FPS+RES";
+	settings -> show = "CPU+GPU+RAM+TEMP+DRAW+FAN+FPS+RES+READ";
 	settings -> showRAMLoad = true;
 	settings -> refreshRate = 1;
 	settings -> setPos = 0;
