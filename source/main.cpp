@@ -256,7 +256,7 @@ public:
 	}
 
 	virtual void exitServices() override {
-		CloseThreads();
+		CloseThreads(true);
 		if (R_SUCCEEDED(sysclkCheck)) {
 			sysclkIpcExit();
 		}
@@ -326,7 +326,7 @@ public:
 	}
 
 	virtual void exitServices() override {
-		CloseThreads();
+		CloseThreads(true);
 		shmemClose(&_sharedmemory);
 		if (R_SUCCEEDED(sysclkCheck)) {
 			sysclkIpcExit();
@@ -359,6 +359,7 @@ public:
 int main(int argc, char **argv) {
 	systemtickfrequency = armGetSystemTickFreq();
 	ParseIniFile(); // parse INI from file
+	leventInit(&threadexit, false, false);
     
 	if (argc > 0) {
 		filename = argv[0];

@@ -177,6 +177,7 @@ public:
 			refreshRate = SaltySharedDisplayRefreshRate;
 		else refreshRate = 60;
 		if (FPSavg < 254) {
+			snprintf(FPSavg_c, sizeof(FPSavg_c), "%.1f", FPSavg);
 			if (FPSavg == last) return;
 			else last = FPSavg;
 			if ((s16)(readings.size()) >= rectangle_width) {
@@ -189,10 +190,13 @@ public:
 			}
 			readings.push_back(temp);
 		}
-		else if (readings.size()) {
-			readings.clear();
-			readings.shrink_to_fit();
-			last = 0;
+		else {
+			if (readings.size()) {
+				readings.clear();
+				readings.shrink_to_fit();
+				last = 0;
+			}
+			FPSavg_c[0] = 0;
 		}
 		
 	}

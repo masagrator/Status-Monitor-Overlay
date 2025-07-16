@@ -44,9 +44,14 @@ public:
 		mutexInit(&mutex_Misc);
 		TeslaFPS = settings.refreshRate;
 		systemtickfrequency_impl /= settings.refreshRate;
+		idletick0 = systemtickfrequency_impl;
+		idletick1 = systemtickfrequency_impl;
+		idletick2 = systemtickfrequency_impl;
+		idletick3 = systemtickfrequency_impl;
 		alphabackground = 0x0;
 		deactivateOriginalFooter = true;
-        StartThreads();
+        StartThreads(NULL);
+		TeslaFPS = 60;
 	}
 	~MicroOverlay() {
 		CloseThreads();
@@ -357,6 +362,7 @@ public:
             }
 			return true;
 		}
+		TeslaFPS = settings.refreshRate;
 		return false;
 	}
 };

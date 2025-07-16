@@ -36,13 +36,18 @@ public:
 		tsl::hlp::requestForeground(false);
 		TeslaFPS = settings.refreshRate;
 		systemtickfrequency_impl /= settings.refreshRate;
+		idletick0 = systemtickfrequency_impl;
+		idletick1 = systemtickfrequency_impl;
+		idletick2 = systemtickfrequency_impl;
+		idletick3 = systemtickfrequency_impl;
 		if (settings.setPosRight) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 		}
 		deactivateOriginalFooter = true;
 		formatButtonCombination(formattedKeyCombo);
 		message = "Hold " + formattedKeyCombo + " to Exit";
-        StartThreads();
+        StartThreads(NULL);
+		TeslaFPS = 60;
 	}
 	~FullOverlay() {
 		CloseThreads();
@@ -365,6 +370,7 @@ public:
 			tsl::goBack();
 			return true;
 		}
+		else TeslaFPS = settings.refreshRate;
 		return false;
 	}
 };
