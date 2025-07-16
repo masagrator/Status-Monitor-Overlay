@@ -582,7 +582,6 @@ void CheckCore3(void*) {
 
 //Start reading all stats
 void StartThreads(void*) {
-	leventSignal(&threadexit);
 	threadWaitForExit(&t0);
 	threadWaitForExit(&t1);
 	threadWaitForExit(&t2);
@@ -591,36 +590,41 @@ void StartThreads(void*) {
 	threadWaitForExit(&t5);
 	threadWaitForExit(&t6);
 	threadWaitForExit(&t7);
-	threadClose(&t0);
-	threadClose(&t1);
-	threadClose(&t2);
-	threadClose(&t3);
-	threadClose(&t4);
-	threadClose(&t5);
-	threadClose(&t6);
-	threadClose(&t7);
 	leventClear(&threadexit);
+
+	threadClose(&t0);
 	threadCreate(&t0, CheckCore0, NULL, NULL, 0x1000, 0x10, 0);
+	threadStart(&t0);
+
+	threadClose(&t1);
 	threadCreate(&t1, CheckCore1, NULL, NULL, 0x1000, 0x10, 1);
+	threadStart(&t1);
+
+	threadClose(&t2);
 	threadCreate(&t2, CheckCore2, NULL, NULL, 0x1000, 0x10, 2);
+	threadStart(&t2);
+
+	threadClose(&t3);
 	threadCreate(&t3, CheckCore3, NULL, NULL, 0x1000, 0x10, 3);
+	threadStart(&t3);
+
+	threadClose(&t4);
 	threadCreate(&t4, Misc, NULL, NULL, 0x1000, 0x3F, -2);
+	threadStart(&t4);
+
+	threadClose(&t5);
 	threadCreate(&t5, gpuLoadThread, NULL, NULL, 0x1000, 0x3F, -2);
+	threadStart(&t5);
+
+	threadClose(&t6);
 	if (SaltySD) {
 		//Assign NX-FPS to default core
 		threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
-	}
-				
-	threadStart(&t0);
-	threadStart(&t1);
-	threadStart(&t2);
-	threadStart(&t3);
-	threadStart(&t4);
-	threadStart(&t5);
-	if (SaltySD) {
 		//Start NX-FPS detection
 		threadStart(&t6);
 	}
+
+	threadClose(&t7);
 	StartBatteryThread();
 }
 
@@ -663,15 +667,16 @@ void FPSCounter(void*) {
 
 void StartFPSCounterThread() {
 	threadWaitForExit(&t0);
-	threadClose(&t0);
 	threadWaitForExit(&t6);
-	threadClose(&t6);
 	leventClear(&threadexit);
-	//Assign NX-FPS to default core
+
+	threadClose(&t6);
 	threadCreate(&t6, CheckIfGameRunning, NULL, NULL, 0x1000, 0x38, -2);
+	threadStart(&t6);
+	
+	threadClose(&t0);
 	threadCreate(&t0, FPSCounter, NULL, NULL, 0x1000, 0x3F, 3);
 	threadStart(&t0);
-	threadStart(&t6);
 }
 
 void EndFPSCounterThread() {

@@ -183,7 +183,7 @@ public:
 			///FPS
 			if (GameRunning) {
 				uint32_t width_offset = 150;
-				if (settings.showFPS || settings.showRES || (NxFps -> readSpeedPerSecond) != 0.f) {
+				if (settings.showFPS || settings.showRES || settings.showRDSD) {
 					renderer->drawString("Game:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
 				}
 				uint32_t height = 210;
@@ -195,7 +195,7 @@ public:
 					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, height, 15, renderer->a(0xFFFF));
 					height += 15;
 				}
-				if ((NxFps -> readSpeedPerSecond) != 0.f) {
+				if (settings.showRDSD == true) {
 					renderer->drawString(readSpeed_c, false, COMMON_MARGIN + width_offset, height, 15, renderer->a(0xFFFF));
 				}
 			}
@@ -341,10 +341,13 @@ public:
 					}
 				}
 				qsort(m_resolutionOutput, 8, sizeof(resolutionCalls), compare);
-				snprintf(readSpeed_c, sizeof(readSpeed_c), "Read speed: %.2f MiB/s", (NxFps -> readSpeedPerSecond) / 1048576.f);
 				if (!m_resolutionOutput[1].width)
 					snprintf(Resolutions_c, sizeof(Resolutions_c), "Resolutions: %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
 				else snprintf(Resolutions_c, sizeof(Resolutions_c), "Resolutions: %dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
+			}
+			if (settings.showRDSD == true && GameRunning && NxFps) {
+				if ((NxFps -> readSpeedPerSecond) != 0.f) snprintf(readSpeed_c, sizeof(readSpeed_c), "Read speed: %.2f MiB/s", (NxFps -> readSpeedPerSecond) / 1048576.f);
+				else snprintf(readSpeed_c, sizeof(readSpeed_c), "Read speed: n/d");
 			}
 		}
 		else if (!GameRunning && resolutionLookup != 0) {

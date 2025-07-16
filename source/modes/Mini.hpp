@@ -481,12 +481,13 @@ public:
 				strcat(Temp, Temp_s);
 				flags |= 1 << 7;			
 			}
-			else if (!key.compare("READ") && !(flags & 1 << 8) && GameRunning && NxFps && ((NxFps -> readSpeedPerSecond) > 0.d)) {
+			else if (!key.compare("READ") && !(flags & 1 << 8) && GameRunning && NxFps) {
 				if (Temp[0]) {
 					strcat(Temp, "\n");
 				}
 				char Temp_s[32] = "";
-				snprintf(Temp_s, sizeof(Temp_s), "%.2lf MiB/s", (NxFps -> readSpeedPerSecond) / 1048576.d);
+				if ((NxFps -> readSpeedPerSecond) > 0.f) snprintf(Temp_s, sizeof(Temp_s), "%.2f MiB/s", (NxFps -> readSpeedPerSecond) / 1048576.f);
+				else strcpy(Temp_s, "n/d");
 				strcat(Temp, Temp_s);
 				flags |= 1 << 8;
 			}
