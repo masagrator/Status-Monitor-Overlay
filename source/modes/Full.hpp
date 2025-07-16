@@ -21,7 +21,7 @@ private:
 	char FPS_var_compressed_c[64] = "";
 	char RAM_load_c[64] = "";
 	char Resolutions_c[64] = "";
-	char readSpeed_c[16] = "";
+	char readSpeed_c[32] = "";
 
 	uint8_t COMMON_MARGIN = 20;
 	FullSettings settings;
@@ -182,21 +182,21 @@ public:
 			
 			///FPS
 			if (GameRunning) {
-				uint32_t width_offset = 230;
+				uint32_t width_offset = 150;
+				if (settings.showFPS || settings.showRES || (NxFps -> readSpeedPerSecond) != 0.f) {
+					renderer->drawString("Game:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
+				}
+				uint32_t height = 210;
 				if (settings.showFPS == true) {
-					static auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0x0000));
-					renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
-					uint32_t offset = COMMON_MARGIN + width_offset + dimensions.first;
-					renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
+					renderer->drawString(FPS_var_compressed_c, false, COMMON_MARGIN + width_offset, height, 15, renderer->a(0xFFFF));
+					height += 15;
 				}
 				if ((settings.showRES == true) && (NxFps -> API >= 1)) {
-					width_offset = 170;
-					renderer->drawString("Resolution:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
-					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, 205, 20, renderer->a(0xFFFF));
+					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, height, 15, renderer->a(0xFFFF));
+					height += 15;
 				}
 				if ((NxFps -> readSpeedPerSecond) != 0.f) {
-					renderer->drawString("Read speed:", false, COMMON_MARGIN + width_offset, 245, 20, renderer->a(0xFFFF));
-					renderer->drawString(readSpeed_c, false, COMMON_MARGIN + width_offset, 265, 20, renderer->a(0xFFFF));
+					renderer->drawString(readSpeed_c, false, COMMON_MARGIN + width_offset, height, 15, renderer->a(0xFFFF));
 				}
 			}
 			
@@ -276,7 +276,7 @@ public:
 		
 		///FPS
 		if (settings.showFPS == true) 
-			snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.1f", FPS, FPSavg);
+			snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "PFPS: %3u; FPS: %.1f", FPS, FPSavg);
 
 		//Resolutions
 		if ((settings.showRES == true) && GameRunning && NxFps) {
@@ -341,10 +341,10 @@ public:
 					}
 				}
 				qsort(m_resolutionOutput, 8, sizeof(resolutionCalls), compare);
-				snprintf(readSpeed_c, sizeof(readSpeed_c), "%.2f MiB/s", (NxFps -> readSpeedPerSecond) / 1048576.f);
+				snprintf(readSpeed_c, sizeof(readSpeed_c), "Read speed: %.2f MiB/s", (NxFps -> readSpeedPerSecond) / 1048576.f);
 				if (!m_resolutionOutput[1].width)
-					snprintf(Resolutions_c, sizeof(Resolutions_c), "%dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
-				else snprintf(Resolutions_c, sizeof(Resolutions_c), "%dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
+					snprintf(Resolutions_c, sizeof(Resolutions_c), "Resolutions: %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
+				else snprintf(Resolutions_c, sizeof(Resolutions_c), "Resolutions: %dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
 			}
 		}
 		else if (!GameRunning && resolutionLookup != 0) {

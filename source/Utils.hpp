@@ -965,6 +965,7 @@ struct FullSettings {
 	bool showTargetFreqs;
 	bool showFPS;
 	bool showRES;
+	bool showRDSD;
 };
 
 struct MiniSettings {
@@ -1452,6 +1453,7 @@ ALWAYS_INLINE void GetConfigSettings(FullSettings* settings) {
 	settings -> showTargetFreqs = true;
 	settings -> showFPS = true;
 	settings -> showRES = true;
+	settings -> showRDSD = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1512,6 +1514,11 @@ ALWAYS_INLINE void GetConfigSettings(FullSettings* settings) {
 		key = parsedData[mode]["show_res"];
 		convertToUpper(key);
 		settings -> showRES = key.compare("FALSE");
+	}
+	if (parsedData[mode].find("show_read_speed") != parsedData[mode].end()) {
+		key = parsedData[mode]["show_read_speed"];
+		convertToUpper(key);
+		settings -> showRDSD = key.compare("FALSE");
 	}
 }
 
