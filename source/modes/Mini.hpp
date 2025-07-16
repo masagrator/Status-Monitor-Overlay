@@ -112,7 +112,7 @@ public:
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
 					}
-					else if (!key.compare("RDSD")) {
+					else if (!key.compare("READ")) {
 						dimensions = renderer->drawString("4444.4 MiB/s", false, 0, fontsize, fontsize, renderer->a(0x0000));
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
@@ -183,7 +183,7 @@ public:
 					resolutionShow = true;
 					flags |= (1 << 7);
 				}
-				else if (!key.compare("READ") && !(flags & 1 << 8) && GameRunning && NxFps && ((NxFps -> readSpeedPerSecond) > 0.d)) {
+				else if (!key.compare("READ") && !(flags & 1 << 8) && GameRunning) {
 					if (print_text[0])
 						strcat(print_text, "\n");
 					strcat(print_text, "READ");
