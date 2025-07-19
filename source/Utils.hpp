@@ -36,7 +36,13 @@ Thread t4;
 Thread t6;
 Thread t7;
 Thread t5;
-uint64_t systemtickfrequency = 19200000;
+
+#ifndef SWITCH
+	uint64_t systemtickfrequency = 19200000;
+#else
+	#define systemtickfrequency 19200000
+#endif
+
 LEvent threadexit = {0};
 PwmChannelSession g_ICon;
 std::string folderpath = "sdmc:/switch/.overlays/";
