@@ -37,7 +37,7 @@ Thread t6;
 Thread t7;
 Thread t5;
 
-#ifndef SWITCH
+#ifndef __SWITCH__
 	uint64_t systemtickfrequency = 19200000;
 #else
 	#define systemtickfrequency 19200000
