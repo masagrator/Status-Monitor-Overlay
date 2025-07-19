@@ -359,7 +359,6 @@ public:
 int main(int argc, char **argv) {
 	systemtickfrequency = armGetSystemTickFreq();
 	ParseIniFile(); // parse INI from file
-	leventInit(&threadexit, false, false);
     
 	if (argc > 0) {
 		filename = argv[0];
