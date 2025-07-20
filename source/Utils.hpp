@@ -416,6 +416,9 @@ void BatteryChecker(void*) {
 }
 
 void StartBatteryThread() {
+	threadWaitForExit(&t7);
+	threadClose(&t7);
+	leventClear(&threadexit);
 	threadCreate(&t7, BatteryChecker, NULL, NULL, 0x4000, 0x3F, 3);
 	threadStart(&t7);
 }
