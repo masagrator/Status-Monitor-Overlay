@@ -357,7 +357,7 @@ public:
 
 // This function gets called on startup to create a new Overlay object
 int main(int argc, char **argv) {
-	#ifndef __SWITCH__
+	#if !defined(__SWITCH__) && !defined(__OUNCE__)
 		systemtickfrequency = armGetSystemTickFreq();
 	#endif
 

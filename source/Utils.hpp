@@ -37,10 +37,12 @@ Thread t6;
 Thread t7;
 Thread t5;
 
-#ifndef __SWITCH__
-	uint64_t systemtickfrequency = 19200000;
-#else
+#ifdef __SWITCH__
 	#define systemtickfrequency 19200000
+#elif __OUNCE__
+	#define systemtickfrequency 31250000
+#else
+	uint64_t systemtickfrequency = 0;
 #endif
 
 LEvent threadexit = {0};
