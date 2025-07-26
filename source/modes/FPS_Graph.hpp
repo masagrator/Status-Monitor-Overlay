@@ -59,7 +59,7 @@ public:
 	s16 rectangle_y = 5;
 	s16 rectangle_range_max = 60;
 	s16 rectangle_range_min = 0;
-	char legend_max[3] = "60";
+	char legend_max[4] = "60";
 	char legend_min[2] = "0";
 	s32 range = std::abs(rectangle_range_max - rectangle_range_min) + 1;
 	s16 x_end = rectangle_x + rectangle_width;
