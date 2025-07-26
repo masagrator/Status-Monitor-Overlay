@@ -21,7 +21,7 @@ If it's not working in dock, you need to first start Status Monitor, then put Ni
   - System Unsafe
 - SoC, PCB & Skin temperatures (Skin temperature not supported by FWs <5.0.0)
 - Fan Rotation Level
-- PFPS, FPS, resolutions (shows only if [my fork of SaltyNX](https://github.com/masagrator/SaltyNX/releases) is installed)
+- PFPS, FPS, resolutions, game read speed (shows only if [my fork of SaltyNX](https://github.com/masagrator/SaltyNX/releases) is installed)
 - Battery temperature, raw charge, age, average voltage, average current flow and average power flow
 - Charger type, max voltage, and max current
 - DSP usage (only for FW older than 17.0.0)
