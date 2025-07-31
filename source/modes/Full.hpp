@@ -21,6 +21,7 @@ private:
 	char FPS_var_compressed_c[64] = "";
 	char RAM_load_c[64] = "";
 	char Resolutions_c[64] = "";
+	char readSpeed_c[32] = "";
 
 	uint8_t COMMON_MARGIN = 20;
 	FullSettings settings;
@@ -35,13 +36,18 @@ public:
 		tsl::hlp::requestForeground(false);
 		TeslaFPS = settings.refreshRate;
 		systemtickfrequency_impl /= settings.refreshRate;
+		idletick0 = systemtickfrequency_impl;
+		idletick1 = systemtickfrequency_impl;
+		idletick2 = systemtickfrequency_impl;
+		idletick3 = systemtickfrequency_impl;
 		if (settings.setPosRight) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 		}
 		deactivateOriginalFooter = true;
 		formatButtonCombination(formattedKeyCombo);
 		message = "Hold " + formattedKeyCombo + " to Exit";
-        StartThreads();
+        StartThreads(NULL);
+		TeslaFPS = 60;
 	}
 	~FullOverlay() {
 		CloseThreads();
@@ -176,17 +182,21 @@ public:
 			
 			///FPS
 			if (GameRunning) {
-				uint32_t width_offset = 230;
+				uint32_t width_offset = 150;
+				if (settings.showFPS || settings.showRES || settings.showRDSD) {
+					renderer->drawString("Game:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
+				}
+				uint32_t height = 210;
 				if (settings.showFPS == true) {
-					static auto dimensions = renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0x0000));
-					renderer->drawString("PFPS: \nFPS:", false, COMMON_MARGIN + width_offset, 120, 20, renderer->a(0xFFFF));
-					uint32_t offset = COMMON_MARGIN + width_offset + dimensions.first;
-					renderer->drawString(FPS_var_compressed_c, false, offset, 120, 20, renderer->a(0xFFFF));
+					renderer->drawString(FPS_var_compressed_c, false, COMMON_MARGIN + width_offset, height, 15, renderer->a(0xFFFF));
+					height += 15;
 				}
 				if ((settings.showRES == true) && (NxFps -> API >= 1)) {
-					width_offset = 170;
-					renderer->drawString("Resolution:", false, COMMON_MARGIN + width_offset, 185, 20, renderer->a(0xFFFF));
-					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, 205, 20, renderer->a(0xFFFF));
+					renderer->drawString(Resolutions_c, false, COMMON_MARGIN + width_offset, height, 15, renderer->a(0xFFFF));
+					height += 15;
+				}
+				if (settings.showRDSD == true) {
+					renderer->drawString(readSpeed_c, false, COMMON_MARGIN + width_offset, height, 15, renderer->a(0xFFFF));
 				}
 			}
 			
@@ -202,11 +212,11 @@ public:
 	virtual void update() override {
 		//Make stuff ready to print
 		///CPU
-		snprintf(CPU_compressed_c, sizeof(CPU_compressed_c), "Core #0: %.2f%%\nCore #1: %.2f%%\nCore #2: %.2f%%\nCore #3: %.2f%%", 
-			(idletick0 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100,
-			(idletick1 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100,
-			(idletick2 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100,
-			(idletick3 > systemtickfrequency_impl) ? 0.0f : (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
+		snprintf(CPU_compressed_c, sizeof(CPU_compressed_c), "Core #0: %.2f%%\nCore #1: %.2f%%\nCore #2: %.2f%%\nCore #3: %.2f%%",
+			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100),
+			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100),
+			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100),
+			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100));
 
 		mutexLock(&mutex_Misc);
 		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "Target Frequency: %u.%u MHz", CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
@@ -266,7 +276,7 @@ public:
 		
 		///FPS
 		if (settings.showFPS == true) 
-			snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%u\n%2.1f", FPS, FPSavg);
+			snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "PFPS: %3u; FPS: %.1f", FPS, FPSavg);
 
 		//Resolutions
 		if ((settings.showRES == true) && GameRunning && NxFps) {
@@ -332,8 +342,12 @@ public:
 				}
 				qsort(m_resolutionOutput, 8, sizeof(resolutionCalls), compare);
 				if (!m_resolutionOutput[1].width)
-					snprintf(Resolutions_c, sizeof(Resolutions_c), "%dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
-				else snprintf(Resolutions_c, sizeof(Resolutions_c), "%dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
+					snprintf(Resolutions_c, sizeof(Resolutions_c), "Resolutions: %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
+				else snprintf(Resolutions_c, sizeof(Resolutions_c), "Resolutions: %dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
+			}
+			if (settings.showRDSD == true && GameRunning && NxFps) {
+				if ((NxFps -> readSpeedPerSecond) != 0.f) snprintf(readSpeed_c, sizeof(readSpeed_c), "Read speed: %.2f MiB/s", (NxFps -> readSpeedPerSecond) / 1048576.f);
+				else snprintf(readSpeed_c, sizeof(readSpeed_c), "Read speed: n/d");
 			}
 		}
 		else if (!GameRunning && resolutionLookup != 0) {
@@ -359,6 +373,7 @@ public:
 			tsl::goBack();
 			return true;
 		}
+		else TeslaFPS = settings.refreshRate;
 		return false;
 	}
 };

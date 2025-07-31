@@ -44,9 +44,14 @@ public:
 		mutexInit(&mutex_Misc);
 		TeslaFPS = settings.refreshRate;
 		systemtickfrequency_impl /= settings.refreshRate;
+		idletick0 = systemtickfrequency_impl;
+		idletick1 = systemtickfrequency_impl;
+		idletick2 = systemtickfrequency_impl;
+		idletick3 = systemtickfrequency_impl;
 		alphabackground = 0x0;
 		deactivateOriginalFooter = true;
-        StartThreads();
+        StartThreads(NULL);
+		TeslaFPS = 60;
 	}
 	~MicroOverlay() {
 		CloseThreads();
@@ -342,10 +347,8 @@ public:
 		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", FPSavg);
 
 		mutexUnlock(&mutex_Misc);
-		
-		
-		
 	}
+	
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
 			TeslaFPS = 60;
@@ -357,6 +360,7 @@ public:
             }
 			return true;
 		}
+		TeslaFPS = settings.refreshRate;
 		return false;
 	}
 };

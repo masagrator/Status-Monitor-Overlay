@@ -27,12 +27,12 @@ public:
 				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 				break;
 		}
-		StartFPSCounterThread();
 		alphabackground = 0x0;
 		tsl::hlp::requestForeground(false);
 		FullMode = false;
 		TeslaFPS = settings.refreshRate;
 		deactivateOriginalFooter = true;
+		StartFPSCounterThread();
 	}
 	~com_FPS() {
 		TeslaFPS = 60;
