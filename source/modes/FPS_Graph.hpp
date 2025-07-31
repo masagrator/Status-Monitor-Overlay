@@ -76,8 +76,18 @@ public:
 			if (refreshRate && refreshRate < 240) {
 				rectangle_height = refreshRate;
 				rectangle_range_max = refreshRate;
-				legend_max[0] = 0x30 + (refreshRate / 10);
-				legend_max[1] = 0x30 + (refreshRate % 10);
+				if (refreshRate < 100) {
+					rectangle_x = 15;
+					legend_max[0] = 0x30 + (refreshRate / 10);
+					legend_max[1] = 0x30 + (refreshRate % 10);
+					legend_max[2] = 0;
+				}
+				else {
+					rectangle_x = 22;
+					legend_max[0] = 0x30 + (refreshRate / 100);
+					legend_max[1] = 0x30 + ((refreshRate / 10) % 10);
+					legend_max[2] = 0x30 + (refreshRate % 10);
+				}
 				y_30FPS = rectangle_y+(rectangle_height / 2);
 				range = std::abs(rectangle_range_max - rectangle_range_min) + 1;
 			};
@@ -107,7 +117,7 @@ public:
 					break;
 			}
 
-			renderer->drawRect(base_x, base_y, rectangle_width + 21, rectangle_height + 12, a(settings.backgroundColor));
+			renderer->drawRect(base_x, base_y, rectangle_width + ((refreshRate < 100) ? 21 : 28), rectangle_height + 12, a(settings.backgroundColor));
 			s16 size = (refreshRate > 60 || !refreshRate) ? 63 : (s32)(63.0/(60.0/refreshRate));
 			std::pair<u32, u32> dimensions = renderer->drawString(FPSavg_c, false, 0, 0, size, renderer->a(0x0000));
 			s16 pos_y = size + base_y + rectangle_y + ((rectangle_height - size) / 2);
@@ -116,10 +126,13 @@ public:
 			renderer->drawString(FPSavg_c, false, pos_x, pos_y, size, renderer->a(settings.fpsColor));
 			renderer->drawEmptyRect(base_x+(rectangle_x - 1), base_y+(rectangle_y - 1), rectangle_width + 2, rectangle_height + 4, renderer->a(settings.borderColor));
 			renderer->drawDashedLine(base_x+rectangle_x, base_y+y_30FPS, base_x+rectangle_x+rectangle_width, base_y+y_30FPS, 6, renderer->a(settings.dashedLineColor));
-			renderer->drawString(&legend_max[0], false, base_x+(rectangle_x-15), base_y+(rectangle_y+7), 10, renderer->a(settings.maxFPSTextColor));
+			renderer->drawString(&legend_max[0], false, base_x+(rectangle_x-((refreshRate < 100) ? 15 : 22)), base_y+(rectangle_y+7), 10, renderer->a(settings.maxFPSTextColor));
 			renderer->drawString(&legend_min[0], false, base_x+(rectangle_x-10), base_y+(rectangle_y+rectangle_height+3), 10, renderer->a(settings.minFPSTextColor));
 
 			size_t last_element = readings.size() - 1;
+			
+			s16 offset = 0;
+			if (refreshRate >= 100) offset = 7;
 
 			for (s16 x = x_end; x > static_cast<s16>(x_end-readings.size()); x--) {
 				s32 y_on_range = readings[last_element].value + std::abs(rectangle_range_min) + 1;
@@ -154,7 +167,7 @@ public:
 				}
 				*/
 
-				renderer->drawLine(base_x+x, base_y+y, base_x+x, base_y+y_old, colour);
+				renderer->drawLine(base_x+x+offset, base_y+y, base_x+x+offset, base_y+y_old, colour);
 				isAbove = false;
 				y_old = y;
 				last_element--;
