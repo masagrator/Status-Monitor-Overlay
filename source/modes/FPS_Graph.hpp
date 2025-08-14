@@ -183,7 +183,7 @@ public:
 	virtual void update() override {
 		///FPS
 		stats temp = {0, false};
-		static float last = 0;
+		static uint64_t lastFrame = 0;
 		
 		uint8_t SaltySharedDisplayRefreshRate = *(uint8_t*)((uintptr_t)shmemGetAddr(&_sharedmemory) + 1);
 		if (SaltySharedDisplayRefreshRate) 
@@ -191,8 +191,8 @@ public:
 		else refreshRate = 60;
 		if (FPSavg < 254) {
 			snprintf(FPSavg_c, sizeof(FPSavg_c), "%.1f", FPSavg);
-			if (FPSavg == last) return;
-			else last = FPSavg;
+			if (lastFrame == lastFrameNumber) return;
+			else lastFrame = lastFrameNumber;
 			if ((s16)(readings.size()) >= rectangle_width) {
 				readings.erase(readings.begin());
 			}
@@ -207,7 +207,7 @@ public:
 			if (readings.size()) {
 				readings.clear();
 				readings.shrink_to_fit();
-				last = 0;
+				lastFrame = 0;
 			}
 			FPSavg_c[0] = 0;
 		}
