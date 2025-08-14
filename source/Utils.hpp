@@ -171,6 +171,7 @@ struct NxFpsSharedBlock {
 	bool forceSuspend;
 	uint8_t currentRefreshRate;
 	float readSpeedPerSecond;
+	uint64_t frameNumber;
 } NX_PACKED;
 
 NxFpsSharedBlock* NxFps = 0;
@@ -185,6 +186,8 @@ float FPSavg = 254;
 SharedMemory _sharedmemory = {};
 bool SharedMemoryUsed = false;
 Handle remoteSharedMemory = 1;
+bool smoothFpsAvg = true;
+uint64_t lastFrameNumber;
 
 //Read real freqs from sys-clk sysmodule
 uint32_t realCPU_Hz = 0;
@@ -265,14 +268,6 @@ void CheckIfGameRunning(void*) {
 	do {
 		if (!check && R_FAILED(pmdmntGetApplicationProcessId(&PID))) {
 			GameRunning = false;
-			if (SharedMemoryUsed) {
-				(NxFps -> MAGIC) = 0;
-				(NxFps -> pluginActive) = false;
-				(NxFps -> FPS) = 0;
-				(NxFps -> FPSavg) = 0.0;
-				FPS = 254;
-				FPSavg = 254.0;
-			}
 			check = true;
 		}
 		else if (!GameRunning && SharedMemoryUsed) {
@@ -513,7 +508,10 @@ void Misc(void*) {
 		if (GameRunning) {
 			if (SharedMemoryUsed) {
 				FPS = (NxFps -> FPS);
-				FPSavg = 19'200'000.f / (std::accumulate<uint32_t*, float>(&(NxFps -> FPSticks[0]), &(NxFps -> FPSticks[10]), 0) / 10);
+				const size_t element_count = sizeof(NxFps -> FPSticks) / sizeof(NxFps -> FPSticks[0]);
+				FPSavg = (float)systemtickfrequency / (std::accumulate<uint32_t*, float>(&NxFps->FPSticks[0], &NxFps->FPSticks[element_count], 0) / element_count);
+				if (smoothFpsAvg && FPSavg > (float)refreshRate) FPSavg = (float)refreshRate;
+				lastFrameNumber = NxFps -> frameNumber;
 			}
 		}
 		else FPSavg = 254;
@@ -675,7 +673,10 @@ void FPSCounter(void*) {
 		if (GameRunning) {
 			if (SharedMemoryUsed) {
 				FPS = (NxFps -> FPS);
-				FPSavg = 19'200'000.f / (std::accumulate<uint32_t*, float>(&(NxFps -> FPSticks[0]), &(NxFps -> FPSticks[10]), 0) / 10);
+				const size_t element_count = sizeof(NxFps -> FPSticks) / sizeof(NxFps -> FPSticks[0]);
+				FPSavg = (float)systemtickfrequency / (std::accumulate<uint32_t*, float>(&NxFps->FPSticks[0], &NxFps->FPSticks[element_count], 0) / element_count);
+				if (smoothFpsAvg && FPSavg > (float)refreshRate) FPSavg = (float)refreshRate;
+				lastFrameNumber = NxFps->frameNumber;
 			}
 		}
 		else FPSavg = 254;
@@ -1059,6 +1060,7 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
 	settings -> showRAMLoad = true;
 	settings -> refreshRate = 1;
 	settings -> setPos = 0;
+	smoothFpsAvg = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1164,6 +1166,11 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
 			settings -> setPos += 6;
 		}
 	}
+	if (parsedData[mode].find("smooth_fps_avg") != parsedData[mode].end()) {
+		key = parsedData[mode]["smooth_fps_avg"];
+		convertToUpper(key);
+		smoothFpsAvg = key.compare("FALSE");
+	}
 }
 
 ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
@@ -1178,6 +1185,7 @@ ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
 	settings -> showRAMLoad = true;
 	settings -> setPosBottom = false;
 	settings -> refreshRate = 1;
+	smoothFpsAvg = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1280,6 +1288,11 @@ ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
 		convertToUpper(key);
 		settings -> setPosBottom = !key.compare("BOTTOM");
 	}
+	if (parsedData[mode].find("smooth_fps_avg") != parsedData[mode].end()) {
+		key = parsedData[mode]["smooth_fps_avg"];
+		convertToUpper(key);
+		smoothFpsAvg = key.compare("FALSE");
+	}
 }
 
 ALWAYS_INLINE void GetConfigSettings(FpsCounterSettings* settings) {
@@ -1289,6 +1302,7 @@ ALWAYS_INLINE void GetConfigSettings(FpsCounterSettings* settings) {
 	convertStrToRGBA4444("#FFFF", &(settings -> textColor));
 	settings -> setPos = 0;
 	settings -> refreshRate = 31;
+	smoothFpsAvg = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1359,6 +1373,11 @@ ALWAYS_INLINE void GetConfigSettings(FpsCounterSettings* settings) {
 			settings -> setPos += 6;
 		}
 	}
+	if (parsedData[mode].find("smooth_fps_avg") != parsedData[mode].end()) {
+		key = parsedData[mode]["smooth_fps_avg"];
+		convertToUpper(key);
+		smoothFpsAvg = key.compare("FALSE");
+	}
 }
 
 ALWAYS_INLINE void GetConfigSettings(FpsGraphSettings* settings) {
@@ -1373,6 +1392,7 @@ ALWAYS_INLINE void GetConfigSettings(FpsGraphSettings* settings) {
 	convertStrToRGBA4444("#F0FF", &(settings -> roundedLineColor));
 	convertStrToRGBA4444("#0C0F", &(settings -> perfectLineColor));
 	settings -> refreshRate = 31;
+	smoothFpsAvg = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1465,6 +1485,11 @@ ALWAYS_INLINE void GetConfigSettings(FpsGraphSettings* settings) {
 		if (convertStrToRGBA4444(key, &temp))
 			settings -> perfectLineColor = temp;
 	}
+	if (parsedData[mode].find("smooth_fps_avg") != parsedData[mode].end()) {
+		key = parsedData[mode]["smooth_fps_avg"];
+		convertToUpper(key);
+		smoothFpsAvg = key.compare("FALSE");
+	}
 }
 
 ALWAYS_INLINE void GetConfigSettings(FullSettings* settings) {
@@ -1476,6 +1501,7 @@ ALWAYS_INLINE void GetConfigSettings(FullSettings* settings) {
 	settings -> showFPS = true;
 	settings -> showRES = true;
 	settings -> showRDSD = true;
+	smoothFpsAvg = true;
 
 	FILE* configFileIn = fopen("sdmc:/config/status-monitor/config.ini", "r");
 	if (!configFileIn)
@@ -1541,6 +1567,11 @@ ALWAYS_INLINE void GetConfigSettings(FullSettings* settings) {
 		key = parsedData[mode]["show_read_speed"];
 		convertToUpper(key);
 		settings -> showRDSD = key.compare("FALSE");
+	}
+	if (parsedData[mode].find("smooth_fps_avg") != parsedData[mode].end()) {
+		key = parsedData[mode]["smooth_fps_avg"];
+		convertToUpper(key);
+		smoothFpsAvg = key.compare("FALSE");
 	}
 }
 
