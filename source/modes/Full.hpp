@@ -276,7 +276,7 @@ public:
 		
 		///FPS
 		if (settings.showFPS == true) 
-			snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "PFPS: %3u; FPS: %.1f", FPS, FPSavg);
+			snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "PFPS: %3u; FPS: %.1f", FPS, useOldFPSavg ? FPSavg_old : FPSavg);
 
 		//Resolutions
 		if ((settings.showRES == true) && GameRunning && NxFps) {

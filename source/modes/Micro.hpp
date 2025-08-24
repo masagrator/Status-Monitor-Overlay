@@ -344,7 +344,7 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%%", Rotation_Duty);
 		
 		///FPS
-		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", FPSavg);
+		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", useOldFPSavg ? FPSavg_old : FPSavg);
 
 		mutexUnlock(&mutex_Misc);
 	}
