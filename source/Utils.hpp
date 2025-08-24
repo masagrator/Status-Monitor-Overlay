@@ -516,7 +516,11 @@ void Misc(void*) {
 			if (SharedMemoryUsed) {
 				FPS = (NxFps -> FPS);
 				const size_t element_count = sizeof(NxFps -> FPSticks) / sizeof(NxFps -> FPSticks[0]);
-				FPSavg = (float)systemtickfrequency / (std::accumulate<uint32_t*, float>(&NxFps->FPSticks[0], &NxFps->FPSticks[element_count], 0) / element_count);
+				float FPSavg_in = (float)systemtickfrequency / (std::accumulate<uint32_t*, float>(&NxFps->FPSticks[0], &NxFps->FPSticks[element_count], 0) / element_count);
+				float FPS_in = (float)FPS;
+				if (FPSavg >= (FPS_in-0.2) && FPSavg <= (FPS_in+0.2)) 
+					FPSavg = FPS_in;
+				else FPSavg = FPSavg_in;
 				lastFrameNumber = NxFps -> frameNumber;
 			}
 		}
@@ -680,7 +684,11 @@ void FPSCounter(void*) {
 			if (SharedMemoryUsed) {
 				FPS = (NxFps -> FPS);
 				const size_t element_count = sizeof(NxFps -> FPSticks) / sizeof(NxFps -> FPSticks[0]);
-				FPSavg = (float)systemtickfrequency / (std::accumulate<uint32_t*, float>(&NxFps->FPSticks[0], &NxFps->FPSticks[element_count], 0) / element_count);
+				float FPSavg_in = (float)systemtickfrequency / (std::accumulate<uint32_t*, float>(&NxFps->FPSticks[0], &NxFps->FPSticks[element_count], 0) / element_count);
+				float FPS_in = (float)FPS;
+				if (FPSavg >= (FPS_in-0.2) && FPSavg <= (FPS_in+0.2)) 
+					FPSavg = FPS_in;
+				else FPSavg = FPSavg_in;
 				lastFrameNumber = NxFps -> frameNumber;
 			}
 		}
