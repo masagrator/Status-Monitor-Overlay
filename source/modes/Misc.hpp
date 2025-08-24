@@ -1,13 +1,13 @@
 void StartMiscThread() {
+	threadWaitForExit(&t0);
+	threadClose(&t0);
+	leventClear(&threadexit);
 	threadCreate(&t0, Misc2, NULL, NULL, 0x1000, 0x3F, 3);
 	threadStart(&t0);
 }
 
 void EndMiscThread() {
-	threadexit = true;
-	threadWaitForExit(&t0);
-	threadClose(&t0);
-	threadexit = false;
+	leventSignal(&threadexit);
 }
 
 class MiscOverlay : public tsl::Gui {

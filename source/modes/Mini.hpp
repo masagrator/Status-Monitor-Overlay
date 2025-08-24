@@ -10,14 +10,27 @@ private:
 	uint32_t rectangleWidth = 0;
 	char Variables[512] = "";
 	size_t fontsize = 0;
-	MiniSettings settings;
 	bool Initialized = false;
+	MiniSettings settings;
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
 	uint64_t systemtickfrequency_impl = systemtickfrequency;
 public:
     MiniOverlay() { 
 		GetConfigSettings(&settings);
 		apmGetPerformanceMode(&performanceMode);
+		mutexInit(&mutex_BatteryChecker);
+		mutexInit(&mutex_Misc);
+		alphabackground = 0x0;
+		tsl::hlp::requestForeground(false);
+		FullMode = false;
+		TeslaFPS = settings.refreshRate;
+		systemtickfrequency_impl /= settings.refreshRate;
+		idletick0 = systemtickfrequency_impl;
+		idletick1 = systemtickfrequency_impl;
+		idletick2 = systemtickfrequency_impl;
+		idletick3 = systemtickfrequency_impl;
+		deactivateOriginalFooter = true;
+        StartThreads(NULL);
 		if (performanceMode == ApmPerformanceMode_Normal) {
 			fontsize = settings.handheldFontSize;
 		}
@@ -34,15 +47,6 @@ public:
 				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 				break;
 		}
-		mutexInit(&mutex_BatteryChecker);
-		mutexInit(&mutex_Misc);
-		alphabackground = 0x0;
-		tsl::hlp::requestForeground(false);
-		FullMode = false;
-		TeslaFPS = settings.refreshRate;
-		systemtickfrequency_impl /= settings.refreshRate;
-		deactivateOriginalFooter = true;
-        StartThreads();
 	}
 	~MiniOverlay() {
 		CloseThreads();
@@ -65,8 +69,8 @@ public:
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 			
 			if (!Initialized) {
-				std::pair<u32, u32> dimensions;
 				rectangleWidth = 0;
+				std::pair<u32, u32> dimensions;
 				for (std::string key : tsl::hlp::split(settings.show, '+')) {
 					if (!key.compare("CPU")) {
 						dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
@@ -108,13 +112,17 @@ public:
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
 					}
+					else if (!key.compare("READ")) {
+						dimensions = renderer->drawString("4444.4 MiB/s", false, 0, fontsize, fontsize, renderer->a(0x0000));
+						if (rectangleWidth < dimensions.first)
+							rectangleWidth = dimensions.first;
+					}
 				}
 				Initialized = true;
 			}
-			
 			char print_text[36] = "";
 			size_t entry_count = 0;
-			uint8_t flags = 0;
+			uint32_t flags = 0;
 			for (std::string key : tsl::hlp::split(settings.show, '+')) {
 				if (!key.compare("CPU") && !(flags & 1 << 0)) {
 					if (print_text[0])
@@ -174,6 +182,13 @@ public:
 					entry_count++;
 					resolutionShow = true;
 					flags |= (1 << 7);
+				}
+				else if (!key.compare("READ") && !(flags & 1 << 8) && GameRunning) {
+					if (print_text[0])
+						strcat(print_text, "\n");
+					strcat(print_text, "READ");
+					entry_count++;
+					flags |= (1 << 8);
 				}
 			}
 
@@ -402,7 +417,7 @@ public:
 		
 		///FPS
 		char Temp[256] = "";
-		uint8_t flags = 0;
+		uint32_t flags = 0;
 		for (std::string key : tsl::hlp::split(settings.show, '+')) {
 			if (!key.compare("CPU") && !(flags & 1 << 0)) {
 				if (Temp[0]) {
@@ -451,7 +466,7 @@ public:
 					strcat(Temp, "\n");
 				}
 				char Temp_s[8] = "";
-				snprintf(Temp_s, sizeof(Temp_s), "%2.1f", FPSavg);
+				snprintf(Temp_s, sizeof(Temp_s), "%2.1f", useOldFPSavg ? FPSavg_old : FPSavg);
 				strcat(Temp, Temp_s);
 				flags |= 1 << 6;			
 			}
@@ -466,6 +481,16 @@ public:
 				strcat(Temp, Temp_s);
 				flags |= 1 << 7;			
 			}
+			else if (!key.compare("READ") && !(flags & 1 << 8) && GameRunning && NxFps) {
+				if (Temp[0]) {
+					strcat(Temp, "\n");
+				}
+				char Temp_s[32] = "";
+				if ((NxFps -> readSpeedPerSecond) > 0.f) snprintf(Temp_s, sizeof(Temp_s), "%.2f MiB/s", (NxFps -> readSpeedPerSecond) / 1048576.f);
+				else strcpy(Temp_s, "n/d");
+				strcat(Temp, Temp_s);
+				flags |= 1 << 8;
+			}
 		}
 		mutexUnlock(&mutex_Misc);
 		strcpy(Variables, Temp);
@@ -477,7 +502,7 @@ public:
 		}
 		else snprintf(remainingBatteryLife, sizeof remainingBatteryLife, "-:--");
 		
-		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2fW[%s]", PowerConsumption, remainingBatteryLife);
+		snprintf(SoCPCB_temperature_c, sizeof SoCPCB_temperature_c, "%0.2lfW[%s]", PowerConsumption, remainingBatteryLife);
 		mutexUnlock(&mutex_BatteryChecker);
 
 	}

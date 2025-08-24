@@ -16,6 +16,7 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `battery_time_left_refreshrate` | How many seconds must pass to refresh Battery Remaining Time | from `1` to `60` | `60` |
 | `average_gpu_load` | Average 5 last GPU load readings. Because GPU load by design shows only load for last 1/60s, this option allows for more accurate gpu load readings at the cost of slight bump in CPU Core #3 usage (from 2 to 4 percentage points depending on CPU clock). | `true`, `false` | `false` |
 | `font_cache` | Allow caching generated glyphs for better performance. Cache is cleaned up when moving between modes. | `true`, `false` | `true` |
+| `use_old_fps_average` | Turn off rounding FPS average introduced in 1.2.2 release. | `true`, `false` | `false` |
 
 
 > [full]
@@ -29,6 +30,7 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `show_target_freqs` | Show target frequencies for CPU, GPU and RAM | `false`, `true` | `true` |
 | `show_fps` | Show game's FPS and PFPS | `false`, `true` | `true` |
 | `show_res` | Show game's 2 best candidates for internal resolution, it won't show when game is not using NVN | `false`, `true` | `true` |
+| `show_read_speed` | Show game's read speed per second | `false`, `true` | `true` |
 
 > [mini]
 
@@ -40,7 +42,7 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `handheld_font_size` | How big should be rendered text in handheld mode | From `8` to `22` | `15` |
 | `docked_font_size` | How big should be rendered text in docked mode | From `8` to `22` | `15` |
 | `real_freqs` | This works only if you have sys-clk 2.0.0_rc4+ installed. It shows real frequencies for CPU, GPU and RAM instead of target frequencies | `true`, `false` | `false` |
-| `show` | Which data should be rendered. Connect different stats with `+` in any order. | `CPU`, `GPU`, `RAM`, `TEMP`, `FAN`, `DRAW`, `FPS`, `RES` | `CPU+GPU+RAM+TEMP+FAN+DRAW+FPS+RES` |
+| `show` | Which data should be rendered. Connect different stats with `+` in any order. | `CPU`, `GPU`, `RAM`, `TEMP`, `FAN`, `DRAW`, `FPS`, `RES`, `READ` | `CPU+GPU+RAM+TEMP+FAN+DRAW+FPS+RES+READ` |
 | `replace_MB_with_RAM_load` | This works only if you have sys-clk 2.0.0_rc4+ installed. Instead of RAM total usage it shows RAM load. | `true`, `false` | `true` |
 | `background_color` | Background color in RGBA4444 format | From `#0000` to `#FFFF` | `#1117` |
 | `cat_color` | Category text color (left side) in RGBA4444 format | From `#0000` to `#FFFF` | `#FFFF` |

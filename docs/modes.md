@@ -38,6 +38,7 @@ This mode you can know from older releases of Status Monitor. It contains all in
 | PFPS     | %u                | Pushed Frames Per Second - how many frames were displayed in last second |
 | FPS      | %.2f              | Frames Per Second - value calculated by averaging frametime              |
 | Resolutions | %dx%d \|\| %dx%d | Two the most promising candidates for internal game resolution `(^1)`    |
+| Read speed | %.2f MiB/s | Show game read speed in the last second    |
 
 - ^1 - read more informations in explanation for "Game Resolutions" menu
 
@@ -53,7 +54,8 @@ Contains most of supported informations with lower precision.
 | TEMP     | %2.1f/%2.1f/%2.1f                                | SoC temperature/PCB temperature/Skin temperature `(^2)`                   |
 | FAN      | %2.1f                                            | Fan rotation level                                                        |
 | DRAW     | %+.2f[h:mm]                                      | How much power in watts is discharged from or charged to the battery [Time left before shutdown]      |
-| RES      | %dx%d \|\| %dx%d                                   | Two the most promising candidates for internal game resolution `(^3)`     |
+| RES      | %dx%d \|\| %dx%d                                 | Two the most promising candidates for internal game resolution `(^3)`     |
+| READ     | %.2f MiB/s                                       | Show game read speed in the last second                                   |
 
 - ^1 - Real Frequency + RAM Load available only with sys-clk 2.0.0_rc4+
 - ^2 - Explanation provided at the end of file

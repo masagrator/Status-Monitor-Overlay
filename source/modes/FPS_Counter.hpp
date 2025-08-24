@@ -27,12 +27,12 @@ public:
 				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 				break;
 		}
-		StartFPSCounterThread();
 		alphabackground = 0x0;
 		tsl::hlp::requestForeground(false);
 		FullMode = false;
 		TeslaFPS = settings.refreshRate;
 		deactivateOriginalFooter = true;
+		StartFPSCounterThread();
 	}
 	~com_FPS() {
 		TeslaFPS = 60;
@@ -95,7 +95,7 @@ public:
 		else if (performanceMode == ApmPerformanceMode_Boost) {
 			fontsize = settings.dockedFontSize;
 		}
-		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f", FPSavg);
+		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f", useOldFPSavg ? FPSavg_old : FPSavg);
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
