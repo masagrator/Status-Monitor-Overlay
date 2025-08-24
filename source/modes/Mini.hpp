@@ -466,7 +466,7 @@ public:
 					strcat(Temp, "\n");
 				}
 				char Temp_s[8] = "";
-				snprintf(Temp_s, sizeof(Temp_s), "%2.1f", FPSavg);
+				snprintf(Temp_s, sizeof(Temp_s), "%2.1f", useOldFPSavg ? FPSavg_old : FPSavg);
 				strcat(Temp, Temp_s);
 				flags |= 1 << 6;			
 			}

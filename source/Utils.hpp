@@ -191,6 +191,8 @@ uintptr_t FPSavgaddress = 0;
 uint64_t PID = 0;
 uint32_t FPS = 0xFE;
 float FPSavg = 254;
+float FPSavg_old = 254;
+bool useOldFPSavg = false;
 SharedMemory _sharedmemory = {};
 bool SharedMemoryUsed = false;
 Handle remoteSharedMemory = 1;
@@ -516,7 +518,11 @@ void Misc(void*) {
 			if (SharedMemoryUsed) {
 				FPS = (NxFps -> FPS);
 				const size_t element_count = sizeof(NxFps -> FPSticks) / sizeof(NxFps -> FPSticks[0]);
-				FPSavg = (float)systemtickfrequency / (std::accumulate<uint32_t*, float>(&NxFps->FPSticks[0], &NxFps->FPSticks[element_count], 0) / element_count);
+				FPSavg_old = (float)systemtickfrequency / (std::accumulate<uint32_t*, float>(&NxFps->FPSticks[0], &NxFps->FPSticks[element_count], 0) / element_count);
+				float FPS_in = (float)FPS;
+				if (FPSavg_old >= (FPS_in-0.25) && FPSavg_old <= (FPS_in+0.25)) 
+					FPSavg = FPS_in;
+				else FPSavg = FPSavg_old;
 				lastFrameNumber = NxFps -> frameNumber;
 			}
 		}
@@ -680,7 +686,11 @@ void FPSCounter(void*) {
 			if (SharedMemoryUsed) {
 				FPS = (NxFps -> FPS);
 				const size_t element_count = sizeof(NxFps -> FPSticks) / sizeof(NxFps -> FPSticks[0]);
-				FPSavg = (float)systemtickfrequency / (std::accumulate<uint32_t*, float>(&NxFps->FPSticks[0], &NxFps->FPSticks[element_count], 0) / element_count);
+				FPSavg_old = (float)systemtickfrequency / (std::accumulate<uint32_t*, float>(&NxFps->FPSticks[0], &NxFps->FPSticks[element_count], 0) / element_count);
+				float FPS_in = (float)FPS;
+				if (FPSavg_old >= (FPS_in-0.25) && FPSavg_old <= (FPS_in+0.25)) 
+					FPSavg = FPS_in;
+				else FPSavg = FPSavg_old;
 				lastFrameNumber = NxFps -> frameNumber;
 			}
 		}
@@ -910,6 +920,11 @@ void ParseIniFile() {
 				auto key = parsedData["status-monitor"]["average_gpu_load"];
 				convertToUpper(key);
 				GPULoadPerFrame = key.compare("TRUE");
+			}
+			if (parsedData["status-monitor"].find("use_old_fps_average") != parsedData["status-monitor"].end()) {
+				auto key = parsedData["status-monitor"]["use_old_fps_average"];
+				convertToUpper(key);
+				useOldFPSavg = !key.compare("TRUE");
 			}
 		}
 		
