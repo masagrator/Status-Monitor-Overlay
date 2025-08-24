@@ -1,9 +1,10 @@
 [status-monitor]
-key_combo=LSTICK+RSTICK
+key_combo=L+DDOWN+RSTICK
 battery_avg_iir_filter=false
 battery_time_left_refreshrate=60
 average_gpu_load=false
 font_cache=true
+use_old_fps_average=false
 [full]
 refresh_rate=1
 layer_width_align=left
