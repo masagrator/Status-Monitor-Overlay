@@ -352,7 +352,6 @@ public:
 				}
 				if (!m_resolutionOutput[1].width) {
 					snprintf(Resolutions_c, sizeof(Resolutions_c), "Resolutions: %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
-					
 				}
 				else snprintf(Resolutions_c, sizeof(Resolutions_c), "Resolutions: %dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
 				old_res[0] = std::make_pair(m_resolutionOutput[0].width, m_resolutionOutput[0].height);

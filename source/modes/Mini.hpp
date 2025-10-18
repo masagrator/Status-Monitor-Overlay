@@ -475,9 +475,21 @@ public:
 					strcat(Temp, "\n");
 				}
 				char Temp_s[32] = "";
-				if (!m_resolutionOutput[1].width)
+				static std::pair<uint16_t, uint16_t> old_res[2];
+				if ((m_resolutionOutput[0].width == old_res[1].first && m_resolutionOutput[0].height == old_res[1].second) || (m_resolutionOutput[1].width == old_res[0].first && m_resolutionOutput[1].height == old_res[0].second)) {
+					uint16_t swap_width = m_resolutionOutput[0].width;
+					uint16_t swap_height = m_resolutionOutput[0].height;
+					m_resolutionOutput[0].width = m_resolutionOutput[1].width;
+					m_resolutionOutput[0].height = m_resolutionOutput[1].height;
+					m_resolutionOutput[1].width = swap_width;
+					m_resolutionOutput[1].height = swap_height;
+				}
+				if (!m_resolutionOutput[1].width) {
 					snprintf(Temp_s, sizeof(Temp_s), "%dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
+				}
 				else snprintf(Temp_s, sizeof(Temp_s), "%dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
+				old_res[0] = std::make_pair(m_resolutionOutput[0].width, m_resolutionOutput[0].height);
+				old_res[1] = std::make_pair(m_resolutionOutput[1].width, m_resolutionOutput[1].height);
 				strcat(Temp, Temp_s);
 				flags |= 1 << 7;			
 			}
