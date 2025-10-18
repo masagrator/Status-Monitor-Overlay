@@ -341,9 +341,22 @@ public:
 					}
 				}
 				qsort(m_resolutionOutput, 8, sizeof(resolutionCalls), compare);
-				if (!m_resolutionOutput[1].width)
+				static std::pair<uint16_t, uint16_t> old_res[2];
+				if ((m_resolutionOutput[0].width == old_res[1].first && m_resolutionOutput[0].height == old_res[1].second) || (m_resolutionOutput[1].width == old_res[0].first && m_resolutionOutput[1].height == old_res[0].second)) {
+					uint16_t swap_width = m_resolutionOutput[0].width;
+					uint16_t swap_height = m_resolutionOutput[0].height;
+					m_resolutionOutput[0].width = m_resolutionOutput[1].width;
+					m_resolutionOutput[0].height = m_resolutionOutput[1].height;
+					m_resolutionOutput[1].width = swap_width;
+					m_resolutionOutput[1].height = swap_height;
+				}
+				if (!m_resolutionOutput[1].width) {
 					snprintf(Resolutions_c, sizeof(Resolutions_c), "Resolutions: %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height);
+					
+				}
 				else snprintf(Resolutions_c, sizeof(Resolutions_c), "Resolutions: %dx%d || %dx%d", m_resolutionOutput[0].width, m_resolutionOutput[0].height, m_resolutionOutput[1].width, m_resolutionOutput[1].height);
+				old_res[0] = std::make_pair(m_resolutionOutput[0].width, m_resolutionOutput[0].height);
+				old_res[1] = std::make_pair(m_resolutionOutput[1].width, m_resolutionOutput[1].height);
 			}
 			if (settings.showRDSD == true && GameRunning && NxFps) {
 				if ((NxFps -> readSpeedPerSecond) != 0.f) snprintf(readSpeed_c, sizeof(readSpeed_c), "Read speed: %.2f MiB/s", (NxFps -> readSpeedPerSecond) / 1048576.f);
