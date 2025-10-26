@@ -252,8 +252,20 @@ public:
 		float RAM_Used_system_f = (float)RAM_Used_system_u / 1024 / 1024;
 		float RAM_Used_systemunsafe_f = (float)RAM_Used_systemunsafe_u / 1024 / 1024;
 		float RAM_Used_all_f = RAM_Used_application_f + RAM_Used_applet_f + RAM_Used_system_f + RAM_Used_systemunsafe_f;
+		float RAM_UsedTrue_application_f = 0;
+		if (GameRunning && NxFps) {
+			RAM_UsedTrue_application_f = RAM_Used_application_f - ((float)NxFps->unusedHeap / 1024 / 1024);
+		}
 
-		snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB", 
+		if (GameRunning && NxFps) {
+			snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%4.2f / %4.2f MB\n%4.2f / %4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB", 
+				RAM_Used_all_f, RAM_Total_all_f,
+				RAM_UsedTrue_application_f, RAM_Used_application_f, RAM_Total_application_f,
+				RAM_Used_applet_f, RAM_Total_applet_f,
+				RAM_Used_system_f, RAM_Total_system_f,
+				RAM_Used_systemunsafe_f, RAM_Total_systemunsafe_f);
+		}
+		else snprintf(RAM_var_compressed_c, sizeof(RAM_var_compressed_c), "%4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB\n%4.2f / %4.2f MB", 
 			RAM_Used_all_f, RAM_Total_all_f,
 			RAM_Used_application_f, RAM_Total_application_f,
 			RAM_Used_applet_f, RAM_Total_applet_f,
