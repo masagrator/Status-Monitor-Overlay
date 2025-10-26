@@ -180,6 +180,9 @@ struct NxFpsSharedBlock {
 	float readSpeedPerSecond;
 	uint8_t FPSlockedDocked;
 	uint64_t frameNumber;
+	int8_t expectedSetBuffers;
+	uint32_t unusedHeap;
+	bool tooLowAmount;
 } NX_PACKED;
 
 NxFpsSharedBlock* NxFps = 0;
