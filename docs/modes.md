@@ -23,7 +23,7 @@ This mode you can know from older releases of Status Monitor. It contains all in
   - Real Frequency: `%.1f` = Real clockrate of EMC in MHz (This shows only when sys-clk 2.0.0_rc4+ is installed)
   - Target Frequency: `%.1f` = Target clockrate of EMC in MHz
   - Load: `%.1f` (CPU `%.1f` | GPU `%.1f`) = RAM Load in % (Which part of that are CPU and GPU (with other hardware, but their impact on GPU readings is negligible))
-  - `%s`: `%.2f`/`%.2f` = %s memory used/%s memory available in MB (not working with FW <5.0.0)
+  - `%s`: `%.2f`/`%.2f` = %s memory used/%s memory available in MB (not working with FW <5.0.0) (in case of Application if SaltyNX 1.6.0+ is in use, it will show additional value as first one that is the `memory used` minus unallocated space in reserved heap.
 
 - Board
   - Battery Power Flow: `%+.2f`[h:mm] = How much power in watts is discharged from or charged to the battery [time left before shutdown]
