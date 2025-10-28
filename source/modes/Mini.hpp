@@ -78,7 +78,7 @@ public:
 							rectangleWidth = dimensions.first;
 					}
 					else if (!key.compare("GPU") || (!key.compare("RAM") && settings.showRAMLoad && R_SUCCEEDED(sysclkCheck))) {
-						dimensions = renderer->drawString("100.0%(100.0|100.0)@4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
+						dimensions = renderer->drawString("100.0%(100.0 | 100.0)@4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
 					}
