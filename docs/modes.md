@@ -50,7 +50,7 @@ Contains most of supported informations with lower precision.
 |----------|--------------------------------------------------|---------------------------------------------------------------------------|
 | CPU      | [%.0f,%.0f,%.0f,%.0f]@%.1f                       | Core #0 usage, Core #1 usage, Core #2 usage, Core #3 usage@CPU Target/Real frequency`(^1)`  |
 | GPU      | %.1f@%.1f                                        | Load@GPU Target/Real Frequency`(^1)`                                      |
-| RAM      | %.0f/%.0f@%.1f `or` %.1f@%.1f                    | Total RAM used/Total RAM available in MB@EMC Target/Real frequency `or` RAM load@EMC Target frequency `(^1)`  |
+| RAM      | %.0f/%.0f@%.1f `or` %.1f(%.1f | %.1f)@%.1f       | Total RAM used/Total RAM available in MB@EMC Target/Real frequency `or` RAM load (CPU | GPU)@EMC Target frequency `(^1)`  |
 | TEMP     | %2.1f/%2.1f/%2.1f                                | SoC temperature/PCB temperature/Skin temperature `(^2)`                   |
 | FAN      | %2.1f                                            | Fan rotation level                                                        |
 | DRAW     | %+.2f[h:mm]                                      | How much power in watts is discharged from or charged to the battery [Time left before shutdown]      |
