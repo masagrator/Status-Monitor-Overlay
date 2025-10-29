@@ -14,6 +14,21 @@ private:
 	MiniSettings settings;
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
 	uint64_t systemtickfrequency_impl = systemtickfrequency;
+	int16_t layer_pos_x = 0;
+	int16_t layer_pos_x_orig = 0;
+	#define layer_pos_x_max 832
+	#define layer_pos_x_orig_max 1248
+	uint16_t base_x_max = 0;
+	uint16_t base_y_max = 0;
+	int64_t touch_pos_x = -1;
+	int64_t touch_pos_y = -1;
+	uint32_t m_base_x = 0;
+	uint32_t m_base_y = 0;
+	uint32_t m_width = 0;
+	uint32_t m_height = 0;
+	bool changingPos = false;
+	bool changedPos = false;
+	bool reachedMaxY = false;
 public:
     MiniOverlay() { 
 		GetConfigSettings(&settings);
@@ -40,11 +55,15 @@ public:
 			case 4:
 			case 7:
 				tsl::gfx::Renderer::getRenderer().setLayerPos(624, 0);
+				layer_pos_x_orig = 624;
+				layer_pos_x = 624 / 3 * 2;
 				break;
 			case 2:
 			case 5:
 			case 8:
 				tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
+				layer_pos_x_orig = 1248;
+				layer_pos_x = 1248 / 3 * 2;
 				break;
 		}
 	}
@@ -121,112 +140,177 @@ public:
 				Initialized = true;
 			}
 			char print_text[36] = "";
-			size_t entry_count = 0;
-			uint32_t flags = 0;
-			for (std::string key : tsl::hlp::split(settings.show, '+')) {
-				if (!key.compare("CPU") && !(flags & 1 << 0)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "CPU");
-					entry_count++;
-					flags |= (1 << 0);
-				}
-				else if (!key.compare("GPU") && !(flags & 1 << 1)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "GPU");
-					entry_count++;
-					flags |= (1 << 1);
-				}
-				else if (!key.compare("RAM") && !(flags & 1 << 2)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "RAM");
-					entry_count++;
-					flags |= (1 << 2);
-				}
-				else if (!key.compare("TEMP") && !(flags & 1 << 3)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "TEMP");
-					entry_count++;
-					flags |= (1 << 3);
-				}
-				else if (!key.compare("DRAW") && !(flags & 1 << 4)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					if (batTimeEstimate >= 0)
-						strcat(print_text, "DRAW");
-					else strcat(print_text, "CHRG");
-					entry_count++;
-					flags |= (1 << 4);
-				}
-				else if (!key.compare("FAN") && !(flags & 1 << 5)) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "FAN");
-					entry_count++;
-					flags |= (1 << 5);
-				}
-				else if (!key.compare("FPS") && !(flags & 1 << 6) && GameRunning) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "FPS");
-					entry_count++;
-					flags |= (1 << 6);
-				}
-				else if (!key.compare("RES") && !(flags & 1 << 7) && GameRunning) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "RES");
-					entry_count++;
-					resolutionShow = true;
-					flags |= (1 << 7);
-				}
-				else if (!key.compare("READ") && !(flags & 1 << 8) && GameRunning) {
-					if (print_text[0])
-						strcat(print_text, "\n");
-					strcat(print_text, "READ");
-					entry_count++;
-					flags |= (1 << 8);
+			static size_t entry_count = 0;
+			static uint32_t flags = 0;
+			if (!changingPos) {
+				flags = 0;
+				entry_count = 0;
+				for (std::string key : tsl::hlp::split(settings.show, '+')) {
+					if (!key.compare("CPU") && !(flags & 1 << 0)) {
+						strcat(print_text, "CPU");
+						entry_count++;
+						flags |= (1 << 0);
+					}
+					else if (!key.compare("GPU") && !(flags & 1 << 1)) {
+						if (print_text[0])
+							strcat(print_text, "\n");
+						strcat(print_text, "GPU");
+						entry_count++;
+						flags |= (1 << 1);
+					}
+					else if (!key.compare("RAM") && !(flags & 1 << 2)) {
+						if (print_text[0])
+							strcat(print_text, "\n");
+						strcat(print_text, "RAM");
+						entry_count++;
+						flags |= (1 << 2);
+					}
+					else if (!key.compare("TEMP") && !(flags & 1 << 3)) {
+						if (print_text[0])
+							strcat(print_text, "\n");
+						strcat(print_text, "TEMP");
+						entry_count++;
+						flags |= (1 << 3);
+					}
+					else if (!key.compare("DRAW") && !(flags & 1 << 4)) {
+						if (print_text[0])
+							strcat(print_text, "\n");
+						if (batTimeEstimate >= 0)
+							strcat(print_text, "DRAW");
+						else strcat(print_text, "CHRG");
+						entry_count++;
+						flags |= (1 << 4);
+					}
+					else if (!key.compare("FAN") && !(flags & 1 << 5)) {
+						if (print_text[0])
+							strcat(print_text, "\n");
+						strcat(print_text, "FAN");
+						entry_count++;
+						flags |= (1 << 5);
+					}
+					else if (!key.compare("FPS") && !(flags & 1 << 6) && GameRunning) {
+						if (print_text[0])
+							strcat(print_text, "\n");
+						strcat(print_text, "FPS");
+						entry_count++;
+						flags |= (1 << 6);
+					}
+					else if (!key.compare("RES") && !(flags & 1 << 7) && GameRunning) {
+						if (print_text[0])
+							strcat(print_text, "\n");
+						strcat(print_text, "RES");
+						entry_count++;
+						resolutionShow = true;
+						flags |= (1 << 7);
+					}
+					else if (!key.compare("READ") && !(flags & 1 << 8) && GameRunning) {
+						if (print_text[0])
+							strcat(print_text, "\n");
+						strcat(print_text, "READ");
+						entry_count++;
+						flags |= (1 << 8);
+					}
 				}
 			}
+
+			if (changingPos) print_text[0] = 0;
 
 			uint32_t height = (fontsize * entry_count) + (fontsize / 3);
 			uint32_t margin = (fontsize * 4);
 
-			int base_x = 0;
-			int base_y = 0;
-			switch(settings.setPos) {
+			m_width = margin + rectangleWidth + (fontsize / 3);
+			base_x_max = 448 - m_width;
+			base_y_max = 720 - height;
+			static int base_x = 0;
+			static int base_y = 0;
+			if (!changedPos) switch(settings.setPos) {
+				case 0:
+					base_x = 0;
+					base_y = 0;
+					break;
+				case 3:
+					base_x = 0;
+					base_y = 360 - height / 2;
+					break;
+				case 6:
+					base_x = 0;
+					base_y = 720 - height;
+					break;
 				case 1:
-					base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
+					base_x = 224 - (m_width / 2);
+					base_y = 0;
 					break;
 				case 4:
-					base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
+					base_x = 224 - (m_width / 2);
 					base_y = 360 - height / 2;
 					break;
 				case 7:
-					base_x = 224 - ((margin + rectangleWidth + (fontsize / 3)) / 2);
+					base_x = 224 - (m_width / 2);
 					base_y = 720 - height;
 					break;
 				case 2:
-					base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
+					base_x = 448 - m_width;
+					base_y = 0;
 					break;
 				case 5:
-					base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
+					base_x = 448 - m_width;
 					base_y = 360 - height / 2;
 					break;
 				case 8:
-					base_x = 448 - (margin + rectangleWidth + (fontsize / 3));
+					base_x = 448 - m_width;
 					base_y = 720 - height;
 					break;
 			}
-			
-			renderer->drawRect(base_x, base_y, margin + rectangleWidth + (fontsize / 3), height, a(settings.backgroundColor));
+			if (changingPos) {
+				base_x = touch_pos_x - layer_pos_x;
+				base_y = touch_pos_y;
+			}
+			m_base_y = base_y;
+			m_base_x = base_x + layer_pos_x;
+			m_height = height;
+			if (changingPos) {
+				base_x -= (m_width / 2);
+				base_y -= (m_height / 2);
+				if (base_y >= base_y_max) {
+					reachedMaxY = true;
+				}
+				else reachedMaxY = false;
+			}
+			if (base_y < 0) {
+				base_y = 0;
+			}
+			if (reachedMaxY) {
+				base_y = base_y_max;
+			}
+			if (base_x < 0) {
+				int base_x_abs = std::abs(base_x);
+				layer_pos_x_orig -= (base_x_abs * 3) / 2;
+				layer_pos_x -= base_x_abs;
+				if (layer_pos_x_orig > layer_pos_x_orig_max) layer_pos_x_orig = layer_pos_x_orig_max;
+				else if (layer_pos_x_orig < 0) layer_pos_x_orig = 0;
+				if (layer_pos_x > layer_pos_x_max) layer_pos_x = layer_pos_x_max;
+				else if (layer_pos_x < 0) layer_pos_x = 0;
+				base_x = 0;
+				tsl::gfx::Renderer::getRenderer().setLayerPos(layer_pos_x_orig, 0);
+			}
+			else if (base_x > base_x_max) {
+				int base_x_abs = base_x - base_x_max;
+				layer_pos_x_orig += (base_x_abs * 3) / 2;
+				layer_pos_x += base_x_abs;
+				if (layer_pos_x_orig > layer_pos_x_orig_max) layer_pos_x_orig = layer_pos_x_orig_max;
+				else if (layer_pos_x_orig < 0) layer_pos_x_orig = 0;
+				if (layer_pos_x > layer_pos_x_max) layer_pos_x = layer_pos_x_max;
+				else if (layer_pos_x < 0) layer_pos_x = 0;
+				base_x = base_x_max;
+				tsl::gfx::Renderer::getRenderer().setLayerPos(layer_pos_x_orig, 0);
+			}
+
+			renderer->drawRect(base_x, base_y, m_width, height, a(settings.backgroundColor));
 			renderer->drawString(print_text, false, base_x, base_y + fontsize, fontsize, renderer->a(settings.catColor));
-			
-			///GPU
 			renderer->drawString(Variables, false, base_x + margin, base_y + fontsize, fontsize, renderer->a(settings.textColor));
+			if (changingPos) {
+				renderer->drawString("\uE058", false, base_x, base_y+(m_height / 2), m_height / 2, renderer->a(settings.catColor));
+			}
 		});
 
 		rootFrame->setContent(Status);
@@ -235,6 +319,7 @@ public:
 	}
 
 	virtual void update() override {
+		if (changingPos) return;
 		apmGetPerformanceMode(&performanceMode);
 		if (performanceMode == ApmPerformanceMode_Normal) {
 			if (fontsize != settings.handheldFontSize) {
@@ -524,6 +609,29 @@ public:
 
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
+		static auto TeslaFPS_copy = 0;
+		if (*touchInput.delta_time != 0 && (*touchInput.x >= m_base_x && *touchInput.x <= (m_base_x + m_width)) && (*touchInput.y >= m_base_y && *touchInput.y <= (m_base_y + m_height))) {
+			changingPos = true;
+			changedPos = true;
+		}
+		else if (changingPos && *touchInput.delta_time == 0) {
+			if (TeslaFPS_copy != 0) {
+				TeslaFPS = TeslaFPS_copy;
+				TeslaFPS_copy = 0;
+			}
+			touch_pos_x = -1;
+			touch_pos_y = -1;
+			changingPos = false;
+			tsl::hlp::requestForeground(false);
+		}
+		if (changingPos) {
+			tsl::hlp::requestForeground(true);
+			if (TeslaFPS_copy == 0)
+				TeslaFPS_copy = TeslaFPS;
+			TeslaFPS = 60;
+			touch_pos_x = *touchInput.x;
+			touch_pos_y = *touchInput.y;
+		}
 		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
 			TeslaFPS = 60;
 			tsl::goBack();
