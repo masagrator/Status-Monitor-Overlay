@@ -271,11 +271,11 @@ public:
 			if (changingPos) {
 				base_x -= (m_width / 2);
 				base_y -= (m_height / 2);
-				if (base_y >= base_y_max) {
-					reachedMaxY = true;
-				}
-				else reachedMaxY = false;
 			}
+			if (base_y >= base_y_max) {
+				reachedMaxY = true;
+			}
+			else reachedMaxY = false;
 			if (base_y < 0) {
 				base_y = 0;
 			}
@@ -622,10 +622,8 @@ public:
 			touch_pos_x = -1;
 			touch_pos_y = -1;
 			changingPos = false;
-			tsl::hlp::requestForeground(false);
 		}
 		if (changingPos) {
-			tsl::hlp::requestForeground(true);
 			if (TeslaFPS_copy == 0)
 				TeslaFPS_copy = TeslaFPS;
 			TeslaFPS = 60;
