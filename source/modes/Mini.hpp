@@ -271,11 +271,11 @@ public:
 			if (changingPos) {
 				base_x -= (m_width / 2);
 				base_y -= (m_height / 2);
+				reachedMaxY = false;
 			}
 			if (base_y >= base_y_max) {
 				reachedMaxY = true;
 			}
-			else reachedMaxY = false;
 			if (base_y < 0) {
 				base_y = 0;
 			}
