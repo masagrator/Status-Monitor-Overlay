@@ -51,12 +51,12 @@ NO_ICON		:=	1
 #---------------------------------------------------------------------------------
 ARCH		:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	-g -Wall -Wno-address-of-packed-member -O3 -ffunction-sections -ffast-math \
+CFLAGS	:=	-g -Wall -Werror -O2 -ffunction-sections -ffast-math \
 			$(ARCH) $(DEFINES)
 
 CFLAGS		+=	$(INCLUDE) -D__SWITCH__ -DAPP_VERSION="\"$(APP_VERSION)\""
 
-CXXFLAGS	:=	$(CFLAGS) -fno-exceptions -std=c++23 -Wno-dangling-else
+CXXFLAGS	:=	$(CFLAGS) -fno-exceptions -std=c++23
 
 ASFLAGS		:=	-g $(ARCH)
 LDFLAGS		=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
