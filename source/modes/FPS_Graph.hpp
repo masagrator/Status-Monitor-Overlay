@@ -336,9 +336,9 @@ public:
 			uint64_t new_time = armTicksToNs(svcGetSystemTick());
 			uint64_t delta = new_time - last_time;
 			if (delta < frametime) {
-				uint64_t time_delta = frametime - delta;
+				int64_t time_delta = (int64_t)frametime - delta;
 				while (time_delta > 1000000) {
-					HidTouchScreenState state;
+					HidTouchScreenState state = {0};
 					if (hidGetTouchScreenStates(&state, 1) && state.count && (state.touches[0].x >= m_base_x && state.touches[0].x <= (m_base_x + m_width)) && (state.touches[0].y >= m_base_y && state.touches[0].y <= (m_base_y + m_height))) {
 						break;
 					}
@@ -351,7 +351,7 @@ public:
 					time_delta -= 1000000;
 				}
 			}
-			last_time = new_time;
+			last_time = armTicksToNs(svcGetSystemTick());;
 		}
 		return false;
 	}

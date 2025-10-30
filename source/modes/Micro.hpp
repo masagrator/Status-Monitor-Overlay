@@ -376,7 +376,7 @@ public:
 					time_delta -= 1000000;
 				}
 			}
-			last_time = new_time;
+			last_time = armTicksToNs(svcGetSystemTick());
 		}
 		return false;
 	}
