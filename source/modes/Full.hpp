@@ -28,6 +28,7 @@ private:
 	uint64_t systemtickfrequency_impl = systemtickfrequency;
 	std::string formattedKeyCombo = keyCombo;
 	std::string message = "Hold to Exit";
+	uint64_t frametime = 1000000000 / 60;
 public:
     FullOverlay() { 
 		GetConfigSettings(&settings);
@@ -36,18 +37,19 @@ public:
 		tsl::hlp::requestForeground(false);
 		TeslaFPS = settings.refreshRate;
 		systemtickfrequency_impl /= settings.refreshRate;
+		frametime = 1000000000 / settings.refreshRate;
 		idletick0 = systemtickfrequency_impl;
 		idletick1 = systemtickfrequency_impl;
 		idletick2 = systemtickfrequency_impl;
 		idletick3 = systemtickfrequency_impl;
+		StartThreads(NULL);
 		if (settings.setPosRight) {
 			tsl::gfx::Renderer::getRenderer().setLayerPos(1248, 0);
 		}
 		deactivateOriginalFooter = true;
 		formatButtonCombination(formattedKeyCombo);
 		message = "Hold " + formattedKeyCombo + " to Exit";
-        StartThreads(NULL);
-		TeslaFPS = 60;
+		TeslaFPS = 0;
 	}
 	~FullOverlay() {
 		CloseThreads();
@@ -380,12 +382,28 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
-			TeslaFPS = 60;
-			tsl::goBack();
-			return true;
+		if (!TeslaFPS) TeslaFPS = settings.refreshRate;
+		static uint64_t last_time = 0;
+		if (!last_time) {
+			last_time = armTicksToNs(svcGetSystemTick());
 		}
-		else TeslaFPS = settings.refreshRate;
+		else {
+			uint64_t new_time = armTicksToNs(svcGetSystemTick());
+			uint64_t delta = new_time - last_time;
+			if (delta < frametime) {
+				uint64_t time_delta = frametime - delta;
+				while (time_delta > 1000000) {
+					if (isKeyComboPressed(padGetButtons(&pad), padGetButtonsDown(&pad), mappedButtons)) {
+						TeslaFPS = 0;
+						tsl::goBack();
+						return true;
+					}
+					svcSleepThread(1000000);
+					time_delta -= 1000000;
+				}
+			}
+			last_time = armTicksToNs(svcGetSystemTick());
+		}
 		return false;
 	}
 };

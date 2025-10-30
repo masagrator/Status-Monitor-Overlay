@@ -103,6 +103,7 @@ float designedFullBatCapacity = 0;
 bool batteryFiltered = false;
 uint8_t batteryTimeLeftRefreshRate = 60;
 int32_t BatteryTimeCache[120];
+bool touchScreen = true;
 
 //Temperatures
 float SOC_temperatureF = 0;
@@ -444,7 +445,8 @@ void gpuLoadThread(void*) {
 
 //Stuff that doesn't need multithreading
 void Misc(void*) {
-	uint64_t timeout_ns = TeslaFPS < 10 ? (1'000'000'000 / TeslaFPS) : 100'000'000;
+	u8 m_TeslaFPS = !TeslaFPS ? 60 : TeslaFPS;
+	uint64_t timeout_ns = m_TeslaFPS < 10 ? (1'000'000'000 / m_TeslaFPS) : 100'000'000;
 	do {
 		mutexLock(&mutex_Misc);
 		// CPU, GPU and RAM Frequency
@@ -556,7 +558,8 @@ void Misc2(void*) {
 //In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
 //This is because making each loop also takes time, which is not considered because this will take also additional time
 void CheckCore0(void*) {
-	uint64_t timeout_ns = 1'000'000'000 / TeslaFPS;
+	u8 m_TeslaFPS = !TeslaFPS ? 60 : TeslaFPS;
+	uint64_t timeout_ns = 1'000'000'000 / m_TeslaFPS;
 	while(true) {
 		uint64_t idletick_a0 = 0;
 		uint64_t idletick_b0 = 0;
@@ -569,7 +572,8 @@ void CheckCore0(void*) {
 }
 
 void CheckCore1(void*) {
-	uint64_t timeout_ns = 1'000'000'000 / TeslaFPS;
+	u8 m_TeslaFPS = !TeslaFPS ? 60 : TeslaFPS;
+	uint64_t timeout_ns = 1'000'000'000 / m_TeslaFPS;
 	while(true) {
 		uint64_t idletick_a1 = 0;
 		uint64_t idletick_b1 = 0;
@@ -582,7 +586,8 @@ void CheckCore1(void*) {
 }
 
 void CheckCore2(void*) {
-	uint64_t timeout_ns = 1'000'000'000 / TeslaFPS;
+	u8 m_TeslaFPS = !TeslaFPS ? 60 : TeslaFPS;
+	uint64_t timeout_ns = 1'000'000'000 / m_TeslaFPS;
 	while(true) {
 		uint64_t idletick_a2 = 0;
 		uint64_t idletick_b2 = 0;
@@ -595,7 +600,8 @@ void CheckCore2(void*) {
 }
 
 void CheckCore3(void*) {
-	uint64_t timeout_ns = 1'000'000'000 / TeslaFPS;
+	u8 m_TeslaFPS = !TeslaFPS ? 60 : TeslaFPS;
+	uint64_t timeout_ns = 1'000'000'000 / m_TeslaFPS;
 	while(true) {
 		uint64_t idletick_a3 = 0;
 		uint64_t idletick_b3 = 0;
@@ -680,7 +686,8 @@ void CloseThreads(bool wait = false) {
 
 //Separate functions dedicated to "FPS Counter" mode
 void FPSCounter(void*) {
-	uint64_t timeout_ns = 1'000'000'000 / TeslaFPS;
+	u8 m_TeslaFPS = !TeslaFPS ? 60 : TeslaFPS;
+	uint64_t timeout_ns = 1'000'000'000 / m_TeslaFPS;
 	do {
 		if (GameRunning) {
 			if (SharedMemoryUsed) {
@@ -844,7 +851,18 @@ uint64_t MapButtons(const std::string& buttonCombo) {
 }
 
 ALWAYS_INLINE bool isKeyComboPressed(uint64_t keysHeld, uint64_t keysDown, uint64_t comboBitmask) {
-	return (keysDown == comboBitmask) || (keysHeld == comboBitmask);
+	uint64_t expectedPressTime = 200'000'000;
+	static uint64_t first_time_checked = 0;
+	if ((keysDown == comboBitmask) || (keysHeld == comboBitmask)) {
+		if (!first_time_checked) {
+			first_time_checked = armTicksToNs(svcGetSystemTick());
+			return false;
+		}
+		uint64_t second_time_checked = armTicksToNs(svcGetSystemTick());
+		if (second_time_checked - first_time_checked > expectedPressTime) return true;
+	}
+	else first_time_checked = 0;
+	return false;
 }
 
 // Custom utility function for parsing an ini file
@@ -925,6 +943,11 @@ void ParseIniFile() {
 				auto key = parsedData["status-monitor"]["use_old_fps_average"];
 				convertToUpper(key);
 				useOldFPSavg = !key.compare("TRUE");
+			}
+			if (parsedData["status-monitor"].find("touch_screen") != parsedData["status-monitor"].end()) {
+				auto key = parsedData["status-monitor"]["touch_screen"];
+				convertToUpper(key);
+				touchScreen = key.compare("FALSE");
 			}
 		}
 		
