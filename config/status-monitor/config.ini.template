@@ -5,6 +5,7 @@ battery_time_left_refreshrate=60
 average_gpu_load=false
 font_cache=true
 use_old_fps_average=false
+touch_screen=true
 [full]
 refresh_rate=1
 layer_width_align=left
