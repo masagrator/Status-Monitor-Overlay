@@ -17,6 +17,7 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `average_gpu_load` | Average 5 last GPU load readings. Because GPU load by design shows only load for last 1/60s, this option allows for more accurate gpu load readings at the cost of slight bump in CPU Core #3 usage (from 2 to 4 percentage points depending on CPU clock). | `true`, `false` | `false` |
 | `font_cache` | Allow caching generated glyphs for better performance. Cache is cleaned up when moving between modes. | `true`, `false` | `true` |
 | `use_old_fps_average` | Turn off rounding FPS average introduced in 1.2.2 release. | `true`, `false` | `false` |
+| `touch_screen` | Enable touch screen functionalities in various modes | `true`, `false` | `true` |
 
 
 > [full]
