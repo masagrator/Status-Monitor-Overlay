@@ -103,6 +103,7 @@ float designedFullBatCapacity = 0;
 bool batteryFiltered = false;
 uint8_t batteryTimeLeftRefreshRate = 60;
 int32_t BatteryTimeCache[120];
+bool touchScreen = true;
 
 //Temperatures
 float SOC_temperatureF = 0;
@@ -942,6 +943,11 @@ void ParseIniFile() {
 				auto key = parsedData["status-monitor"]["use_old_fps_average"];
 				convertToUpper(key);
 				useOldFPSavg = !key.compare("TRUE");
+			}
+			if (parsedData["status-monitor"].find("touch_screen") != parsedData["status-monitor"].end()) {
+				auto key = parsedData["status-monitor"]["touch_screen"];
+				convertToUpper(key);
+				touchScreen = key.compare("FALSE");
 			}
 		}
 		

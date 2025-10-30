@@ -310,23 +310,26 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (*touchInput.delta_time != 0 && (*touchInput.x >= m_base_x && *touchInput.x <= (m_base_x + m_width)) && (*touchInput.y >= m_base_y && *touchInput.y <= (m_base_y + m_height))) {
-			changingPos = true;
-			changedPos = true;
-		}
-		else if (changingPos && *touchInput.delta_time == 0) {
-			touch_pos_x = -1;
-			touch_pos_y = -1;
-			changingPos = false;
-			return false;
-		}
-		if (changingPos) {
-			touch_pos_x = *touchInput.x;
-			touch_pos_y = *touchInput.y;
-			if (touch_pos_y >= 704) touch_pos_y = 720;
-			else if (touch_pos_y <= 15) touch_pos_y = 0;
-			if (touch_pos_x >= 1264) touch_pos_x = 1280;
-			else if (touch_pos_x <= 15) touch_pos_x = 0;
+		bool m_touchScreen = touchScreen;
+		if (m_touchScreen) {
+			if (*touchInput.delta_time != 0 && (*touchInput.x >= m_base_x && *touchInput.x <= (m_base_x + m_width)) && (*touchInput.y >= m_base_y && *touchInput.y <= (m_base_y + m_height))) {
+				changingPos = true;
+				changedPos = true;
+			}
+			else if (changingPos && *touchInput.delta_time == 0) {
+				touch_pos_x = -1;
+				touch_pos_y = -1;
+				changingPos = false;
+				return false;
+			}
+			if (changingPos) {
+				touch_pos_x = *touchInput.x;
+				touch_pos_y = *touchInput.y;
+				if (touch_pos_y >= 704) touch_pos_y = 720;
+				else if (touch_pos_y <= 15) touch_pos_y = 0;
+				if (touch_pos_x >= 1264) touch_pos_x = 1280;
+				else if (touch_pos_x <= 15) touch_pos_x = 0;
+			}
 		}
 		static uint64_t last_time = 0;
 		if (!last_time) {
@@ -339,7 +342,7 @@ public:
 				int64_t time_delta = (int64_t)frametime - delta;
 				while (time_delta > 1000000) {
 					HidTouchScreenState state = {0};
-					if (hidGetTouchScreenStates(&state, 1) && state.count && (state.touches[0].x >= m_base_x && state.touches[0].x <= (m_base_x + m_width)) && (state.touches[0].y >= m_base_y && state.touches[0].y <= (m_base_y + m_height))) {
+					if (m_touchScreen && hidGetTouchScreenStates(&state, 1) && state.count && (state.touches[0].x >= m_base_x && state.touches[0].x <= (m_base_x + m_width)) && (state.touches[0].y >= m_base_y && state.touches[0].y <= (m_base_y + m_height))) {
 						break;
 					}
 					if (isKeyComboPressed(padGetButtons(&pad), padGetButtonsDown(&pad), mappedButtons)) {
