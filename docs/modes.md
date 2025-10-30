@@ -44,7 +44,7 @@ This mode you can know from older releases of Status Monitor. It contains all in
 
 # Mini
 
-Contains most of supported informations with lower precision.
+Contains most of supported informations with lower precision. You can use touch screen to change its position temporarily.
 
 | Category | Format                                            | Explanation                                                               |
 |----------|---------------------------------------------------|---------------------------------------------------------------------------|
@@ -104,7 +104,7 @@ Contains most of supported informations with lower precision in one line.
 It shows only FPS value in 31Hz + vsync signal. <br>
 If game is not launched, it will show always 254.0 value.<br>
 
-Mode available only with SaltyNX installed.
+Mode available only with SaltyNX installed. You can use touch screen to change its position temporarily.
 
 > Graph
 
@@ -117,7 +117,7 @@ If it's in display refresh rate or half of it rounding error range, it's green. 
 
 Colors can be changed in config file.
 
-Mode available only with SaltyNX installed.
+Mode available only with SaltyNX installed. You can use touch screen to change its position temporarily.
 
 # Other
 
@@ -154,7 +154,7 @@ If Network Type is "Wi-Fi", you can press Y to show password. Since max password
 
 > Game Resolutions
 
-For this mode to show and work properly you must have SaltyNX 0.9.0+ installed.
+For this mode to show and work properly you must have SaltyNX 0.9.0+ installed. You can use touch screen to change its position temporarily.
 
 When game runs, this menu shows what resolutions and how many times they were passed to GPU via two functions:
 - __Depth__ shows info from depth texture passed to `nvnCommandBufferSetRenderTargets`
