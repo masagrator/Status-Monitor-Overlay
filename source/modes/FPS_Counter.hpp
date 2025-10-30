@@ -189,7 +189,11 @@ public:
 		else if (performanceMode == ApmPerformanceMode_Boost) {
 			fontsize = settings.dockedFontSize;
 		}
-		snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f", useOldFPSavg ? FPSavg_old : FPSavg);
+		float m_FPSavg = useOldFPSavg ? FPSavg_old : FPSavg;
+		if (m_FPSavg <= 0.f || m_FPSavg >= 1000.f || m_FPSavg == 254.f) {
+			strcpy(FPSavg_c, "n/d");
+		}
+		else snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f", m_FPSavg);
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {

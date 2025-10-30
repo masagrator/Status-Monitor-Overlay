@@ -277,8 +277,13 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "Fan Rotation Level: %2.1f%%", Rotation_Duty);
 		
 		///FPS
-		if (settings.showFPS == true) 
-			snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "PFPS: %3u; FPS: %.1f", FPS, useOldFPSavg ? FPSavg_old : FPSavg);
+		if (settings.showFPS == true) {
+			float m_FPSavg = useOldFPSavg ? FPSavg_old : FPSavg;
+			if (m_FPSavg <= 0.f || m_FPSavg >= 1000.f || m_FPSavg == 254.f) {
+				strcpy(FPS_var_compressed_c, "PFPS: n/d; FPS: n/d");
+			}
+			else snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "PFPS: %3u; FPS: %.1f", FPS, useOldFPSavg ? FPSavg_old : FPSavg);
+		}
 
 		//Resolutions
 		if ((settings.showRES == true) && GameRunning && NxFps) {

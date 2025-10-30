@@ -282,17 +282,17 @@ public:
 		if (SaltySharedDisplayRefreshRate) 
 			refreshRate = SaltySharedDisplayRefreshRate;
 		else refreshRate = 60;
-		if (FPSavg < 254) {
-			bool useOldFPS = useOldFPSavg;
-			snprintf(FPSavg_c, sizeof(FPSavg_c), "%.1f", useOldFPS ? FPSavg_old : FPSavg);
+		float m_FPSavg = useOldFPSavg ? FPSavg_old : FPSavg;
+		if (m_FPSavg >= 0.f && m_FPSavg <= 1000.f && m_FPSavg != 254.f) {
+			snprintf(FPSavg_c, sizeof(FPSavg_c), "%.1f", m_FPSavg);
 			if (lastFrame == lastFrameNumber) return;
 			else lastFrame = lastFrameNumber;
 			if ((s16)(readings.size()) >= rectangle_width) {
 				readings.erase(readings.begin());
 			}
-			float whole = std::round(useOldFPS ? FPSavg_old : FPSavg);
-			temp.value = static_cast<s16>(std::lround(useOldFPS ? FPSavg_old : FPSavg));
-			if ((useOldFPS ? FPSavg_old : FPSavg) < whole+0.04 && (useOldFPS ? FPSavg_old : FPSavg) > whole-0.05) {
+			float whole = std::round(m_FPSavg);
+			temp.value = static_cast<s16>(std::lround(m_FPSavg));
+			if (m_FPSavg < whole+0.04 && m_FPSavg > whole-0.05) {
 				temp.zero_rounded = true;
 			}
 			readings.push_back(temp);

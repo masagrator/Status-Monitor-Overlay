@@ -558,7 +558,11 @@ public:
 					strcat(Temp, "\n");
 				}
 				char Temp_s[8] = "";
-				snprintf(Temp_s, sizeof(Temp_s), "%2.1f", useOldFPSavg ? FPSavg_old : FPSavg);
+				float m_FPSavg = useOldFPSavg ? FPSavg_old : FPSavg;
+				if (m_FPSavg <= 0.f || m_FPSavg >= 1000.f || m_FPSavg == 254.f) {
+					strcpy(Temp_s, "n/d");
+				}
+				else snprintf(Temp_s, sizeof(Temp_s), "%2.1f", m_FPSavg);
 				strcat(Temp, Temp_s);
 				flags |= 1 << 6;			
 			}

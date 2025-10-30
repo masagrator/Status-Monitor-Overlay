@@ -345,7 +345,11 @@ public:
 		snprintf(Rotation_SpeedLevel_c, sizeof Rotation_SpeedLevel_c, "%2.1f%%", Rotation_Duty);
 		
 		///FPS
-		snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", useOldFPSavg ? FPSavg_old : FPSavg);
+		float m_FPSavg = useOldFPSavg ? FPSavg_old : FPSavg;
+		if (m_FPSavg <= 0.f || m_FPSavg >= 1000.f || m_FPSavg == 254.f) {
+			strcpy(FPS_var_compressed_c, "n/d");
+		}
+		else snprintf(FPS_var_compressed_c, sizeof FPS_var_compressed_c, "%2.1f", m_FPSavg);
 
 		mutexUnlock(&mutex_Misc);
 	}
