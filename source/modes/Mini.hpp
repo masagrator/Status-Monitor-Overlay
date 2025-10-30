@@ -223,6 +223,8 @@ public:
 			uint32_t margin = (fontsize * 4);
 
 			m_width = margin + rectangleWidth + (fontsize / 3);
+			m_height = height;
+
 			base_x_max = 448 - m_width;
 			base_y_max = 720 - height;
 			static int base_x = 0;
@@ -271,7 +273,6 @@ public:
 			}
 			m_base_y = base_y;
 			m_base_x = base_x + layer_pos_x;
-			m_height = height;
 			if (changingPos) {
 				base_x -= (m_width / 2);
 				base_y -= (m_height / 2);
@@ -628,6 +629,10 @@ public:
 		if (changingPos) {
 			touch_pos_x = *touchInput.x;
 			touch_pos_y = *touchInput.y;
+			if (touch_pos_y >= 704) touch_pos_y = 720;
+			else if (touch_pos_y <= 15) touch_pos_y = 0;
+			if (touch_pos_x >= 1264) touch_pos_x = 1280;
+			else if (touch_pos_x <= 15) touch_pos_x = 0;
 		}
 		static uint64_t last_time = 0;
 		if (!last_time) {
