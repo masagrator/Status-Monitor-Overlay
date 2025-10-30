@@ -38,7 +38,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:=	Status Monitor
-APP_VERSION	:=	1.2.4
+APP_VERSION	:=	1.3.0
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
@@ -51,7 +51,7 @@ NO_ICON		:=	1
 #---------------------------------------------------------------------------------
 ARCH		:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	-g -Wall -Werror -O2 -ffunction-sections -ffast-math \
+CFLAGS	:=	-g -Wall -Werror -Wno-address-of-packed-member -O2 -ffunction-sections -ffast-math \
 			$(ARCH) $(DEFINES)
 
 CFLAGS		+=	$(INCLUDE) -D__SWITCH__ -DAPP_VERSION="\"$(APP_VERSION)\""
