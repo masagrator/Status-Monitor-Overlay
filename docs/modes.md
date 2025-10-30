@@ -158,7 +158,7 @@ For this mode to show and work properly you must have SaltyNX 0.9.0+ installed. 
 
 When game runs, this menu shows what resolutions and how many times they were passed to GPU via two functions:
 - __Depth__ shows info from depth texture passed to `nvnCommandBufferSetRenderTargets`
-- __Viewport__ shows info from arguments passed to `nvnCommandBufferSetViewport` and `nvnCommandBufferSetViewports`
+- __Viewport__ shows info from arguments passed to `nvnCommandBufferSetViewport`, `nvnCommandBufferSetViewports`, `nvnCommandBufferSetScissor` and `nvnCommandBufferSetScissors`
 
 This menu shows first 8 resolutions passed to those functions in last frame rendering loop, sorted in descending order of calls number.<br>
 Its main purpose is to catch game rendering resolution, but user must deduce which ones are correct.<br>
