@@ -141,7 +141,7 @@ public:
 				}
 				Initialized = true;
 			}
-			char print_text[36] = "";
+			char print_text[128] = "";
 			static size_t entry_count = 0;
 			static uint32_t flags = 0;
 			if (!changingPos) {
@@ -214,8 +214,10 @@ public:
 					}
 				}
 			}
-
-			if (changingPos) print_text[0] = 0;
+			else for (size_t i = 0; i < entry_count; i++) {
+				strcat(print_text, "\uE01A\uE01B\uE01C\uE019");
+				if (i + 1 < entry_count) strcat(print_text, "\n");
+			}
 
 			uint32_t height = (fontsize * entry_count) + (fontsize / 3);
 			uint32_t margin = (fontsize * 4);
@@ -310,9 +312,6 @@ public:
 			renderer->drawRect(base_x, base_y, m_width, height, a(settings.backgroundColor));
 			renderer->drawString(print_text, false, base_x, base_y + fontsize, fontsize, renderer->a(settings.catColor));
 			renderer->drawString(Variables, false, base_x + margin, base_y + fontsize, fontsize, renderer->a(settings.textColor));
-			if (changingPos) {
-				renderer->drawString("\uE058", false, base_x, base_y+(m_height / 2), m_height / 2, renderer->a(settings.catColor));
-			}
 		});
 
 		rootFrame->setContent(Status);
