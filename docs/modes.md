@@ -102,14 +102,14 @@ Contains most of supported informations with lower precision in one line.
 > Counter
 
 It shows only FPS value in 31Hz + vsync signal. <br>
-If game is not launched, it will show always 254.0 value.<br>
+If game is not launched, it will show always `n/d` aka `no data`.<br>
 
 Mode available only with SaltyNX installed. You can use touch screen to change its position temporarily.
 
 > Graph
 
 It shows average FPS graph in 31Hz + vsync signal. In background of graph you can see rendered actual average FPS.<br>
-If game is not launched, it will show always 254.0 value and graph will be empty.<br>
+If game is not launched, graph will be empty.<br>
 If game is not rendering any new frame, graph is not updated.
 
 If line is within rounding error of graph line, it's colored. Average FPS must be between -0.05 and +0.04 of graph line target FPS. So for 30 FPS it's between 29.95 - 30.04 FPS. For 43 FPS it's 42.95 - 43.04 FPS.
