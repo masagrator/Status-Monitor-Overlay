@@ -29,6 +29,7 @@ private:
 	bool changingPos = false;
 	bool changedPos = false;
 	bool reachedMaxY = false;
+	bool reachedMaxX = false;
 	uint64_t frametime = 1000000000 / 60;
 public:
     MiniOverlay() { 
@@ -277,15 +278,22 @@ public:
 				base_x -= (m_width / 2);
 				base_y -= (m_height / 2);
 				reachedMaxY = false;
+				reachedMaxX = false;
 			}
 			if (base_y >= base_y_max) {
 				reachedMaxY = true;
+			}
+			if (base_x >= base_x_max) {
+				reachedMaxX = true;
 			}
 			if (base_y < 0) {
 				base_y = 0;
 			}
 			if (reachedMaxY) {
 				base_y = base_y_max;
+			}
+			if (reachedMaxX && (layer_pos_x_orig == layer_pos_x_orig_max)) {
+				base_x = base_x_max;
 			}
 			if (base_x < 0) {
 				int base_x_abs = std::abs(base_x);
