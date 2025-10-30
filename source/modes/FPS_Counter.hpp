@@ -5,6 +5,7 @@ private:
 	FpsCounterSettings settings;
 	size_t fontsize = 0;
 	ApmPerformanceMode performanceMode = ApmPerformanceMode_Invalid;
+	uint64_t frametime = 1000000000 / 60;
 public:
     com_FPS() { 
 		GetConfigSettings(&settings);
@@ -31,11 +32,11 @@ public:
 		tsl::hlp::requestForeground(false);
 		FullMode = false;
 		TeslaFPS = settings.refreshRate;
+		frametime = 1000000000 / settings.refreshRate;
 		deactivateOriginalFooter = true;
 		StartFPSCounterThread();
 	}
 	~com_FPS() {
-		TeslaFPS = 60;
 		EndFPSCounterThread();
 		if (settings.setPos)
 			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
@@ -99,9 +100,26 @@ public:
 		
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
-			tsl::goBack();
-			return true;
+		static uint64_t last_time = 0;
+		if (!last_time) {
+			last_time = armTicksToNs(svcGetSystemTick());
+		}
+		else {
+			uint64_t new_time = armTicksToNs(svcGetSystemTick());
+			uint64_t delta = new_time - last_time;
+			if (delta < frametime) {
+				uint64_t time_delta = frametime - delta;
+				while (time_delta > 1000000) {
+					if (isKeyComboPressed(padGetButtons(&pad), padGetButtonsDown(&pad), mappedButtons)) {
+						TeslaFPS = 0;
+						tsl::goBack();
+						return true;
+					}
+					svcSleepThread(1000000);
+					time_delta -= 1000000;
+				}
+			}
+			last_time = new_time;
 		}
 		return false;
 	}

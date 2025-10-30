@@ -29,6 +29,7 @@ private:
 	size_t fontsize = 0;
 	bool showFPS = false;
 	uint64_t systemtickfrequency_impl = systemtickfrequency;
+	uint64_t frametime = 1000000000 / 60;
 public:
     MicroOverlay() { 
 		GetConfigSettings(&settings);
@@ -44,6 +45,7 @@ public:
 		mutexInit(&mutex_Misc);
 		TeslaFPS = settings.refreshRate;
 		systemtickfrequency_impl /= settings.refreshRate;
+		frametime = 1000000000 / settings.refreshRate;
 		idletick0 = systemtickfrequency_impl;
 		idletick1 = systemtickfrequency_impl;
 		idletick2 = systemtickfrequency_impl;
@@ -51,7 +53,6 @@ public:
 		alphabackground = 0x0;
 		deactivateOriginalFooter = true;
         StartThreads(NULL);
-		TeslaFPS = 60;
 	}
 	~MicroOverlay() {
 		CloseThreads();
@@ -350,17 +351,33 @@ public:
 	}
 	
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
-			TeslaFPS = 60;
-            if (skipMain)
-                tsl::goBack();
-            else {
-			    tsl::setNextOverlay(filepath.c_str());
-			    tsl::Overlay::get()->close();
-            }
-			return true;
+		if (!TeslaFPS) TeslaFPS = settings.refreshRate;
+		static uint64_t last_time = 0;
+		if (!last_time) {
+			last_time = armTicksToNs(svcGetSystemTick());
 		}
-		TeslaFPS = settings.refreshRate;
+		else {
+			uint64_t new_time = armTicksToNs(svcGetSystemTick());
+			uint64_t delta = new_time - last_time;
+			if (delta < frametime) {
+				uint64_t time_delta = frametime - delta;
+				while (time_delta > 1000000) {
+					if (isKeyComboPressed(padGetButtons(&pad), padGetButtonsDown(&pad), mappedButtons)) {
+						TeslaFPS = 0;
+						if (skipMain)
+							tsl::goBack();
+						else {
+							tsl::setNextOverlay(filepath.c_str());
+							tsl::Overlay::get()->close();
+						}
+						return true;
+					}
+					svcSleepThread(1000000);
+					time_delta -= 1000000;
+				}
+			}
+			last_time = new_time;
+		}
 		return false;
 	}
 };

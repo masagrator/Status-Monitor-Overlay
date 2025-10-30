@@ -29,23 +29,25 @@ private:
 	bool changingPos = false;
 	bool changedPos = false;
 	bool reachedMaxY = false;
+	uint64_t frametime = 1000000000 / 60;
 public:
     MiniOverlay() { 
 		GetConfigSettings(&settings);
-		apmGetPerformanceMode(&performanceMode);
-		mutexInit(&mutex_BatteryChecker);
-		mutexInit(&mutex_Misc);
-		alphabackground = 0x0;
-		tsl::hlp::requestForeground(false);
 		FullMode = false;
 		TeslaFPS = settings.refreshRate;
 		systemtickfrequency_impl /= settings.refreshRate;
+		frametime = 1000000000 / settings.refreshRate;
 		idletick0 = systemtickfrequency_impl;
 		idletick1 = systemtickfrequency_impl;
 		idletick2 = systemtickfrequency_impl;
 		idletick3 = systemtickfrequency_impl;
 		deactivateOriginalFooter = true;
+		mutexInit(&mutex_BatteryChecker);
+		mutexInit(&mutex_Misc);
         StartThreads(NULL);
+		apmGetPerformanceMode(&performanceMode);
+		alphabackground = 0x0;
+		tsl::hlp::requestForeground(false);
 		if (performanceMode == ApmPerformanceMode_Normal) {
 			fontsize = settings.handheldFontSize;
 		}
@@ -608,32 +610,50 @@ public:
 		mutexUnlock(&mutex_BatteryChecker);
 
 	}
+
+	void FPSLock() {
+		
+	}
+
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
-		static auto TeslaFPS_copy = 0;
 		if (*touchInput.delta_time != 0 && (*touchInput.x >= m_base_x && *touchInput.x <= (m_base_x + m_width)) && (*touchInput.y >= m_base_y && *touchInput.y <= (m_base_y + m_height))) {
 			changingPos = true;
 			changedPos = true;
 		}
 		else if (changingPos && *touchInput.delta_time == 0) {
-			if (TeslaFPS_copy != 0) {
-				TeslaFPS = TeslaFPS_copy;
-				TeslaFPS_copy = 0;
-			}
 			touch_pos_x = -1;
 			touch_pos_y = -1;
 			changingPos = false;
+			return false;
 		}
 		if (changingPos) {
-			if (TeslaFPS_copy == 0)
-				TeslaFPS_copy = TeslaFPS;
-			TeslaFPS = 60;
 			touch_pos_x = *touchInput.x;
 			touch_pos_y = *touchInput.y;
 		}
-		if (isKeyComboPressed(keysHeld, keysDown, mappedButtons)) {
-			TeslaFPS = 60;
-			tsl::goBack();
-			return true;
+		static uint64_t last_time = 0;
+		if (!last_time) {
+			last_time = armTicksToNs(svcGetSystemTick());
+		}
+		else if (!changingPos) {
+			uint64_t new_time = armTicksToNs(svcGetSystemTick());
+			uint64_t delta = new_time - last_time;
+			if (delta < frametime) {
+				uint64_t time_delta = frametime - delta;
+				while (time_delta > 1000000) {
+					HidTouchScreenState state;
+					if (hidGetTouchScreenStates(&state, 1) && state.count && (state.touches[0].x >= m_base_x && state.touches[0].x <= (m_base_x + m_width)) && (state.touches[0].y >= m_base_y && state.touches[0].y <= (m_base_y + m_height))) {
+						break;
+					}
+					if (isKeyComboPressed(padGetButtons(&pad), padGetButtonsDown(&pad), mappedButtons)) {
+						TeslaFPS = 0;
+						tsl::goBack();
+						return true;
+					}
+					svcSleepThread(1000000);
+					time_delta -= 1000000;
+				}
+			}
+			last_time = new_time;
 		}
 		return false;
 	}

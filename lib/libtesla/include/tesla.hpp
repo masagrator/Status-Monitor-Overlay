@@ -113,7 +113,7 @@ bool isValidHexColor(const std::string& hexColor) {
 #define ASSERT_EXIT(x) if (R_FAILED(x)) std::exit(1)
 #define ASSERT_FATAL(x) if (Result res = x; R_FAILED(res)) fatalThrow(res)
 	
-u8 TeslaFPS = 60;
+u8 TeslaFPS = 0;
 u8 alphabackground = 0xD;
 bool FullMode = true;
 PadState pad;
@@ -1054,8 +1054,21 @@ namespace tsl {
 			 */
 			inline void endFrame() {
 				std::memcpy(this->getNextFramebuffer(), this->getCurrentFramebuffer(), this->getFramebufferSize());
-				svcSleepThread(1000*1000*1000 / TeslaFPS);
 				this->waitForVSync();
+				if (!TeslaFPS) {
+					static uint64_t last_time = 0;
+					if (!last_time) {
+						last_time = armTicksToNs(svcGetSystemTick());
+					}
+					else {
+						uint64_t new_time = armTicksToNs(svcGetSystemTick());
+						uint64_t delta = new_time - last_time;
+						last_time = new_time;
+						const uint64_t frametime = 1000000000 / 60;
+						if (delta < frametime)
+							svcSleepThread(frametime - delta);
+					}
+				}
 				framebufferEnd(&this->m_framebuffer);
 
 				this->m_currentFramebuffer = nullptr;
@@ -2409,8 +2422,8 @@ namespace tsl {
 					shData->keysDownPending |= shData->keysDown;
 				}
 
-				//20 ms
-				svcSleepThread(20E6);
+				//15 ms
+				svcSleepThread(15000000);
 			}
 		}
 
