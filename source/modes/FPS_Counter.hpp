@@ -58,8 +58,6 @@ public:
 	}
 	~com_FPS() {
 		EndFPSCounterThread();
-		if (settings.setPos)
-			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;

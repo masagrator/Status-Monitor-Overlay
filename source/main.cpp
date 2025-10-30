@@ -49,7 +49,11 @@ public:
 		return rootFrame;
 	}
 
-	virtual void update() override {}
+	virtual void update() override {
+		if (tsl::cfg::LayerPosX || tsl::cfg::LayerPosY) {
+			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
+		}
+	}
 
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if (keysDown & KEY_B) {
@@ -106,7 +110,11 @@ public:
 		return rootFrame;
 	}
 
-	virtual void update() override {}
+	virtual void update() override {
+		if (tsl::cfg::LayerPosX || tsl::cfg::LayerPosY) {
+			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
+		}
+	}
 
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		if (keysDown & KEY_B) {

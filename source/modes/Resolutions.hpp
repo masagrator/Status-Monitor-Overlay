@@ -54,8 +54,6 @@ public:
 		tsl::hlp::requestForeground(true);
 		alphabackground = 0xD;
 		FullMode = true;
-		if (settings.setPos)
-			tsl::gfx::Renderer::getRenderer().setLayerPos(0, 0);
 	}
 
 	resolutionCalls m_resolutionRenderCalls[8] = {0};
