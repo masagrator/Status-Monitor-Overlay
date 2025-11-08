@@ -214,11 +214,11 @@ public:
 	virtual void update() override {
 		//Make stuff ready to print
 		///CPU
-		snprintf(CPU_compressed_c, sizeof(CPU_compressed_c), "Core #0: %.2f%%\nCore #1: %.2f%%\nCore #2: %.2f%%\nCore #3: %.2f%%",
-			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100),
-			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100),
-			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100),
-			std::clamp(0.f, 100.f, (float)(1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100));
+		snprintf(CPU_compressed_c, sizeof(CPU_compressed_c), "Core #0: %.2lf%%\nCore #1: %.2lf%%\nCore #2: %.2lf%%\nCore #3: %.2lf%%",
+			std::clamp(0.d, 100.d, floor((1.d - ((double)idletick0 / systemtickfrequency_impl)) * 10000) / 100),
+			std::clamp(0.d, 100.d, floor((1.d - ((double)idletick1 / systemtickfrequency_impl)) * 10000) / 100),
+			std::clamp(0.d, 100.d, floor((1.d - ((double)idletick2 / systemtickfrequency_impl)) * 10000) / 100),
+			std::clamp(0.d, 100.d, floor((1.d - ((double)idletick3 / systemtickfrequency_impl)) * 10000) / 100));
 
 		mutexLock(&mutex_Misc);
 		snprintf(CPU_Hz_c, sizeof(CPU_Hz_c), "Target Frequency: %u.%u MHz", CPU_Hz / 1000000, (CPU_Hz / 100000) % 10);
