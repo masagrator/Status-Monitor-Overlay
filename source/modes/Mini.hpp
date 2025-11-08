@@ -353,16 +353,16 @@ public:
 
 		if (idletick0 > systemtickfrequency_impl)
 			strcpy(MINI_CPU_Usage0, "0%");
-		else snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0f%%", (1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100);
+		else snprintf(MINI_CPU_Usage0, sizeof(MINI_CPU_Usage0), "%.0lf%%", std::clamp((1.d - ((double)idletick0 / systemtickfrequency_impl)) * 100.d, 0.d, 100.d));
 		if (idletick1 > systemtickfrequency_impl)
 			strcpy(MINI_CPU_Usage1, "0%");
-		else snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0f%%", (1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100);
+		else snprintf(MINI_CPU_Usage1, sizeof(MINI_CPU_Usage1), "%.0lf%%", std::clamp((1.d - ((double)idletick1 / systemtickfrequency_impl)) * 100.d, 0.d, 100.d));
 		if (idletick2 > systemtickfrequency_impl)
 			strcpy(MINI_CPU_Usage2, "0%");
-		else snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0f%%", (1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100);
+		else snprintf(MINI_CPU_Usage2, sizeof(MINI_CPU_Usage2), "%.0lf%%", std::clamp((1.d - ((double)idletick2 / systemtickfrequency_impl)) * 100.d, 0.d, 100.d));
 		if (idletick3 > systemtickfrequency_impl)
 			strcpy(MINI_CPU_Usage3, "0%");
-		else snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0f%%", (1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100);
+		else snprintf(MINI_CPU_Usage3, sizeof(MINI_CPU_Usage3), "%.0lf%%", std::clamp((1.d - ((double)idletick3 / systemtickfrequency_impl)) * 100.d, 0.d, 100.d));
 
 		mutexLock(&mutex_Misc);
 		
