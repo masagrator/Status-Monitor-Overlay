@@ -46,6 +46,7 @@ Thread t5;
 #endif
 
 LEvent threadexit = {0};
+uint32_t threadexit2 = 0;
 PwmChannelSession g_ICon;
 std::string folderpath = "sdmc:/switch/.overlays/";
 std::string filename = "";
@@ -564,11 +565,11 @@ void CheckCore(void* idletick_ptr) {
 	while(true) {
 		uint64_t idletick_a;
 		uint64_t idletick_b;
-		Result rc = svcGetInfo(&idletick_b, InfoType_IdleTickCount, INVALID_HANDLE, -1);
-		if (leventWait(&threadexit, timeout_ns))
-			return;
-		if (R_SUCCEEDED(rc)) rc = svcGetInfo(&idletick_a, InfoType_IdleTickCount, INVALID_HANDLE, -1);
-		if (R_SUCCEEDED(rc)) *idletick = idletick_a - idletick_b;
+		svcGetInfo(&idletick_b, InfoType_IdleTickCount, INVALID_HANDLE, -1);
+		Result rc_break = svcWaitForAddress(&threadexit2, ArbitrationType_WaitIfEqual, 0, timeout_ns);
+		svcGetInfo(&idletick_a, InfoType_IdleTickCount, INVALID_HANDLE, -1);
+		if (R_SUCCEEDED(rc_break)) return;
+		*idletick = idletick_a - idletick_b;
 	}
 }
 
@@ -583,6 +584,7 @@ void StartThreads(void*) {
 	threadWaitForExit(&t6);
 	threadWaitForExit(&t7);
 	leventClear(&threadexit);
+	threadexit2 = 0;
 
 	threadClose(&t0);
 	threadCreate(&t0, CheckCore, &idletick0, NULL, 0x1000, 0x10, 0);
@@ -622,6 +624,7 @@ void StartThreads(void*) {
 
 //End reading all stats
 void CloseThreads(bool wait = false) {
+	svcSignalToAddress(&threadexit2, SignalType_SignalAndIncrementIfEqual, 0, 4);
 	leventSignal(&threadexit);
 	if (wait) {
 		threadWaitForExit(&t0);
