@@ -46,7 +46,7 @@ How to setup everything: [HERE](https://gist.github.com/masagrator/65fcbd5ad0924
 # FAQ:
 Q: This homebrew has any impact on games?
 
-A: Negligible, you won't see any difference. Almost everything is done on Core `#3`, other cores usage is below 0.001%.
+A: Negligible, you won't see any difference. Almost everything is done on Core `#3`, other cores usage is below 0.005% at 1 FPS refresh rate.
 
 # Troubleshooting:
 
