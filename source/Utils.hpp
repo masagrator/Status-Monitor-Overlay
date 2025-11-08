@@ -557,59 +557,18 @@ void Misc2(void*) {
 //Check each core for idled ticks in intervals, they cannot read info about other core than they are assigned
 //In case of getting more than systemtickfrequency in idle, make it equal to systemtickfrequency to get 0% as output and nothing less
 //This is because making each loop also takes time, which is not considered because this will take also additional time
-void CheckCore0(void*) {
+void CheckCore(void* idletick_ptr) {
 	u8 m_TeslaFPS = !TeslaFPS ? 60 : TeslaFPS;
 	uint64_t timeout_ns = 1'000'000'000 / m_TeslaFPS;
+	uint64_t* idletick = (uint64_t*)idletick_ptr;
 	while(true) {
-		uint64_t idletick_a0 = 0;
-		uint64_t idletick_b0 = 0;
-		svcGetInfo(&idletick_b0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
+		uint64_t idletick_a;
+		uint64_t idletick_b;
+		Result rc = svcGetInfo(&idletick_b, InfoType_IdleTickCount, INVALID_HANDLE, -1);
 		if (leventWait(&threadexit, timeout_ns))
 			return;
-		svcGetInfo(&idletick_a0, InfoType_IdleTickCount, INVALID_HANDLE, 0);
-		idletick0 = idletick_a0 - idletick_b0;
-	}
-}
-
-void CheckCore1(void*) {
-	u8 m_TeslaFPS = !TeslaFPS ? 60 : TeslaFPS;
-	uint64_t timeout_ns = 1'000'000'000 / m_TeslaFPS;
-	while(true) {
-		uint64_t idletick_a1 = 0;
-		uint64_t idletick_b1 = 0;
-		svcGetInfo(&idletick_b1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-		if (leventWait(&threadexit, timeout_ns))
-			return;
-		svcGetInfo(&idletick_a1, InfoType_IdleTickCount, INVALID_HANDLE, 1);
-		idletick1 = idletick_a1 - idletick_b1;
-	}
-}
-
-void CheckCore2(void*) {
-	u8 m_TeslaFPS = !TeslaFPS ? 60 : TeslaFPS;
-	uint64_t timeout_ns = 1'000'000'000 / m_TeslaFPS;
-	while(true) {
-		uint64_t idletick_a2 = 0;
-		uint64_t idletick_b2 = 0;
-		svcGetInfo(&idletick_b2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-		if (leventWait(&threadexit, timeout_ns))
-			return;
-		svcGetInfo(&idletick_a2, InfoType_IdleTickCount, INVALID_HANDLE, 2);
-		idletick2 = idletick_a2 - idletick_b2;
-	}
-}
-
-void CheckCore3(void*) {
-	u8 m_TeslaFPS = !TeslaFPS ? 60 : TeslaFPS;
-	uint64_t timeout_ns = 1'000'000'000 / m_TeslaFPS;
-	while(true) {
-		uint64_t idletick_a3 = 0;
-		uint64_t idletick_b3 = 0;
-		svcGetInfo(&idletick_b3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		if (leventWait(&threadexit, timeout_ns))
-			return;
-		svcGetInfo(&idletick_a3, InfoType_IdleTickCount, INVALID_HANDLE, 3);
-		idletick3 = idletick_a3 - idletick_b3;
+		if (R_SUCCEEDED(rc)) rc = svcGetInfo(&idletick_a, InfoType_IdleTickCount, INVALID_HANDLE, -1);
+		if (R_SUCCEEDED(rc)) *idletick = idletick_a - idletick_b;
 	}
 }
 
@@ -626,19 +585,19 @@ void StartThreads(void*) {
 	leventClear(&threadexit);
 
 	threadClose(&t0);
-	threadCreate(&t0, CheckCore0, NULL, NULL, 0x1000, 0x10, 0);
+	threadCreate(&t0, CheckCore, &idletick0, NULL, 0x1000, 0x10, 0);
 	threadStart(&t0);
 
 	threadClose(&t1);
-	threadCreate(&t1, CheckCore1, NULL, NULL, 0x1000, 0x10, 1);
+	threadCreate(&t1, CheckCore, &idletick1, NULL, 0x1000, 0x10, 1);
 	threadStart(&t1);
 
 	threadClose(&t2);
-	threadCreate(&t2, CheckCore2, NULL, NULL, 0x1000, 0x10, 2);
+	threadCreate(&t2, CheckCore, &idletick2, NULL, 0x1000, 0x10, 2);
 	threadStart(&t2);
 
 	threadClose(&t3);
-	threadCreate(&t3, CheckCore3, NULL, NULL, 0x1000, 0x10, 3);
+	threadCreate(&t3, CheckCore, &idletick3, NULL, 0x1000, 0x10, 3);
 	threadStart(&t3);
 
 	threadClose(&t4);
