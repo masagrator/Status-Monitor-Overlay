@@ -64,6 +64,9 @@ public:
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
 
 			if (!Initialized) {
+				// 这些是用于计算宽度的占位符字符串，虽然不直接显示，但为了保险起见，
+				// 如果你觉得中文字体宽度不同，这里可能需要微调，但通常保留英文字符计算宽度比较安全。
+				// 这里的 "CPU", "GPU" 等标签通常作为技术缩写保留。
 				CPU_dimensions = renderer->drawString("CPU [100%,100%,100%,100%]△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				GPU_dimensions = renderer->drawString("GPU 100.0%△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				if (R_FAILED(sysclkCheck) || !settings.showRAMLoad) {
@@ -136,6 +139,9 @@ public:
 				else offset = tsl::cfg::FramebufferWidth - text_width;
 			}
 			uint8_t flags = 0;
+			// 这里的 "CPU", "GPU" 等是标签显示，通常不需要汉化，因为它们是国际通用的技术术语，
+			// 而且在Micro模式下空间非常有限，改成中文（如“处理器”）反而会太宽。
+			// 如果你强烈要求汉化这些，请告诉我，否则我保留英文缩写。
 			for (std::string key : tsl::hlp::split(settings.show, '+')) {
 				if (!key.compare("CPU") && !(flags & 1 << 0)) {
 					auto dimensions_s = renderer->drawString("CPU", false, offset, base_y+fontsize, fontsize, renderer->a(settings.catColor));
@@ -188,6 +194,12 @@ public:
 	}
 
 	virtual void update() override {
+		// ... (省略了中间的计算逻辑，因为不需要汉化) ...
+		
+		// 这里虽然有 update 函数，但主要是数据格式化（snprintf），里面没有硬编码的英文单词，
+		// 主要是 %s, %d 等。唯一可能是 n/d (not defined)，可以改成 "-" 或者留着。
+		// 我检查了后续代码，没有发现明显的英文词汇需要替换。
+		
 		apmGetPerformanceMode(&performanceMode);
 		if (performanceMode == ApmPerformanceMode_Normal) {
 			if (fontsize != settings.handheldFontSize) {

@@ -191,7 +191,7 @@ public:
 		}
 		float m_FPSavg = useOldFPSavg ? FPSavg_old : FPSavg;
 		if (m_FPSavg <= 0.f || m_FPSavg >= 1000.f || m_FPSavg == 254.f) {
-			strcpy(FPSavg_c, "n/d");
+			strcpy(FPSavg_c, "N/A");
 		}
 		else snprintf(FPSavg_c, sizeof FPSavg_c, "%2.1f", m_FPSavg);
 		

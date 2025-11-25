@@ -173,9 +173,12 @@ public:
 			if (ready) {
 				renderer->drawRect(base_x, base_y, m_width, m_height, a(settings.backgroundColor));
 
-				renderer->drawString("Depth:", false, base_x+20, base_y+20, 20, renderer->a(settings.catColor));
+				// "Depth" -> "渲染分辨率" (因为这里的 Depth 实际上是指渲染缓冲区)
+				renderer->drawString("渲染分辨率:", false, base_x+20, base_y+20, 20, renderer->a(settings.catColor));
 				renderer->drawString(Resolutions_c, false, base_x+20, base_y+55, 18, renderer->a(settings.textColor));
-				renderer->drawString("Viewport:", false, base_x+180, base_y+20, 20, renderer->a(settings.catColor));
+				
+				// "Viewport" -> "视口分辨率"
+				renderer->drawString("视口分辨率:", false, base_x+180, base_y+20, 20, renderer->a(settings.catColor));
 				renderer->drawString(Resolutions2_c, false, base_x+180, base_y+55, 18, renderer->a(settings.textColor));
 			}
 			else {
@@ -188,7 +191,8 @@ public:
 						break;
 				}
 				renderer->drawRect(base_x, base_y, m_width, 28, a(settings.backgroundColor));
-				renderer->drawString("Game is not running or it's incompatible.", false, base_x, base_y+20, 18, renderer->a(0xF00F));
+				// "Game is not running or it's incompatible." -> "游戏未运行或不兼容"
+				renderer->drawString("游戏未运行或不兼容。", false, base_x, base_y+20, 18, renderer->a(0xF00F));
 			}
 		});
 

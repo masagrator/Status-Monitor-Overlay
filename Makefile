@@ -37,7 +37,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   of a homebrew executable (.nro). This is intended to be used for sysmodules.
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
-APP_TITLE	:=	Status Monitor
+APP_TITLE	:=	状态监视
 APP_VERSION	:=	1.3.2
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
@@ -56,7 +56,7 @@ CFLAGS	:=	-g -Wall -Werror -Wno-address-of-packed-member -O2 -ffunction-sections
 
 CFLAGS		+=	$(INCLUDE) -D__SWITCH__ -DAPP_VERSION="\"$(APP_VERSION)\""
 
-CXXFLAGS	:=	$(CFLAGS) -fno-exceptions -std=c++23
+CXXFLAGS	:=	$(CFLAGS) -fno-exceptions -std=c++23 -finput-charset=UTF-8 -fexec-charset=UTF-8
 
 ASFLAGS		:=	-g $(ARCH)
 LDFLAGS		=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)

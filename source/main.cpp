@@ -21,10 +21,12 @@ public:
     GraphsMenu() {}
 
     virtual tsl::elm::Element* createUI() override {
-		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "FPS");
+		// "Status Monitor" -> "状态监视", "FPS" -> "FPS" (通用术语不翻译)
+		rootFrame = new tsl::elm::OverlayFrame("状态监视", "FPS");
 		auto list = new tsl::elm::List();
 
-		auto comFPSGraph = new tsl::elm::ListItem("Graph");
+		// "Graph" -> "图表模式"
+		auto comFPSGraph = new tsl::elm::ListItem("图表模式");
 		comFPSGraph->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				tsl::changeTo<com_FPSGraph>();
@@ -34,7 +36,8 @@ public:
 		});
 		list->addItem(comFPSGraph);
 
-		auto comFPSCounter = new tsl::elm::ListItem("Counter");
+		// "Counter" -> "计数器模式"
+		auto comFPSCounter = new tsl::elm::ListItem("计数器模式");
 		comFPSCounter->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				tsl::changeTo<com_FPS>();
@@ -70,10 +73,12 @@ public:
     OtherMenu() { }
 
     virtual tsl::elm::Element* createUI() override {
-		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", "Other");
+		// "Status Monitor" -> "状态监视", "Other" -> "其他"
+		rootFrame = new tsl::elm::OverlayFrame("状态监视", "其他");
 		auto list = new tsl::elm::List();
 
-		auto Battery = new tsl::elm::ListItem("Battery/Charger");
+		// "Battery/Charger" -> "电池/充电信息"
+		auto Battery = new tsl::elm::ListItem("电池/充电信息");
 		Battery->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				tsl::changeTo<BatteryOverlay>();
@@ -83,7 +88,8 @@ public:
 		});
 		list->addItem(Battery);
 
-		auto Misc = new tsl::elm::ListItem("Miscellaneous");
+		// "Miscellaneous" -> "杂项信息"
+		auto Misc = new tsl::elm::ListItem("杂项信息");
 		Misc->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				tsl::changeTo<MiscOverlay>();
@@ -94,7 +100,8 @@ public:
 		list->addItem(Misc);
 
 		if (SaltySD) {
-			auto Res = new tsl::elm::ListItem("Game Resolutions");
+			// "Game Resolutions" -> "游戏分辨率"
+			auto Res = new tsl::elm::ListItem("游戏分辨率");
 			Res->setClickListener([](uint64_t keys) {
 				if (keys & KEY_A) {
 					tsl::changeTo<ResolutionsOverlay>();
@@ -131,10 +138,12 @@ public:
     MainMenu() {}
 
     virtual tsl::elm::Element* createUI() override {
-		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
+		// "Status Monitor" -> "状态监视"
+		rootFrame = new tsl::elm::OverlayFrame("状态监视", APP_VERSION "(星野無上)");
 		auto list = new tsl::elm::List();
 		
-		auto Full = new tsl::elm::ListItem("Full");
+		// "Full" -> "完整模式"
+		auto Full = new tsl::elm::ListItem("完整模式");
 		Full->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				tsl::changeTo<FullOverlay>();
@@ -143,7 +152,9 @@ public:
 			return false;
 		});
 		list->addItem(Full);
-		auto Mini = new tsl::elm::ListItem("Mini");
+
+		// "Mini" -> "迷你模式"
+		auto Mini = new tsl::elm::ListItem("迷你模式");
 		Mini->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				tsl::changeTo<MiniOverlay>();
@@ -169,7 +180,8 @@ public:
 			}
 		}
 		if (fileExist) {
-			auto Micro = new tsl::elm::ListItem("Micro");
+			// "Micro" -> "微型模式"
+			auto Micro = new tsl::elm::ListItem("微型模式");
 			Micro->setClickListener([](uint64_t keys) {
 				if (keys & KEY_A) {
 					tsl::setNextOverlay(filepath, "--microOverlay_");
@@ -181,7 +193,8 @@ public:
 			list->addItem(Micro);
 		}
 		if (SaltySD) {
-			auto Graphs = new tsl::elm::ListItem("FPS");
+			// "FPS" -> "FPS工具" (为了区分，加了“工具”二字，也可只用FPS)
+			auto Graphs = new tsl::elm::ListItem("FPS工具");
 			Graphs->setClickListener([](uint64_t keys) {
 				if (keys & KEY_A) {
 					tsl::changeTo<GraphsMenu>();
@@ -191,7 +204,8 @@ public:
 			});
 			list->addItem(Graphs);
 		}
-		auto Other = new tsl::elm::ListItem("Other");
+		// "Other" -> "其他功能"
+		auto Other = new tsl::elm::ListItem("其他功能");
 		Other->setClickListener([](uint64_t keys) {
 			if (keys & KEY_A) {
 				tsl::changeTo<OtherMenu>();

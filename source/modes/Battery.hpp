@@ -11,10 +11,12 @@ public:
 	}
 
     virtual tsl::elm::Element* createUI() override {
-		rootFrame = new tsl::elm::OverlayFrame("Status Monitor", APP_VERSION);
+		// APP_VERSION 保持不变
+		rootFrame = new tsl::elm::OverlayFrame("状态监视", APP_VERSION "(星野無上)");
 
 		auto Status = new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, u16 x, u16 y, u16 w, u16 h) {
-			renderer->drawString("Battery/Charger Stats:", false, 20, 120, 20, renderer->a(0xFFFF));
+			// "Battery/Charger Stats:" -> "电池/充电统计:"
+			renderer->drawString("电池/充电统计:", false, 20, 120, 20, renderer->a(0xFFFF));
 			renderer->drawString(Battery_c, false, 20, 155, 18, renderer->a(0xFFFF));
 		});
 
@@ -44,19 +46,20 @@ public:
 		}
 
 		if (ChargerConnected)
+			// 这里是主要的汉化部分
 			snprintf(Battery_c, sizeof Battery_c,
-				"Battery Actual Capacity: %.0f mAh\n"
-				"Battery Designed Capacity: %.0f mAh\n"
-				"Battery Temperature: %.1f\u00B0C\n"
-				"Battery Raw Charge: %.1f%%\n"
-				"Battery Age: %.1f%%\n"
-				"Battery Voltage (%ds AVG): %.0f mV\n"
-				"Battery Current Flow (%ss AVG): %+.0f mA\n"
-				"Battery Power Flow%s: %+.3f W\n"
-				"Battery Remaining Time: %s\n"
-				"Charger Type: %u\n"
-				"Charger Max Voltage: %u mV\n"
-				"Charger Max Current: %u mA",
+				"电池实际容量: %.0f mAh\n"
+				"电池设计容量: %.0f mAh\n"
+				"电池温度: %.1f\u00B0C\n"
+				"电池原始电量: %.1f%%\n"
+				"电池寿命: %.1f%%\n"
+				"电池电压 (%d秒平均): %.0f mV\n"
+				"电池电流 (%s秒平均): %+.0f mA\n"
+				"电池功率%s: %+.3f W\n"
+				"电池剩余时间: %s\n"
+				"充电器类型: %u\n"
+				"充电最大电压: %u mV\n"
+				"充电最大电流: %u mA",
 				actualFullBatCapacity,
 				designedFullBatCapacity,
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
@@ -71,16 +74,17 @@ public:
 				ChargerCurrentLimit
 			);
 		else
+			// 未连接充电器时的显示
 			snprintf(Battery_c, sizeof Battery_c,
-				"Battery Actual Capacity: %.0f mAh\n"
-				"Battery Designed Capacity: %.0f mAh\n"
-				"Battery Temperature: %.1f\u00B0C\n"
-				"Battery Raw Charge: %.1f%%\n"
-				"Battery Age: %.1f%%\n"
-				"Battery Voltage (%ds AVG): %.0f mV\n"
-				"Battery Current Flow (%ss AVG): %+.0f mA\n"
-				"Battery Power Flow%s: %+.3f W\n"
-				"Battery Remaining Time: %s",
+				"电池实际容量: %.0f mAh\n"
+				"电池设计容量: %.0f mAh\n"
+				"电池温度: %.1f\u00B0C\n"
+				"电池原始电量: %.1f%%\n"
+				"电池寿命: %.1f%%\n"
+				"电池电压 (%d秒平均): %.0f mV\n"
+				"电池电流 (%s秒平均): %+.0f mA\n"
+				"电池功率%s: %+.3f W\n"
+				"电池剩余时间: %s",
 				actualFullBatCapacity,
 				designedFullBatCapacity,
 				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,

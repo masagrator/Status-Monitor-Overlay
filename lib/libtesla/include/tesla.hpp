@@ -1019,26 +1019,30 @@ namespace tsl {
 			 * @return Result
 			 */
 			Result initFonts() {
-				Result res;
+                Result res;
 
-				static PlFontData stdFontData, extFontData;
+                static PlFontData stdFontData, extFontData;
 
-				// Nintendo's default font
-				if(R_FAILED(res = plGetSharedFontByType(&stdFontData, PlSharedFontType_Standard)))
-					return res;
+                // ---------------------------------------------------------
+                // 修改点：将 PlSharedFontType_Standard 改为 PlSharedFontType_ChineseSimplified
+                // 这样 m_stdFont 就会加载系统的简体中文字库（其中也包含英文字母和数字）
+                // ---------------------------------------------------------
+                if(R_FAILED(res = plGetSharedFontByType(&stdFontData, PlSharedFontType_ChineseSimplified)))
+                    return res;
 
-				u8 *fontBuffer = reinterpret_cast<u8*>(stdFontData.address);
-				stbtt_InitFont(&this->m_stdFont, fontBuffer, stbtt_GetFontOffsetForIndex(fontBuffer, 0));
-				
-				// Nintendo's extended font containing a bunch of icons
-				if(R_FAILED(res = plGetSharedFontByType(&extFontData, PlSharedFontType_NintendoExt)))
-					return res;
+                u8 *fontBuffer = reinterpret_cast<u8*>(stdFontData.address);
+                stbtt_InitFont(&this->m_stdFont, fontBuffer, stbtt_GetFontOffsetForIndex(fontBuffer, 0));
+                
+                // Nintendo's extended font containing a bunch of icons
+                // 下面这段保持不变，用于加载 Switch 的手柄图标等特殊符号
+                if(R_FAILED(res = plGetSharedFontByType(&extFontData, PlSharedFontType_NintendoExt)))
+                    return res;
 
-				fontBuffer = reinterpret_cast<u8*>(extFontData.address);
-				stbtt_InitFont(&this->m_extFont, fontBuffer, stbtt_GetFontOffsetForIndex(fontBuffer, 0));
+                fontBuffer = reinterpret_cast<u8*>(extFontData.address);
+                stbtt_InitFont(&this->m_extFont, fontBuffer, stbtt_GetFontOffsetForIndex(fontBuffer, 0));
 
-				return res;
-			}
+                return res;
+            }
 			
 			/**
 			 * @brief Start a new frame

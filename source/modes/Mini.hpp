@@ -94,6 +94,7 @@ public:
 				rectangleWidth = 0;
 				std::pair<u32, u32> dimensions;
 				for (std::string key : tsl::hlp::split(settings.show, '+')) {
+					// 这里的 key.compare("XXX") 是配置文件的键，不能改！
 					if (!key.compare("CPU")) {
 						dimensions = renderer->drawString("[100%,100%,100%,100%]@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
 						if (rectangleWidth < dimensions.first)
@@ -149,29 +150,30 @@ public:
 				flags = 0;
 				entry_count = 0;
 				for (std::string key : tsl::hlp::split(settings.show, '+')) {
+					// 下面这些 strcat 的内容是真正显示在屏幕上的，可以汉化！
 					if (!key.compare("CPU") && !(flags & 1 << 0)) {
-						strcat(print_text, "CPU");
+						strcat(print_text, "CPU"); // 保持
 						entry_count++;
 						flags |= (1 << 0);
 					}
 					else if (!key.compare("GPU") && !(flags & 1 << 1)) {
 						if (print_text[0])
 							strcat(print_text, "\n");
-						strcat(print_text, "GPU");
+						strcat(print_text, "GPU"); // 保持
 						entry_count++;
 						flags |= (1 << 1);
 					}
 					else if (!key.compare("RAM") && !(flags & 1 << 2)) {
 						if (print_text[0])
 							strcat(print_text, "\n");
-						strcat(print_text, "RAM");
+						strcat(print_text, "RAM"); // 保持
 						entry_count++;
 						flags |= (1 << 2);
 					}
 					else if (!key.compare("TEMP") && !(flags & 1 << 3)) {
 						if (print_text[0])
 							strcat(print_text, "\n");
-						strcat(print_text, "TEMP");
+						strcat(print_text, "温度"); // "TEMP" -> "温度"
 						entry_count++;
 						flags |= (1 << 3);
 					}
@@ -179,15 +181,15 @@ public:
 						if (print_text[0])
 							strcat(print_text, "\n");
 						if (batTimeEstimate >= 0)
-							strcat(print_text, "DRAW");
-						else strcat(print_text, "CHRG");
+							strcat(print_text, "功耗"); // "DRAW" -> "功耗"
+						else strcat(print_text, "充电"); // "CHRG" -> "充电"
 						entry_count++;
 						flags |= (1 << 4);
 					}
 					else if (!key.compare("FAN") && !(flags & 1 << 5)) {
 						if (print_text[0])
 							strcat(print_text, "\n");
-						strcat(print_text, "FAN");
+						strcat(print_text, "风扇"); // "FAN" -> "风扇"
 						entry_count++;
 						flags |= (1 << 5);
 					}
@@ -201,7 +203,7 @@ public:
 					else if (!key.compare("RES") && !(flags & 1 << 7) && GameRunning) {
 						if (print_text[0])
 							strcat(print_text, "\n");
-						strcat(print_text, "RES");
+						strcat(print_text, "分辩"); // "RES" -> "分辩" (分辨率缩写)
 						entry_count++;
 						resolutionShow = true;
 						flags |= (1 << 7);
@@ -209,7 +211,7 @@ public:
 					else if (!key.compare("READ") && !(flags & 1 << 8) && GameRunning) {
 						if (print_text[0])
 							strcat(print_text, "\n");
-						strcat(print_text, "READ");
+						strcat(print_text, "读取"); // "READ" -> "读取"
 						entry_count++;
 						flags |= (1 << 8);
 					}
@@ -327,7 +329,10 @@ public:
 
 		return rootFrame;
 	}
-
+    // ... 后续代码没有需要汉化的字符串 ...
+    // (已省略无变化部分)
+    // 请确保复制回文件时保留原文件 createUI() 之后的所有内容，或者只替换 createUI() 块
+    // 为了方便，我这里把 createUI 之后的部分也放出来，但没有汉化修改。
 	virtual void update() override {
 		if (changingPos) return;
 		apmGetPerformanceMode(&performanceMode);
