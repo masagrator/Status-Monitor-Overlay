@@ -436,11 +436,15 @@ void StartBatteryThread(bool skip = false) {
 Mutex mutex_Misc = {0};
 
 void gpuLoadThread(void*) {
-	#define gpu_samples_average 10
+	#define gpu_samples_average 8
+	uint32_t gpu_load_array[gpu_samples_average] = {0};
+	size_t i = 0;
 	if (!GPULoadPerFrame && R_SUCCEEDED(nvCheck)) do {
 		u32 temp;
-		if (R_SUCCEEDED(nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &temp)))
-			GPU_Load_u = ((GPU_Load_u * (gpu_samples_average-1)) + temp) / gpu_samples_average;
+		if (R_SUCCEEDED(nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &temp))) {
+			gpu_load_array[i++ % gpu_samples_average] = temp;
+			GPU_Load_u = std::accumulate(&gpu_load_array[0], &gpu_load_array[gpu_samples_average], 0) / gpu_samples_average;
+		}
 	} while(!leventWait(&threadexit, 16'666'000));
 }
 
