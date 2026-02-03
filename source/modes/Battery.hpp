@@ -33,15 +33,9 @@ public:
 			snprintf(&tempBatTimeEstimate[0], sizeof(tempBatTimeEstimate), "%d:%02d", batTimeEstimate / 60, batTimeEstimate % 60);
 		}
 
-		BatteryChargeInfoFieldsChargerType ChargerConnected = _batteryChargeInfoFields.ChargerType;
-		int32_t ChargerVoltageLimit = _batteryChargeInfoFields.ChargerVoltageLimit;
-		int32_t ChargerCurrentLimit = _batteryChargeInfoFields.ChargerCurrentLimit;
-
-		if (hosversionAtLeast(17,0,0)) {
-			ChargerConnected = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerType;
-			ChargerVoltageLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerVoltageLimit;
-			ChargerCurrentLimit = ((BatteryChargeInfoFields17*)&_batteryChargeInfoFields) -> ChargerCurrentLimit;
-		}
+		uint32_t ChargerConnected = _batteryChargeInfoFields.usb_charger_type;
+		uint32_t ChargerVoltageLimit = _batteryChargeInfoFields.charger_input_voltage_limit;
+		uint32_t ChargerCurrentLimit = _batteryChargeInfoFields.charger_input_current_limit;
 
 		if (ChargerConnected)
 			snprintf(Battery_c, sizeof Battery_c,
@@ -59,9 +53,9 @@ public:
 				"Charger Max Current: %u mA",
 				actualFullBatCapacity,
 				designedFullBatCapacity,
-				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
-				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000,
-				(float)_batteryChargeInfoFields.BatteryAge / 1000,
+				(float)_batteryChargeInfoFields.temperature_celcius / 1000,
+				(float)_batteryChargeInfoFields.battery_charge_percentage / 1000,
+				(float)_batteryChargeInfoFields.battery_age_percentage / 1000,
 				batteryFiltered ? 45 : 5, batVoltageAvg,
 				batteryFiltered ? "11.25" : "5", batCurrentAvg,
 				batteryFiltered ? "" : " (5s AVG)", PowerConsumption, 
@@ -83,9 +77,9 @@ public:
 				"Battery Remaining Time: %s",
 				actualFullBatCapacity,
 				designedFullBatCapacity,
-				(float)_batteryChargeInfoFields.BatteryTemperature / 1000,
-				(float)_batteryChargeInfoFields.RawBatteryCharge / 1000,
-				(float)_batteryChargeInfoFields.BatteryAge / 1000,
+				(float)_batteryChargeInfoFields.temperature_celcius / 1000,
+				(float)_batteryChargeInfoFields.battery_charge_percentage / 1000,
+				(float)_batteryChargeInfoFields.battery_age_percentage / 1000,
 				batteryFiltered ? 45 : 5, batVoltageAvg,
 				batteryFiltered ? "11.25" : "5", batCurrentAvg,
 				batteryFiltered ? "" : " (5s AVG)", PowerConsumption, 

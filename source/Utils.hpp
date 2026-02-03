@@ -2,7 +2,6 @@
 #define ALWAYS_INLINE inline __attribute__((always_inline))
 #include "SaltyNX.h"
 
-#include "Battery.hpp"
 #include "audsnoop.h"
 #include "Misc.hpp"
 #include "max17050.h"
@@ -93,8 +92,7 @@ uint32_t NVJPG_Hz = 0;
 uint32_t DSP_Load_u = -1;
 
 //Battery
-Service* psmService = 0;
-BatteryChargeInfoFields _batteryChargeInfoFields = {0};
+PsmBatteryChargeInfoFields _batteryChargeInfoFields = {0};
 float batCurrentAvg = 0;
 float batVoltageAvg = 0;
 float PowerConsumption = 0;
@@ -348,7 +346,7 @@ void BatteryChecker(void*) {
 		mutexLock(&mutex_BatteryChecker);
 		uint64_t startTick = svcGetSystemTick();
 
-		psmGetBatteryChargeInfoFields(psmService, &_batteryChargeInfoFields);
+		psmGetBatteryChargeInfoFields(&_batteryChargeInfoFields);
 
 		// Calculation is based on Hekate's max17050.c
 		// Source: https://github.com/CTCaer/hekate/blob/master/bdk/power/max17050.c

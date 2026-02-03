@@ -241,9 +241,6 @@ public:
 			if (R_SUCCEEDED(nvInitialize())) nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
 
 			psmCheck = psmInitialize();
-			if (R_SUCCEEDED(psmCheck)) {
-				psmService = psmGetServiceSession();
-			}
 			i2cCheck = i2cInitialize();
 
 			SaltySD = CheckPort();
@@ -312,9 +309,6 @@ public:
 			i2cCheck = i2cInitialize();
 
 			psmCheck = psmInitialize();
-			if (R_SUCCEEDED(psmCheck)) {
-				psmService = psmGetServiceSession();
-			}
 
 			SaltySD = CheckPort();
 
