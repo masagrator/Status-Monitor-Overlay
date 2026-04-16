@@ -256,6 +256,14 @@ public:
 				}
 				else sysclkCheck = 0;
 			}
+			else if (hocclkIpcRunning() && R_SUCCEEDED(hocclkIpcInitialize())) {
+				uint32_t hocClkApiVer = 0;
+				hocclkIpcGetAPIVersion(&hocClkApiVer);
+				if (hocClkApiVer < 2) {
+					hocclkIpcExit();
+				}
+				else hocclkCheck = 0;
+			}
 		});
 		Hinted = envIsSyscallHinted(0x6F);
 	}
@@ -264,6 +272,9 @@ public:
 		CloseThreads(true);
 		if (R_SUCCEEDED(sysclkCheck)) {
 			sysclkIpcExit();
+		}
+		else if (R_SUCCEEDED(hocclkCheck)) {
+			hocclkIpcExit();
 		}
 		shmemClose(&_sharedmemory);
 		//Exit services
@@ -323,6 +334,14 @@ public:
 				}
 				else sysclkCheck = 0;
 			}
+			else if (hocclkIpcRunning() && R_SUCCEEDED(hocclkIpcInitialize())) {
+				uint32_t hocClkApiVer = 0;
+				hocclkIpcGetAPIVersion(&hocClkApiVer);
+				if (hocClkApiVer < 2) {
+					hocclkIpcExit();
+				}
+				else hocclkCheck = 0;
+			}
 		});
 		Hinted = envIsSyscallHinted(0x6F);
 	}
@@ -332,6 +351,9 @@ public:
 		shmemClose(&_sharedmemory);
 		if (R_SUCCEEDED(sysclkCheck)) {
 			sysclkIpcExit();
+		}
+		else if (R_SUCCEEDED(hocclkCheck)) {
+			hocclkIpcExit();
 		}
 		//Exit services
 		clkrstExit();

@@ -66,7 +66,7 @@ public:
 			if (!Initialized) {
 				CPU_dimensions = renderer->drawString("CPU [100%,100%,100%,100%]△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				GPU_dimensions = renderer->drawString("GPU 100.0%△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
-				if (R_FAILED(sysclkCheck) || !settings.showRAMLoad) {
+				if ((R_FAILED(sysclkCheck) && R_FAILED(hocclkCheck)) || !settings.showRAMLoad) {
 					RAM_dimensions = renderer->drawString("RAM 4.4/44.4GB△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 				}
 				else RAM_dimensions = renderer->drawString("RAM 100.0%△4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
@@ -282,7 +282,7 @@ public:
 		
 		///RAM
 		char MICRO_RAM_all_c[12] = "";
-		if (!settings.showRAMLoad || R_FAILED(sysclkCheck)) {
+		if (!settings.showRAMLoad || (R_FAILED(sysclkCheck) && R_FAILED(hocclkCheck))) {
 			float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 			float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
 			float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;

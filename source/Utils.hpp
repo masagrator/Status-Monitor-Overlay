@@ -17,6 +17,7 @@ extern "C"
 #endif
 
 #include <sysclk/client/ipc.h>
+#include <hocclk/client/ipc.h>
 
 #if defined(__cplusplus)
 }
@@ -73,6 +74,7 @@ Result nvencCheck = 1;
 Result nvjpgCheck = 1;
 Result nifmCheck = 1;
 Result sysclkCheck = 1;
+Result hocclkCheck = 1;
 Result pwmDutyCycleCheck = 1;
 
 //Wi-Fi
@@ -484,6 +486,16 @@ void Misc(void*) {
 				realRAM_Hz = sysclkCTX.realFreqs[SysClkModule_MEM];
 				ramLoad[SysClkRamLoad_All] = sysclkCTX.ramLoad[SysClkRamLoad_All];
 				ramLoad[SysClkRamLoad_Cpu] = sysclkCTX.ramLoad[SysClkRamLoad_Cpu];
+			}
+		}
+		else if (R_SUCCEEDED(hocclkCheck)) {
+			HocClkContext hocclkCTX;
+			if (R_SUCCEEDED(hocclkIpcGetCurrentContext(&hocclkCTX))) {
+				realCPU_Hz = hocclkCTX.realFreqs[HocClkModule_CPU];
+				realGPU_Hz = hocclkCTX.realFreqs[HocClkModule_GPU];
+				realRAM_Hz = hocclkCTX.realFreqs[HocClkModule_MEM];
+				ramLoad[SysClkRamLoad_All] = hocclkCTX.partLoad[HocClkPartLoad_EMC];
+				ramLoad[SysClkRamLoad_Cpu] = hocclkCTX.partLoad[HocClkPartLoad_EMCCpu];
 			}
 		}
 		

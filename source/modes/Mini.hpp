@@ -99,12 +99,12 @@ public:
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
 					}
-					else if (!key.compare("GPU") || (!key.compare("RAM") && settings.showRAMLoad && R_SUCCEEDED(sysclkCheck))) {
+					else if (!key.compare("GPU") || (!key.compare("RAM") && settings.showRAMLoad && (R_SUCCEEDED(sysclkCheck) || R_SUCCEEDED(hocclkCheck)))) {
 						dimensions = renderer->drawString("100.0%(100.0 | 100.0)@4444.4", false, 0, fontsize, fontsize, renderer->a(0x0000));
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
 					}
-					else if (!key.compare("RAM") && (!settings.showRAMLoad || R_FAILED(sysclkCheck))) {
+					else if (!key.compare("RAM") && (!settings.showRAMLoad || (R_FAILED(sysclkCheck) && R_FAILED(hocclkCheck)))) {
 						dimensions = renderer->drawString("4444/4444MB@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
 						if (rectangleWidth < dimensions.first)
 							rectangleWidth = dimensions.first;
@@ -395,7 +395,7 @@ public:
 		
 		///RAM
 		char MINI_RAM_var_compressed_c[35] = "";
-		if (R_FAILED(sysclkCheck) || !settings.showRAMLoad) {
+		if ((R_FAILED(sysclkCheck) && R_FAILED(hocclkCheck)) || !settings.showRAMLoad) {
 			float RAM_Total_application_f = (float)RAM_Total_application_u / 1024 / 1024;
 			float RAM_Total_applet_f = (float)RAM_Total_applet_u / 1024 / 1024;
 			float RAM_Total_system_f = (float)RAM_Total_system_u / 1024 / 1024;
