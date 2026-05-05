@@ -12,9 +12,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
- 
+
 /* --------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
  * <p-sam@d3vs.net>, <natinusala@gmail.com>, <m4x@m4xw.net>
@@ -58,6 +58,9 @@ typedef struct
     // FPS / Resolution
     u8 fps;
     u16 resolutionHeight;
+
+    // Reserved for future use
+    u8 reserved[0x41C];
 } HocClkContext;
 
 typedef struct
@@ -70,4 +73,6 @@ typedef struct
 
 #define HOCCLK_FREQ_LIST_MAX 32
 
-#define GLOBAL_PROFILE_ID 0xA111111111111111
+#define HOCCLK_GLOBAL_PROFILE_TID 0xA111111111111111
+
+static_assert(sizeof(HocClkContext) == 0x500);
