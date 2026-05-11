@@ -210,6 +210,91 @@ uint32_t realRAM_Hz = 0;
 uint32_t ramLoad[SysClkRamLoad_EnumMax];
 uint8_t refreshRate = 0;
 
+//Sixaxis
+bool motionControl = true;
+std::string leftJoyconMotionKeyCombo = "LEFTSR+LSTICK";
+std::string rightJoyconMotionKeyCombo = "RIGHTSL+RSTICK";
+std::string proControllerMotionKeyCombo = "ZR+R+RSTICK";
+
+enum Controller {
+	Controller_ProController,
+	Controller_JoyConL,
+	Controller_JoyConR,
+	Controller_Max
+};
+
+HidSixAxisSensorHandle sixaxisHandles[Controller_Max];
+
+struct Vec3 {
+	float x, y, z;
+};
+
+static inline Vec3 vec3_sub(Vec3 a, Vec3 b) {
+    return (Vec3){ a.x - b.x, a.y - b.y, a.z - b.z };
+}
+
+static inline Vec3 vec3_scale(Vec3 v, float s) {
+    return (Vec3){ v.x * s, v.y * s, v.z * s };
+}
+
+static inline float vec3_dot(Vec3 a, Vec3 b) {
+    return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+
+static inline Vec3 vec3_normalize(Vec3 v) {
+    float len = sqrtf(vec3_dot(v, v));
+    if (len < 1e-6f) return (Vec3){0, 0, 0};
+    return vec3_scale(v, 1.0f / len);
+}
+
+struct GyroCursor {
+    float x, y;
+    float sensitivity;
+};
+
+void gyroCursor_init(GyroCursor &cur, float startX, float startY, float sensitivity) {
+    cur.x           = startX;
+    cur.y           = startY;
+    cur.sensitivity = sensitivity;
+}
+
+void gyroCursor_update(GyroCursor &cur, HidSixAxisSensorState &state, int64_t* x, int64_t* y) {
+
+	float buffer = 100.f;
+
+    Vec3 gyro  = { state.angular_velocity.x,
+                   state.angular_velocity.y,
+                   state.angular_velocity.z };
+
+    Vec3 accel = { state.acceleration.x,
+                   state.acceleration.y,
+                   state.acceleration.z };
+
+    Vec3 gravity = vec3_normalize((Vec3){ -accel.x, -accel.y, -accel.z });
+    float worldYaw = vec3_dot(gyro, gravity);
+
+    Vec3 yawPart   = vec3_scale(gravity, worldYaw);
+    Vec3 flatGyro  = vec3_sub(gyro, yawPart);
+    float worldPitch = flatGyro.x;
+
+    cur.x -= worldYaw   * cur.sensitivity;
+    cur.y -= worldPitch * cur.sensitivity;
+
+    // Clamp to screen bounds
+    if (cur.x < 0.0f)        *x = 0;
+    else if (cur.x > 1264.f) *x = 1280;
+	else                     *x = (int64_t)cur.x;
+    if (cur.y < 0.0f)        *y = 0;
+    else if (cur.y > 704.f)  *y = 720;
+	else                     *y = (int64_t)cur.y;
+
+	if (cur.x < -buffer) cur.x = -buffer;
+	else if (cur.x > 1264.f + buffer) cur.x = 1264.f + buffer;
+	if (cur.y < -buffer) cur.y = -buffer;
+	else if (cur.y > 704.f + buffer) cur.y = 704.f + buffer;	
+}
+
+
 int compare (const void* elem1, const void* elem2) {
 	if ((((resolutionCalls*)(elem1)) -> calls) > (((resolutionCalls*)(elem2)) -> calls)) return -1;
 	else return 1;
@@ -491,11 +576,11 @@ void Misc(void*) {
 		else if (R_SUCCEEDED(hocclkCheck)) {
 			HocClkContext hocclkCTX;
 			if (R_SUCCEEDED(hocclkIpcGetCurrentContext(&hocclkCTX))) {
-				realCPU_Hz = hocclkCTX.realFreqs[HocClkModule_CPU];
-				realGPU_Hz = hocclkCTX.realFreqs[HocClkModule_GPU];
-				realRAM_Hz = hocclkCTX.realFreqs[HocClkModule_MEM];
-				ramLoad[SysClkRamLoad_All] = hocclkCTX.partLoad[HocClkPartLoad_EMC];
-				ramLoad[SysClkRamLoad_Cpu] = hocclkCTX.partLoad[HocClkPartLoad_EMCCpu];
+				realCPU_Hz = hocclkCTX.stable.realFreqs[HocClkModule_CPU];
+				realGPU_Hz = hocclkCTX.stable.realFreqs[HocClkModule_GPU];
+				realRAM_Hz = hocclkCTX.stable.realFreqs[HocClkModule_MEM];
+				ramLoad[SysClkRamLoad_All] = hocclkCTX.stable.partLoad[HocClkPartLoad_EMC];
+				ramLoad[SysClkRamLoad_Cpu] = hocclkCTX.stable.partLoad[HocClkPartLoad_EMCCpu];
 			}
 		}
 		
@@ -702,6 +787,10 @@ void EndFPSCounterThread() {
 	leventSignal(&threadexit);
 }
 
+Result hidsysSetAppletResourceUserId() {
+	u64 aruid = appletGetAppletResourceUserId();
+    return serviceDispatchIn(hidsysGetServiceSession(), 500, aruid);
+}
 
 // String formatting functions
 void removeSpaces(std::string& str) {
@@ -796,6 +885,10 @@ uint64_t MapButtons(const std::string& buttonCombo) {
 		{"DRIGHT", HidNpadButton_Right},
 		{"SL", HidNpadButton_AnySL},
 		{"SR", HidNpadButton_AnySR},
+		{"LEFTSL", HidNpadButton_LeftSL},
+		{"LEFTSR", HidNpadButton_LeftSR},
+		{"RIGHTSL", HidNpadButton_RightSL},
+		{"RIGHTSR", HidNpadButton_RightSR},
 		{"LSTICK", HidNpadButton_StickL},
 		{"RSTICK", HidNpadButton_StickR},
 		{"LS", HidNpadButton_StickL},
@@ -927,6 +1020,28 @@ void ParseIniFile() {
 				auto key = parsedData["status-monitor"]["touch_screen"];
 				convertToUpper(key);
 				touchScreen = key.compare("FALSE");
+			}
+			if (parsedData["status-monitor"].find("motion_control") != parsedData["status-monitor"].end()) {
+				auto key = parsedData["status-monitor"]["motion_control"];
+				convertToUpper(key);
+				motionControl = key.compare("FALSE");
+			}
+			if (motionControl == true) {
+				if (parsedData["status-monitor"].find("left_joycon_motion_key_combo") != parsedData["status-monitor"].end()) {
+					leftJoyconMotionKeyCombo = parsedData["status-monitor"]["left_joycon_motion_key_combo"];
+					removeSpaces(leftJoyconMotionKeyCombo); // format combo
+					convertToUpper(leftJoyconMotionKeyCombo);
+				}
+				if (parsedData["status-monitor"].find("right_joycon_motion_key_combo") != parsedData["status-monitor"].end()) {
+					rightJoyconMotionKeyCombo = parsedData["status-monitor"]["right_joycon_motion_key_combo"];
+					removeSpaces(rightJoyconMotionKeyCombo); // format combo
+					convertToUpper(rightJoyconMotionKeyCombo);
+				}
+				if (parsedData["status-monitor"].find("pro_controller_motion_key_combo") != parsedData["status-monitor"].end()) {
+					proControllerMotionKeyCombo = parsedData["status-monitor"]["pro_controller_motion_key_combo"];
+					removeSpaces(proControllerMotionKeyCombo); // format combo
+					convertToUpper(proControllerMotionKeyCombo);
+				}
 			}
 		}
 		

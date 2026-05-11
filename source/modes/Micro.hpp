@@ -366,6 +366,7 @@ public:
 			if (delta < frametime) {
 				uint64_t time_delta = frametime - delta;
 				while (time_delta > 1000000) {
+					padUpdate(&pad);
 					if (__builtin_expect(isKeyComboPressed(padGetButtons(&pad), padGetButtonsDown(&pad), mappedButtons), false)) {
 						TeslaFPS = 0;
 						if (skipMain)

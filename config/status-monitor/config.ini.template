@@ -6,6 +6,10 @@ average_gpu_load=false
 font_cache=true
 use_old_fps_average=false
 touch_screen=true
+motion_control=true
+left_joycon_motion_key_combo=LEFTSR+LSTICK
+right_joycon_motion_key_combo=RIGHTSL+RSTICK
+pro_controller_motion_key_combo=ZR+R+RSTICK
 [full]
 refresh_rate=1
 layer_width_align=left

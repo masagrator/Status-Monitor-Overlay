@@ -266,6 +266,8 @@ public:
 			}
 		});
 		Hinted = envIsSyscallHinted(0x6F);
+    	hidGetSixAxisSensorHandles(&sixaxisHandles[Controller_ProController], 1, HidNpadIdType_No1,      HidNpadStyleTag_NpadFullKey);
+    	hidGetSixAxisSensorHandles(&sixaxisHandles[Controller_JoyConL], 2, HidNpadIdType_No1,      HidNpadStyleTag_NpadJoyDual);
 	}
 
 	virtual void exitServices() override {
@@ -344,6 +346,8 @@ public:
 			}
 		});
 		Hinted = envIsSyscallHinted(0x6F);
+    	hidGetSixAxisSensorHandles(&sixaxisHandles[0], 1, HidNpadIdType_No1,      HidNpadStyleTag_NpadFullKey);
+    	hidGetSixAxisSensorHandles(&sixaxisHandles[1], 2, HidNpadIdType_No1,      HidNpadStyleTag_NpadJoyDual);
 	}
 
 	virtual void exitServices() override {

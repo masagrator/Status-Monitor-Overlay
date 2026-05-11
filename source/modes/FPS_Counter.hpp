@@ -1,6 +1,9 @@
 class com_FPS : public tsl::Gui {
 private:
 	uint64_t mappedButtons = MapButtons(keyCombo); // map buttons
+	uint64_t leftJoyconMotionMappedButtons = MapButtons(leftJoyconMotionKeyCombo);
+	uint64_t rightJoyconMotionMappedButtons = MapButtons(rightJoyconMotionKeyCombo);
+	uint64_t proControllerMotionMappedButtons = MapButtons(proControllerMotionKeyCombo);
 	char FPSavg_c[8];
 	FpsCounterSettings settings;
 	size_t fontsize = 0;
@@ -19,6 +22,7 @@ private:
 	uint32_t m_width = 0;
 	uint32_t m_height = 0;
 	bool changingPos = false;
+	bool sixaxisChangingPos = false;
 	bool changedPos = false;
 	bool reachedMaxY = false;
 	bool reachedMaxX = false;
@@ -55,8 +59,19 @@ public:
 		frametime = 1000000000 / settings.refreshRate;
 		deactivateOriginalFooter = true;
 		StartFPSCounterThread();
+		if (motionControl == true) {
+			hidsysSetAppletResourceUserId();
+			hidStartSixAxisSensor(sixaxisHandles[Controller_ProController]);
+			hidStartSixAxisSensor(sixaxisHandles[Controller_JoyConL]);
+			hidStartSixAxisSensor(sixaxisHandles[Controller_JoyConR]);
+		}
 	}
 	~com_FPS() {
+		if (motionControl == true) {
+			hidStopSixAxisSensor(sixaxisHandles[Controller_ProController]);
+			hidStopSixAxisSensor(sixaxisHandles[Controller_JoyConL]);
+			hidStopSixAxisSensor(sixaxisHandles[Controller_JoyConR]);
+		}
 		EndFPSCounterThread();
 		FullMode = true;
 		tsl::hlp::requestForeground(true);
@@ -198,10 +213,10 @@ public:
 	}
 	virtual bool handleInput(uint64_t keysDown, uint64_t keysHeld, touchPosition touchInput, JoystickPosition leftJoyStick, JoystickPosition rightJoyStick) override {
 		bool m_touchScreen = touchScreen;
-		if (__builtin_expect(m_touchScreen, false)) {
+		if (__builtin_expect(m_touchScreen && (sixaxisChangingPos == false), false)) {
 			if (*touchInput.delta_time != 0 && (*touchInput.x >= m_base_x && *touchInput.x <= (m_base_x + m_width)) && (*touchInput.y >= m_base_y && *touchInput.y <= (m_base_y + m_height))) {
-			changingPos = true;
-			changedPos = true;
+				changingPos = true;
+				changedPos = true;
 			}
 			else if (changingPos && *touchInput.delta_time == 0) {
 				touch_pos_x = -1;
@@ -218,6 +233,55 @@ public:
 				else if (touch_pos_x <= 15) touch_pos_x = 0;
 			}
 		}
+		if (changingPos == false || sixaxisChangingPos == true) {
+			HidSixAxisSensorState sixaxis = {0};
+			static bool start = false;
+			s32 id = -1;
+			u64 style_set = padGetStyleSet(&pad);
+			if (style_set & HidNpadStyleTag_NpadJoyDual) {
+				if ((keysHeld & leftJoyconMotionMappedButtons) == leftJoyconMotionMappedButtons) id = Controller_JoyConL;
+				else if ((keysHeld & rightJoyconMotionMappedButtons) == rightJoyconMotionMappedButtons) id = Controller_JoyConR;
+			}
+			else if (style_set & HidNpadStyleTag_NpadJoyLeft) {
+				if ((keysHeld & leftJoyconMotionMappedButtons) == leftJoyconMotionMappedButtons) id = Controller_JoyConL;
+			}
+			else if (style_set & HidNpadStyleTag_NpadJoyRight) {
+				if ((keysHeld & rightJoyconMotionMappedButtons) == rightJoyconMotionMappedButtons) id = Controller_JoyConR;
+			}
+			else if (style_set & HidNpadStyleTag_NpadJoyRight) {
+				if ((keysHeld & proControllerMotionMappedButtons) == proControllerMotionMappedButtons) id = Controller_ProController;
+			}
+			if (id < 0) {
+				start = false;
+				changingPos = false;
+				sixaxisChangingPos = false;
+			}
+			else {
+				static GyroCursor cursor;
+				hidGetSixAxisSensorStates(sixaxisHandles[id], &sixaxis, 1);
+				if (sixaxis.acceleration.x == 0.f && sixaxis.acceleration.y == 0.f && sixaxis.acceleration.z == -1.f) {
+					hidsysSetAppletResourceUserId();
+					hidGetSixAxisSensorStates(sixaxisHandles[id], &sixaxis, 1);
+				}
+				if (sixaxis.acceleration.x != 0.f || sixaxis.acceleration.y != 0.f || sixaxis.acceleration.z != -1.f) {
+					if (start == false) {
+						start = true;
+						float sensitivity = 200;
+						gyroCursor_init(cursor, (float)m_base_x, (float)m_base_y, sensitivity);
+					}
+					changingPos = true;
+					changedPos = true;
+					sixaxisChangingPos = true;
+					gyroCursor_update(cursor, sixaxis, &touch_pos_x, &touch_pos_y);
+					
+				}
+				else {
+					start = false;
+					changingPos = false;
+					sixaxisChangingPos = false;
+				}
+			}
+		}
 		static uint64_t last_time = 0;
 		if (__builtin_expect(!last_time, 0)) {
 			last_time = armTicksToNs(svcGetSystemTick());
@@ -229,10 +293,27 @@ public:
 				uint64_t time_delta = frametime - delta;
 				while (time_delta > 1000000) {
 					HidTouchScreenState state = {0};
+					padUpdate(&pad);
+					keysHeld = padGetButtons(&pad);
+					keysDown = padGetButtonsDown(&pad);
 					if (m_touchScreen && hidGetTouchScreenStates(&state, 1) && state.count && (state.touches[0].x >= m_base_x && state.touches[0].x <= (m_base_x + m_width)) && (state.touches[0].y >= m_base_y && state.touches[0].y <= (m_base_y + m_height))) {
 						break;
 					}
-					if (__builtin_expect(isKeyComboPressed(padGetButtons(&pad), padGetButtonsDown(&pad), mappedButtons), false)) {
+					u64 style_set = padGetStyleSet(&pad);
+					if (style_set & HidNpadStyleTag_NpadJoyDual) {
+						if ((keysHeld & leftJoyconMotionMappedButtons) == leftJoyconMotionMappedButtons) break;
+						else if ((keysHeld & rightJoyconMotionMappedButtons) == rightJoyconMotionMappedButtons) break;
+					}
+					else if (style_set & HidNpadStyleTag_NpadJoyLeft) {
+						if ((keysHeld & leftJoyconMotionMappedButtons) == leftJoyconMotionMappedButtons) break;
+					}
+					else if (style_set & HidNpadStyleTag_NpadJoyRight) {
+						if ((keysHeld & rightJoyconMotionMappedButtons) == rightJoyconMotionMappedButtons) break;
+					}
+					else if (style_set & HidNpadStyleTag_NpadJoyRight) {
+						if ((keysHeld & proControllerMotionMappedButtons) == proControllerMotionMappedButtons) break;
+					}
+					if (__builtin_expect(isKeyComboPressed(keysHeld, keysDown, mappedButtons), false)) {
 						TeslaFPS = 0;
 						tsl::goBack();
 						return true;
