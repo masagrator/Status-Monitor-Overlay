@@ -18,7 +18,10 @@ Colors are provided in RGBA4444 format, which means that each character represen
 | `font_cache` | Allow caching generated glyphs for better performance. Cache is cleaned up when moving between modes. | `true`, `false` | `true` |
 | `use_old_fps_average` | Turn off rounding FPS average introduced in 1.2.2 release. | `true`, `false` | `false` |
 | `touch_screen` | Enable touch screen functionalities in various modes | `true`, `false` | `true` |
-
+| `motion_control` | Enable motion control in various modes, works only with wireless Joycons and Pro Controller | `true`, `false` | `true` |
+| `left_joycon_motion_key_combo` | Button combination that allows using motion control with data from left Joycon |  `A`, `B`, `X`, `Y`, `L`, `R`, `ZL`, `ZR`, `PLUS`, `MINUS`, `DUP`, `DDOWN`, `DLEFT`, `DRIGHT`, `SL`, `SR`, `LEFTSL`, `LEFTSR`, `RIGHTSL`, `RIGHTSL`, `LSTICK`, `RSTICK`, `UP`, `DOWN`, `LEFT`, `RIGHT` | `LEFTSR+LSTICK` |
+| `right_joycon_motion_key_combo` | Button combination that allows using motion control with data from right Joycon |  `A`, `B`, `X`, `Y`, `L`, `R`, `ZL`, `ZR`, `PLUS`, `MINUS`, `DUP`, `DDOWN`, `DLEFT`, `DRIGHT`, `SL`, `SR`, `LEFTSL`, `LEFTSR`, `RIGHTSL`, `RIGHTSL`, `LSTICK`, `RSTICK`, `UP`, `DOWN`, `LEFT`, `RIGHT` | `RIGHTSL+RSTICK` |
+| `pro_controller_motion_key_combo` | Button combination that allows using motion control with data from Pro Controller |  `A`, `B`, `X`, `Y`, `L`, `R`, `ZL`, `ZR`, `PLUS`, `MINUS`, `DUP`, `DDOWN`, `DLEFT`, `DRIGHT`, `SL`, `SR`, `LEFTSL`, `LEFTSR`, `RIGHTSL`, `RIGHTSL`, `LSTICK`, `RSTICK`, `UP`, `DOWN`, `LEFT`, `RIGHT` | `ZR+R+RSTICK` |
 
 > [full]
 
