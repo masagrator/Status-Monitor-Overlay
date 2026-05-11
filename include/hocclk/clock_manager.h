@@ -30,21 +30,41 @@
 #include <stdint.h>
 #include "board.h"
 
-typedef struct
-{
+typedef struct {
+
+    /*
+     * This "stable struct" must never be modified. It provides a fixed memory layout so external clients can safely read the expected fields even
+     * if HocClkContext changes in newer versions and the client is not recompiled.
+     */
+    struct {
+        #define HocClkModuleStable_EnumMax 5
+        #define HocClkThermalSensorStable_EnumMax 11
+        #define HocClkPowerSensorStable_EnumMax 2
+        #define HocClkPartLoadStable_EnumMax 10
+        #define HocClkVoltageStable_EnumMax 7
+
+        u32 freqs[HocClkModuleStable_EnumMax];
+        u32 realFreqs[HocClkModuleStable_EnumMax];
+        u32 overrideFreqs[HocClkModuleStable_EnumMax];
+        s32 temps[HocClkThermalSensorStable_EnumMax];
+        s32 power[HocClkPowerSensorStable_EnumMax];
+        u32 partLoad[HocClkPartLoadStable_EnumMax];
+        u32 voltages[HocClkVoltageStable_EnumMax];
+    } stable;
+
     uint64_t applicationId;
     HocClkProfile profile;
     uint32_t freqs[HocClkModule_EnumMax];
     uint32_t realFreqs[HocClkModule_EnumMax];
     uint32_t overrideFreqs[HocClkModule_EnumMax];
-    uint32_t temps[HocClkThermalSensor_EnumMax];
+    int32_t temps[HocClkThermalSensor_EnumMax];
     int32_t power[HocClkPowerSensor_EnumMax];
     uint32_t partLoad[HocClkPartLoad_EnumMax];
     uint32_t voltages[HocClkVoltage_EnumMax];
     u16 speedos[HocClkSpeedo_EnumMax];
     u16 iddq[HocClkSpeedo_EnumMax];
-    u16 waferX;
-    u16 waferY;
+    s16 waferX;
+    s16 waferY;
 
     // Misc stuff
     GpuSchedulingMode gpuSchedulingMode;
@@ -54,13 +74,16 @@ typedef struct
     u8 maxDisplayFreq;
     u8 dramID;
     bool isDram8GB;
+    HocClkConsoleType consoleType;
 
     // FPS / Resolution
     u8 fps;
     u16 resolutionHeight;
+    u8 custRev;
+    u16 kipVersion;
 
     // Reserved for future use
-    u8 reserved[0x41C];
+    u8 reserved[0x35B];
 } HocClkContext;
 
 typedef struct
@@ -71,7 +94,7 @@ typedef struct
     };
 } HocClkTitleProfileList;
 
-#define HOCCLK_FREQ_LIST_MAX 32
+#define HOCCLK_FREQ_LIST_MAX 48
 
 #define HOCCLK_GLOBAL_PROFILE_TID 0xA111111111111111
 
